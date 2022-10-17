@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ public class InsertGenerator extends AbstractGenerator {
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+    public final AtomicLong allMultiTasks = new AtomicLong(0);
 
     private InsertGenerator() {
         this.type = GeneratorType.Insert;
@@ -93,6 +95,8 @@ public class InsertGenerator extends AbstractGenerator {
             }
             logger.error("sources empty!!! end fragments");
         }
+        allMultiTasks.addAndGet(sources.size());
+
         return new CombineNonQuery(sources);
     }
 

@@ -282,6 +282,8 @@ public abstract class MigrationPolicy {
       DefaultMetaManager.getInstance()
           .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
       DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
+    } catch (Exception e){
+      System.exit(1);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }
@@ -467,6 +469,7 @@ public abstract class MigrationPolicy {
     } catch (Exception e) {
       logger.error("encounter error when migrate data from {} to {} ", sourceStorageId,
           targetStorageId, e);
+      System.exit(1);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }

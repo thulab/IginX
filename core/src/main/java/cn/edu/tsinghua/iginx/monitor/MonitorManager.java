@@ -2,7 +2,9 @@ package cn.edu.tsinghua.iginx.monitor;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -117,6 +119,12 @@ public class MonitorManager implements Runnable {
         logger.error("allRequests = {}", StoragePhysicalTaskExecutor.getInstance().allRequests);
         logger.error("submittedRequests = {}", StoragePhysicalTaskExecutor.getInstance().submittedRequests);
         logger.error("completedRequests = {}", StoragePhysicalTaskExecutor.getInstance().completedRequests);
+        logger.error("allMultiTasks = {}", InsertGenerator.getInstance().allMultiTasks);
+        logger.error("allFinishRequests = {}", PhysicalEngineImpl.getInstance().allFinishRequests);
+        logger.error("allPhysicalRequests = {}", PhysicalEngineImpl.getInstance().allPhysicalRequests);
+        logger.error("allStorageTasksNum = {}", PhysicalEngineImpl.getInstance().allStorageTasksNum);
+        logger.error("allSubmittedMemoryRequests = {}", MemoryPhysicalTaskDispatcher.getInstance().allSubmittedMemoryRequests);
+        logger.error("allFinishMemoryRequests = {}", MemoryPhysicalTaskDispatcher.getInstance().allFinishMemoryRequests);
         logger.error("insertCount = {}", IginxWorker.getInstance().insertCount);
         logger.error("insertCompleteCount = {}", IginxWorker.getInstance().insertCompleteCount);
         logger.error("start to print all fragments in the system");

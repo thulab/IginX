@@ -61,6 +61,7 @@ import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +76,12 @@ public class PhysicalEngineImpl implements PhysicalEngine {
   private final MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
   private final StoragePhysicalTaskExecutor storageTaskExecutor;
+
+  public final AtomicLong allPhysicalRequests = new AtomicLong(0);
+
+  public final AtomicLong allFinishRequests = new AtomicLong(0);
+
+  public final AtomicLong allStorageTasksNum = new AtomicLong(0);
 
   private PhysicalEngineImpl() {
     optimizer = PhysicalOptimizerManager.getInstance()
@@ -94,6 +101,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
     if (OperatorType.isGlobalOperator(root.getType())) { // 全局任务临时兼容逻辑
       // 迁移任务单独处理
       if (root.getType() == OperatorType.Migration) {
+        logger.error("start a migration task");
         Migration migration = (Migration) root;
         FragmentMeta toMigrateFragment = migration.getFragmentMeta();
         StorageUnitMeta targetStorageUnitMeta = migration.getTargetStorageUnitMeta();
@@ -166,6 +174,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
 
         // 设置分片现在所属的du
         toMigrateFragment.setMasterStorageUnit(targetStorageUnitMeta);
+        logger.error("end a migration task");
         return selectResult.getRowStream();
       } else {
         GlobalPhysicalTask task = new GlobalPhysicalTask(root);
@@ -176,14 +185,20 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         return result.getRowStream();
       }
     }
+    allPhysicalRequests.incrementAndGet();
     PhysicalTask task = optimizer.optimize(root);
     List<StoragePhysicalTask> storageTasks = new ArrayList<>();
     getStorageTasks(storageTasks, task);
+    if(storageTasks.isEmpty()){
+      logger.error("storageTasks is empty!!!");
+    }
+    allStorageTasksNum.addAndGet(storageTasks.size());
     storageTaskExecutor.commit(storageTasks);
     TaskExecuteResult result = task.getResult();
     if (result.getException() != null) {
       throw result.getException();
     }
+    allFinishRequests.incrementAndGet();
     return result.getRowStream();
   }
 

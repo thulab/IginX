@@ -1314,10 +1314,14 @@ public class DefaultMetaManager implements IMetaManager {
             List<String> paths = new ArrayList<>();
             paths.add(migrationExecuteTask.getMasterStorageUnitId() + "*");
             Delete delete = new Delete(new FragmentSource(fragmentMeta), new ArrayList<>(), paths);
-            physicalEngine.execute(delete);
+            try {
+              physicalEngine.execute(delete);
+            }catch (Exception e){
+              System.exit(1);
+            }
           }
         }
-      } catch (IOException | PhysicalException e) {
+      } catch (IOException e) {
         e.printStackTrace();
       }
 

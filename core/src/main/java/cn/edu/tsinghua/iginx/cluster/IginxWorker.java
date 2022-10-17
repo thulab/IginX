@@ -147,6 +147,7 @@ public class IginxWorker implements IService.Iface {
     public Status insertColumnRecords(InsertColumnRecordsReq req) {
         insertCount.incrementAndGet();
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            insertCompleteCount.incrementAndGet();
             return RpcUtils.ACCESS_DENY;
         }
         RequestContext ctx = contextBuilder.build(req);

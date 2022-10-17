@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueu
 import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueueImpl;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,10 @@ public class MemoryPhysicalTaskDispatcher {
     private final ExecutorService taskDispatcher;
 
     private final ExecutorService taskExecuteThreadPool;
+
+    public final AtomicLong allSubmittedMemoryRequests = new AtomicLong(0);
+
+    public final AtomicLong allFinishMemoryRequests = new AtomicLong(0);
 
     private MemoryPhysicalTaskDispatcher() {
         taskQueue = new MemoryPhysicalTaskQueueImpl();
@@ -61,7 +66,7 @@ public class MemoryPhysicalTaskDispatcher {
             while(true) {
                 final MemoryPhysicalTask task = taskQueue.getTask();
                 taskExecuteThreadPool.submit(() -> {
-
+                    allSubmittedMemoryRequests.incrementAndGet();
                     MemoryPhysicalTask currentTask = task;
                     while(currentTask != null) {
                         TaskExecuteResult result;
@@ -72,6 +77,7 @@ public class MemoryPhysicalTaskDispatcher {
                             result = new TaskExecuteResult(new PhysicalException(e));
                         }
                         currentTask.setResult(result);
+                        allFinishMemoryRequests.incrementAndGet();
                         if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
                             MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();
                             if (followerTask.notifyParentReady()) {

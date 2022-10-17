@@ -252,9 +252,13 @@ public class StatementExecutor {
       after(ctx, postLogicalProcessors);
       if (constraintManager.check(root) && checker.check(root)) {
         before(ctx, prePhysicalProcessors);
-        RowStream stream = engine.execute(root);
+        try {
+          RowStream stream = engine.execute(root);
         after(ctx, postPhysicalProcessors);
         setResult(ctx, stream);
+        }catch (Exception e){
+          System.exit(1);
+        }
         return;
       }
     }
