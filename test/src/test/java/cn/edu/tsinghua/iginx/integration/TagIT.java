@@ -122,14 +122,6 @@ public class TagIT {
 
         testQueryWithMultiTags();
 
-        testDeleteWithTag();
-
-        testDeleteWithMultiTags();
-
-        testDeleteTSWithTag();
-
-        testDeleteTSWithMultiTags();
-
         testQueryWithWildcardTag();
 
         testQueryWithAggregate();
@@ -141,6 +133,14 @@ public class TagIT {
         testSubQuery();
 
         testTagInsertWithSubQuery();
+
+//        testDeleteWithTag();
+
+        testDeleteWithMultiTags();
+
+//        testDeleteTSWithTag();
+
+        testDeleteTSWithMultiTags();
 
         testClearData();
     }
