@@ -84,7 +84,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT#${{matrix.DB-name}}_IT + ${{matrix.Test-Way}} -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT#${{matrix.DB-name}}_IT, IoTDBHistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -164,7 +164,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT + capacityExpansion -DfailIfNoTests=false
+        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT, TagCapExpIT#capacityExpansion -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -244,7 +244,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT + capacityExpansion -DfailIfNoTests=false
+        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT, SQLCapExpSessioinIT#capacityExpansion -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -324,7 +324,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT + capacityExpansion -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT, IoTDBBaseSessionCapExpIT#capacityExpansion -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -404,7 +404,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT + capacityExpansion -DfailIfNoTests=false
+        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT, RestCapExpIT#capacityExpansion -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
