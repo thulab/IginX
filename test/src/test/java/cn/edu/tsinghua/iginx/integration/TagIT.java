@@ -112,8 +112,6 @@ public class TagIT {
 
         testShowTimeSeriesWithTags();
 
-        testCountPoints();
-
         testCountPath();
 
         testBasicQuery();
