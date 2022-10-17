@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,22 +21,15 @@ public class TagKVUtils {
 
     public static final String tagNameAnnotation = Config.tagNameAnnotation;
 
-    public static final String tagPrefix = Config.tagPrefix;
-
-    public static final String tagSuffix = Config.tagSuffix;
-
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
-        if (!fullName.contains(tagPrefix) && !fullName.contains(tagSuffix)) {
+        if (!fullName.contains(tagNameAnnotation)) {
             return new Pair<>(fullName, null);
         }
 
-        String[] parts = fullName.split(tagPrefix, 2);
+        String[] parts = fullName.split(tagNameAnnotation, 2);
         assert parts.length == 2;
         String name = parts[0].substring(0, parts[0].length() - 1);
-        if (!fullName.contains(tagNameAnnotation)) {
-            return new Pair<>(name, null);
-        }
-        parts[1] = parts[1].substring(1, parts[1].length() - 2);
+
         List<String> tagKVList = Arrays.stream(parts[1].split("\\.")).map(e -> {
             if (e.startsWith(tagNameAnnotation)) {
                 return e.substring(tagNameAnnotation.length());
@@ -54,6 +48,18 @@ public class TagKVUtils {
             tags.put(tagKey, tagValue);
         }
         return new Pair<>(name, tags);
+    }
+
+    public static String toFullName(String name, Map<String, String> tags) {
+        if (tags != null && !tags.isEmpty()) {
+            TreeMap<String, String> sortedTags = new TreeMap<>(tags);
+            StringBuilder pathBuilder = new StringBuilder();
+            sortedTags.forEach((tagKey, tagValue) -> {
+                pathBuilder.append('.').append(TagKVUtils.tagNameAnnotation).append(tagKey).append('.').append(tagValue);
+            });
+            name += pathBuilder.toString();
+        }
+        return name;
     }
 
     public static boolean match(Map<String, String> tags, TagFilter tagFilter) {

@@ -102,13 +102,13 @@ public final class Field {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Field field = (Field) o;
-        return Objects.equals(name, field.name) && Objects.equals(fullName, field.fullName) && type == field.type;
+        Field that = (Field) o;
+        return Objects.equals(name, that.name) && Objects.equals(fullName, that.fullName) && type == that.type && Objects.equals(tags, that.tags);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, fullName, type);
+        return Objects.hash(name, fullName, type, tags);
     }
 
     public static String toFullName(String name, Map<String, String> tags) {
