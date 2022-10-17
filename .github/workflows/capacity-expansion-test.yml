@@ -87,8 +87,9 @@ jobs:
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT -DfailIfNoTests=false
-          elif [ "$RUNNER_OS" == "macOS" ]; then
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
             mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT -DfailIfNoTests=false
+          fi
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
