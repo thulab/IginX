@@ -40,15 +40,15 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
         }
     }
 
-    @Test
-    public void iotdb11_IT() {
-        this.ENGINE_TYPE = "iotdb11";
-    }
-
-    @Test
-    public void iotdb12_IT() {
-        this.ENGINE_TYPE = "iotdb12";
-    }
+//    @Test
+//    public void iotdb11_IT() {
+//        this.ENGINE_TYPE = "iotdb11";
+//    }
+//
+//    @Test
+//    public void iotdb12_IT() {
+//        this.ENGINE_TYPE = "iotdb12";
+//    }
 
     @Test
     public void OriHasDataExpHasData() throws Exception {
