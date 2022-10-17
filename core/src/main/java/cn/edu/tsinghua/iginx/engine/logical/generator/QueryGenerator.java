@@ -206,7 +206,9 @@ public class QueryGenerator extends AbstractGenerator {
             fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
         }
 
-        Map<TimeInterval, List<FragmentMeta>> fragments = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
+        List<FragmentMeta> dummyFragments = pair.v;
 
         List<Operator> unionList = new ArrayList<>();
         fragments.forEach((k, v) -> {
@@ -215,6 +217,14 @@ public class QueryGenerator extends AbstractGenerator {
             unionList.add(OperatorUtils.joinOperatorsByTime(joinList));
         });
 
-        return OperatorUtils.unionOperators(unionList);
+        Operator operator = OperatorUtils.unionOperators(unionList);
+        if (!dummyFragments.isEmpty()) {
+            List<Operator> joinList = new ArrayList<>();
+            dummyFragments.forEach(meta -> joinList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
+            joinList.add(operator);
+            operator = OperatorUtils.joinOperatorsByTime(joinList);
+        }
+        return operator;
+
     }
 }

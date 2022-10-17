@@ -238,6 +238,7 @@ public class IginxWorker implements IService.Iface {
                 } else {
                     dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
                 }
+                dummyFragment.setDummyFragment(true);
                 meta.setDummyStorageUnit(dummyStorageUnit);
                 meta.setDummyFragment(dummyFragment);
             }

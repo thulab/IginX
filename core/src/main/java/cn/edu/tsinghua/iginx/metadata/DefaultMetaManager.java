@@ -794,6 +794,7 @@ public class DefaultMetaManager implements IMetaManager {
                 } else {
                     dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
                 }
+                dummyFragment.setDummyFragment(true);
                 storage.setDummyStorageUnit(dummyStorageUnit);
                 storage.setDummyFragment(dummyFragment);
             }

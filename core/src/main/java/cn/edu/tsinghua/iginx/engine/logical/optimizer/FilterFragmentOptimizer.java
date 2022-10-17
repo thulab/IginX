@@ -17,6 +17,7 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,9 @@ public class FilterFragmentOptimizer implements Optimizer {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
-        Map<TimeInterval, List<FragmentMeta>> fragments = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
+        List<FragmentMeta> dummyFragments = pair.v;
 
         Filter filter = selectOperator.getFilter();
         List<TimeRange> timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
@@ -97,6 +100,18 @@ public class FilterFragmentOptimizer implements Optimizer {
         });
 
         Operator root = OperatorUtils.unionOperators(unionList);
+        if (!dummyFragments.isEmpty()) {
+            List<Operator> joinList = new ArrayList<>();
+            dummyFragments.forEach(meta -> {
+                if (hasTimeRangeOverlap(meta, timeRanges)) {
+                    joinList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
+                }
+            });
+            if (root != null) {
+                joinList.add(root);
+            }
+            root = OperatorUtils.joinOperatorsByTime(joinList);
+        }
         if (root != null) {
             selectOperator.setSource(new OperatorSource(root));
         }
