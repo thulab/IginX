@@ -9,7 +9,6 @@ import static cn.edu.tsinghua.iginx.parquet.tools.Constant.DUCKDB_SCHEMA;
 import static cn.edu.tsinghua.iginx.parquet.tools.Constant.IGINX_SEPARATOR;
 import static cn.edu.tsinghua.iginx.parquet.tools.Constant.PARQUET_SEPARATOR;
 import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.fromDuckDBDataType;
-import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.fromParquetDataType;
 import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.toParquetDataType;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
@@ -22,13 +21,8 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.ClearEmptyRowStreamWrapper;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.BitmapView;
-import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
-import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
-import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
@@ -51,6 +45,7 @@ import cn.edu.tsinghua.iginx.parquet.entity.WritePlan;
 import cn.edu.tsinghua.iginx.parquet.policy.NaiveParquetStoragePolicy;
 import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy;
 import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy.FlushType;
+import cn.edu.tsinghua.iginx.parquet.tools.DataViewWrapper;
 import cn.edu.tsinghua.iginx.parquet.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.parquet.tools.TagKVUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -215,7 +210,7 @@ public class ParquetStorage implements IStorage {
             Statement stmt = conn.createStatement();
 
             StringBuilder builder = new StringBuilder();
-            List<String> pathList = determinePathList(storageUnit, project.getPatterns());
+            List<String> pathList = determinePathListWithTagFilter(storageUnit, project.getPatterns(), project.getTagFilter());
             if (pathList.isEmpty()) {
                 RowStream rowStream = new ClearEmptyRowStreamWrapper(
                     ParquetQueryRowStream.EMPTY_PARQUET_ROW_STREAM
@@ -234,23 +229,36 @@ public class ParquetStorage implements IStorage {
 //            pool.pushBack(conn);
             conn.close();
 
-            ResultSetMetaData rsMetaData = rs.getMetaData();
-            List<Field> fields = new ArrayList<>();
-            for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
-                String pathName = rsMetaData.getColumnName(i).replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR);
-                DataType type = fromParquetDataType(rsMetaData.getColumnTypeName(i));
-                if (!pathName.equals(COLUMN_TIME)) {
-                    fields.add(new Field(pathName, type));
-                }
-            }
-            Header header = new Header(Field.TIME, fields);
+
             RowStream rowStream = new ClearEmptyRowStreamWrapper(
-                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(header, rs)));
+                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, project)));
             return new TaskExecuteResult(rowStream);
         } catch (SQLException | PhysicalException e) {
             logger.error(e.getMessage());
             return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in parquet failure", e));
         }
+    }
+
+    private List<String> determinePathListWithTagFilter(String storageUnit, List<String> patterns,
+        TagFilter tagFilter) throws PhysicalException {
+        if (tagFilter == null) {
+            return determinePathList(storageUnit, patterns);
+        }
+
+        List<Timeseries> timeSeries = getTimeSeriesOfStorageUnit(storageUnit);
+
+        List<String> pathList = new ArrayList<>();
+        for (Timeseries ts: timeSeries) {
+            for (String pattern : patterns) {
+                if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath()) &&
+                    TagKVUtils.match(ts.getTags(), tagFilter)) {
+                    String path = TagKVUtils.toFullName(ts.getPath(), ts.getTags());
+                    pathList.add(path);
+                    break;
+                }
+            }
+        }
+        return pathList;
     }
 
     private List<String> determinePathList(String storageUnit, List<String> patterns) throws PhysicalException {
@@ -266,14 +274,16 @@ public class ParquetStorage implements IStorage {
 
         List<String> pathList = new ArrayList<>();
         List<Timeseries> timeSeries = getTimeSeriesOfStorageUnit(storageUnit);
-        for (Timeseries ts: timeSeries) {
+        for (Timeseries ts : timeSeries) {
             if (patternWithoutStarSet.contains(ts.getPath())) {
-                pathList.add(ts.getPath());
+                String path = TagKVUtils.toFullName(ts.getPath(), ts.getTags());
+                pathList.add(path);
                 continue;
             }
             for (String pattern : patternWithStarList) {
                 if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath())) {
-                    pathList.add(ts.getPath());
+                    String path = TagKVUtils.toFullName(ts.getPath(), ts.getTags());
+                    pathList.add(path);
                     break;
                 }
             }
@@ -282,11 +292,11 @@ public class ParquetStorage implements IStorage {
     }
 
     private TaskExecuteResult executeInsertTask(Insert insert, String storageUnit) {
-        DataView dataView = insert.getData();
-        List<WritePlan> writePlans = getWritePlans(dataView, storageUnit);
+        DataViewWrapper data = new DataViewWrapper(insert.getData());
+        List<WritePlan> writePlans = getWritePlans(data, storageUnit);
         for (WritePlan writePlan : writePlans) {
             try {
-                executeWritePlan(dataView, writePlan);
+                executeWritePlan(data, writePlan);
             } catch (SQLException e) {
                 logger.error("execute row write plan error", e);
                 return new TaskExecuteResult(null, new PhysicalException("execute insert task in parquet failure", e));
@@ -295,7 +305,7 @@ public class ParquetStorage implements IStorage {
         return new TaskExecuteResult(null, null);
     }
 
-    private void executeWritePlan(DataView dataView, WritePlan writePlan) throws SQLException {
+    private void executeWritePlan(DataViewWrapper data, WritePlan writePlan) throws SQLException {
 //        Connection conn = pool.getConnection();
         Connection conn = ((DuckDBConnection) connection).duplicate();
         Statement stmt = conn.createStatement();
@@ -305,7 +315,7 @@ public class ParquetStorage implements IStorage {
 
         // prepare to write data.
         if (!Files.exists(path)) {
-            String createTableStmt = generateCreateTableStmt(dataView, writePlan, tableName);
+            String createTableStmt = generateCreateTableStmt(data, writePlan, tableName);
             stmt.execute(createTableStmt);
         } else {
             stmt.execute(String.format(CREATE_TABLE_FROM_PARQUET_STMT, tableName, path.toString()));
@@ -314,7 +324,7 @@ public class ParquetStorage implements IStorage {
             while (rs.next()) {
                 existsColumns.add((String) rs.getObject(COLUMN_NAME));
             }
-            List<String> addColumnsStmts = generateAddColumnsStmt(dataView, writePlan, tableName, existsColumns);
+            List<String> addColumnsStmts = generateAddColumnsStmt(data, writePlan, tableName, existsColumns);
             if (!addColumnsStmts.isEmpty()) {
                 for (String addColumnsStmt : addColumnsStmts) {
                     stmt.execute(addColumnsStmt);
@@ -323,17 +333,17 @@ public class ParquetStorage implements IStorage {
         }
 
         // write data
-        String insertPrefix = generateInsertStmtPrefix(dataView, writePlan, tableName);
+        String insertPrefix = generateInsertStmtPrefix(data, writePlan, tableName);
         String insertBody;
-        switch (dataView.getRawDataType()) {
+        switch (data.getRawDataType()) {
             case Column:
             case NonAlignedColumn:
-                insertBody = generateColInsertStmtBody((ColumnDataView) dataView, writePlan);
+                insertBody = generateColInsertStmtBody(data, writePlan);
                 break;
             case Row:
             case NonAlignedRow:
             default:
-                insertBody = generateRowInsertStmtBody((RowDataView) dataView, writePlan);
+                insertBody = generateRowInsertStmtBody(data, writePlan);
                 break;
         }
         stmt.execute(insertPrefix + insertBody);
@@ -347,26 +357,26 @@ public class ParquetStorage implements IStorage {
         conn.close();
     }
 
-    private String generateRowInsertStmtBody(RowDataView dataView, WritePlan writePlan) {
+    private String generateRowInsertStmtBody(DataViewWrapper data, WritePlan writePlan) {
         StringBuilder builder = new StringBuilder();
 
-        int startPathIdx = dataView.getPathIndex(writePlan.getPathList().get(0));
-        int endPathIdx = dataView.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
-        int startTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
-        int endTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
+        int startPathIdx = data.getPathIndex(writePlan.getPathList().get(0));
+        int endPathIdx = data.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
+        int startTimeIdx = data.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
+        int endTimeIdx = data.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
 
         for (int i = startTimeIdx; i <= endTimeIdx; i++) {
-            BitmapView bitmapView = dataView.getBitmapView(i);
-            builder.append("(").append(dataView.getTimestamp(i)).append(", ");
+            BitmapView bitmapView = data.getBitmapView(i);
+            builder.append("(").append(data.getTimestamp(i)).append(", ");
 
             int index = 0;
-            for (int j = 0; j < dataView.getPathNum(); j++) {
+            for (int j = 0; j < data.getPathNum(); j++) {
                 if (bitmapView.get(j)) {
                     if (startPathIdx <= j && j <= endPathIdx) {
-                        if (dataView.getDataType(j) == DataType.BINARY) {
-                            builder.append("'").append(new String((byte[]) dataView.getValue(i, index))).append("', ");
+                        if (data.getDataType(j) == DataType.BINARY) {
+                            builder.append("'").append(new String((byte[]) data.getValue(i, index))).append("', ");
                         } else {
-                            builder.append(dataView.getValue(i, index)).append(", ");
+                            builder.append(data.getValue(i, index)).append(", ");
                         }
                     }
                     index++;
@@ -381,27 +391,27 @@ public class ParquetStorage implements IStorage {
         return builder.toString();
     }
 
-    private String generateColInsertStmtBody(ColumnDataView dataView, WritePlan writePlan) {
-        int startPathIdx = dataView.getPathIndex(writePlan.getPathList().get(0));
-        int endPathIdx = dataView.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
-        int startTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
-        int endTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
+    private String generateColInsertStmtBody(DataViewWrapper data, WritePlan writePlan) {
+        int startPathIdx = data.getPathIndex(writePlan.getPathList().get(0));
+        int endPathIdx = data.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
+        int startTimeIdx = data.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
+        int endTimeIdx = data.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
 
         String[] rowValueArray = new String[endTimeIdx - startTimeIdx + 1];
         for (int i = startTimeIdx; i <= endTimeIdx; i++) {
-            rowValueArray[i] = "(" + dataView.getTimestamp(i) + ", ";
+            rowValueArray[i] = "(" + data.getTimestamp(i) + ", ";
         }
         for (int i = startPathIdx; i <= endPathIdx; i++) {
-            BitmapView bitmapView = dataView.getBitmapView(i);
+            BitmapView bitmapView = data.getBitmapView(i);
 
             int index = 0;
-            for (int j = 0; j < dataView.getTimeSize(); j++) {
+            for (int j = 0; j < data.getTimeSize(); j++) {
                 if (bitmapView.get(j)) {
                     if (startTimeIdx <= j && j <= endTimeIdx) {
-                        if (dataView.getDataType(i) == DataType.BINARY) {
-                            rowValueArray[j - startPathIdx] += "'" + new String((byte[]) dataView.getValue(i, index)) + "', ";
+                        if (data.getDataType(i) == DataType.BINARY) {
+                            rowValueArray[j - startPathIdx] += "'" + new String((byte[]) data.getValue(i, index)) + "', ";
                         } else {
-                            rowValueArray[j - startPathIdx] += dataView.getValue(i, index) + ", ";
+                            rowValueArray[j - startPathIdx] += data.getValue(i, index) + ", ";
                         }
                     }
                     index++;
@@ -423,14 +433,14 @@ public class ParquetStorage implements IStorage {
         return builder.toString();
     }
 
-    private List<String> generateAddColumnsStmt(DataView dataView, WritePlan writePlan,
+    private List<String> generateAddColumnsStmt(DataViewWrapper data, WritePlan writePlan,
         String tableName, Set<String> existsColumns) {
         List<String> addColumnStmts = new ArrayList<>();
 
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < dataView.getPathNum(); i++) {
-            String path = dataView.getPath(i).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
-            String type = toParquetDataType(dataView.getDataType(i));
+        for (int i = 0; i < data.getPathNum(); i++) {
+            String path = data.getPath(i).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+            String type = toParquetDataType(data.getDataType(i));
             if (writePlan.getPathList().contains(path.replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR))
                 && !existsColumns.contains(path)) {
                 builder.append("{path: ").append(path).append(", type: ").append(type).append("} ");
@@ -442,11 +452,11 @@ public class ParquetStorage implements IStorage {
         return addColumnStmts;
     }
 
-    private String generateInsertStmtPrefix(DataView dataView, WritePlan writePlan, String tableName) {
+    private String generateInsertStmtPrefix(DataViewWrapper data, WritePlan writePlan, String tableName) {
         StringBuilder builder = new StringBuilder();
         builder.append("time, ");
-        for (int i = 0; i < dataView.getPathNum(); i++) {
-            String path = dataView.getPath(i);
+        for (int i = 0; i < data.getPathNum(); i++) {
+            String path = data.getPath(i);
             if (writePlan.getPathList().contains(path)) {
                 builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", ");
             }
@@ -458,15 +468,15 @@ public class ParquetStorage implements IStorage {
         return insertStmtPrefix;
     }
 
-    private String generateCreateTableStmt(DataView dataView, WritePlan writePlan, String tableName) {
+    private String generateCreateTableStmt(DataViewWrapper data, WritePlan writePlan, String tableName) {
         StringBuilder builder = new StringBuilder();
         builder.append(COLUMN_TIME).append(" ").append(DATATYPE_BIGINT).append(", ");
-        for (int i = 0; i < dataView.getPathNum(); i++) {
-            String path = dataView.getPath(i);
+        for (int i = 0; i < data.getPathNum(); i++) {
+            String path = data.getPath(i);
             if (writePlan.getPathList().contains(path)) {
                 builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR))
                     .append(" ")
-                    .append(toParquetDataType(dataView.getDataType(i)))
+                    .append(toParquetDataType(data.getDataType(i)))
                     .append(", ");
             }
         }
@@ -477,10 +487,10 @@ public class ParquetStorage implements IStorage {
         return createTableStmt;
     }
 
-    private List<WritePlan> getWritePlans(DataView dataView, String storageUnit) {
+    private List<WritePlan> getWritePlans(DataViewWrapper data, String storageUnit) {
         TimeInterval timeInterval = new TimeInterval(
-            dataView.getTimestamp(0),
-            dataView.getTimestamp(dataView.getTimeSize() - 1)
+            data.getTimestamp(0),
+            data.getTimestamp(data.getTimeSize() - 1)
         );
 
         Pair<Long, List<String>> latestPartition = policy.getLatestPartition(storageUnit);
@@ -494,8 +504,8 @@ public class ParquetStorage implements IStorage {
                 List<String> pathList = new ArrayList<>();
                 String startPath = tsPartition.get(i);
                 String endPath = tsPartition.get(i + 1);
-                for (int j = 0; j < dataView.getPathNum(); j++) {
-                    String path = dataView.getPath(j);
+                for (int j = 0; j < data.getPathNum(); j++) {
+                    String path = data.getPath(j);
                     if (StringUtils.compare(path, startPath, true) < 0) {
                         continue;
                     }
@@ -537,8 +547,8 @@ public class ParquetStorage implements IStorage {
                         List<String> pathList = new ArrayList<>();
                         String startPath = tsPartition.get(j);
                         String endPath = tsPartition.get(j + 1);
-                        for (int k = 0; k < dataView.getPathNum(); k++) {
-                            String path = dataView.getPath(k);
+                        for (int k = 0; k < data.getPathNum(); k++) {
+                            String path = data.getPath(k);
                             if (StringUtils.compare(path, startPath, true) < 0) {
                                 continue;
                             }
@@ -580,7 +590,7 @@ public class ParquetStorage implements IStorage {
             } else {
                 List<String> deletedPaths;
                 try {
-                    deletedPaths = determineDeletePathList(storageUnit, delete);
+                    deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter());
                 } catch (PhysicalException e) {
                     logger.warn("encounter error when delete path: " + e.getMessage());
                     return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete path task in parquet failure", e));
@@ -591,7 +601,7 @@ public class ParquetStorage implements IStorage {
             }
         } else {
             try {
-                List<String> deletedPaths = determineDeletePathList(storageUnit, delete);
+                List<String> deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter());
                 for (String path : deletedPaths) {
                     deleteDataInAllFiles(storageUnit, path, delete.getTimeRanges());
                 }
@@ -659,28 +669,6 @@ public class ParquetStorage implements IStorage {
         }
     }
 
-    private List<String> determineDeletePathList(String storageUnit, Delete delete) throws PhysicalException {
-        if (delete.getTagFilter() == null) {
-            return determinePathList(storageUnit, delete.getPatterns());
-        }
-
-        List<String> patterns = delete.getPatterns();
-        TagFilter tagFilter = delete.getTagFilter();
-        List<Timeseries> timeSeries = getTimeSeries();
-
-        List<String> pathList = new ArrayList<>();
-        for (Timeseries ts: timeSeries) {
-            for (String pattern : patterns) {
-                if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath()) &&
-                    TagKVUtils.match(ts.getTags(), tagFilter)) {
-                    pathList.add(ts.getPhysicalPath());
-                    break;
-                }
-            }
-        }
-        return pathList;
-    }
-
     private boolean deleteFile(File file) {
         if (!file.exists()) {
             return false;
@@ -702,7 +690,7 @@ public class ParquetStorage implements IStorage {
     }
 
     private List<Timeseries> getTimeSeriesOfStorageUnit(String storageUnit) throws PhysicalTaskExecuteFailureException {
-        Set<Timeseries> timeseries = new TreeSet<>(Comparator.comparing(Timeseries::getPath));
+        Set<Timeseries> timeseries = new HashSet<>();
         Path path = Paths.get(dataDir, storageUnit, /*timePartition*/"*", /*pathPartition*/"*.parquet");
         try {
 //            Connection conn = pool.getConnection();
