@@ -59,7 +59,7 @@ public class SimplePolicy implements IPolicy {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement) {
-        List<String> paths = Utils.getPathListFromStatement(statement);
+        List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
         TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
