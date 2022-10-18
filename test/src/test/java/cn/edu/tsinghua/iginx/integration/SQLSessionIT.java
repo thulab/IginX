@@ -434,13 +434,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testPathFilter() {
-        String insert = "INSERT INTO us.d2(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        String insert = "INSERT INTO us.d9(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
         execute(insert);
 
-        String query = "SELECT a, b FROM us.d2 WHERE a > b;";
+        String query = "SELECT a, b FROM us.d9 WHERE a > b;";
         String expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   6|      6|      4|\n" +
             "|   7|      7|      3|\n" +
@@ -450,10 +450,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a >= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a >= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "|   6|      6|      4|\n" +
@@ -464,10 +464,10 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a < b;";
+        query = "SELECT a, b FROM us.d9 WHERE a < b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -477,10 +477,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a <= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a <= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -491,20 +491,20 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a = b;";
+        query = "SELECT a, b FROM us.d9 WHERE a = b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "+----+-------+-------+\n" +
             "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a != b;";
+        query = "SELECT a, b FROM us.d9 WHERE a != b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
