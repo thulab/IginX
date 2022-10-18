@@ -56,6 +56,8 @@ public final class FragmentMeta {
 
     private boolean initialFragment = true;
 
+    private boolean dummyFragment = false;
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -173,6 +175,14 @@ public final class FragmentMeta {
 
     public void setInitialFragment(boolean initialFragment) {
         this.initialFragment = initialFragment;
+    }
+
+    public boolean isDummyFragment() {
+        return dummyFragment;
+    }
+
+    public void setDummyFragment(boolean dummyFragment) {
+        this.dummyFragment = dummyFragment;
     }
 
     public static long sizeOf() {

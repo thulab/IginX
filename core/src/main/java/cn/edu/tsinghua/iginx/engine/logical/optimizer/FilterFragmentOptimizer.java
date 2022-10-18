@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.FragmentUtils.keyFromTSIntervalToTimeInterval;
+
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
@@ -15,6 +17,7 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,26 +77,41 @@ public class FilterFragmentOptimizer implements Optimizer {
         }
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
+        List<FragmentMeta> dummyFragments = pair.v;
 
         Filter filter = selectOperator.getFilter();
         List<TimeRange> timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
 
-        List<Operator> joinList = new ArrayList<>();
+        List<Operator> unionList = new ArrayList<>();
         fragments.forEach((k, v) -> {
-            List<Operator> unionList = new ArrayList<>();
+            List<Operator> joinList = new ArrayList<>();
             v.forEach(meta -> {
                 if (hasTimeRangeOverlap(meta, timeRanges)) {
-                    unionList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
+                    joinList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
                 }
             });
-            Operator operator = OperatorUtils.unionOperators(unionList);
+            Operator operator = OperatorUtils.joinOperatorsByTime(joinList);
             if (operator != null) {
-                joinList.add(operator);
+                unionList.add(operator);
             }
         });
 
-        Operator root = OperatorUtils.joinOperatorsByTime(joinList);
+        Operator root = OperatorUtils.unionOperators(unionList);
+        if (!dummyFragments.isEmpty()) {
+            List<Operator> joinList = new ArrayList<>();
+            dummyFragments.forEach(meta -> {
+                if (hasTimeRangeOverlap(meta, timeRanges)) {
+                    joinList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
+                }
+            });
+            if (root != null) {
+                joinList.add(root);
+            }
+            root = OperatorUtils.joinOperatorsByTime(joinList);
+        }
         if (root != null) {
             selectOperator.setSource(new OperatorSource(root));
         }
