@@ -41,6 +41,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
+import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
+import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
+import cn.edu.tsinghua.iginx.monitor.TimeseriesMonitor;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
@@ -112,14 +115,25 @@ public class StoragePhysicalTaskExecutor {
                         }
                         pair.v.submit(() -> {
                             TaskExecuteResult result = null;
+                            long taskId = System.nanoTime();
                             try {
                                 result = pair.k.execute(task);
-//                                logger.info("task " + task + " execute finished");
                             } catch (Exception e) {
                                 logger.error("execute task error: " + e);
                                 result = new TaskExecuteResult(new PhysicalException(e));
                             }
                             task.setResult(result);
+                            try {
+                                HotSpotMonitor.getInstance()
+                                        .recordAfter(taskId, task.getTargetFragment(),
+                                                task.getOperators().get(0).getType());
+                                TimeseriesMonitor.getInstance().recordAfter(taskId, result,
+                                        task.getOperators().get(0).getType());
+                                RequestsMonitor.getInstance()
+                                        .record(task.getTargetFragment(), task.getOperators().get(0));
+                            } catch (Exception e) {
+                                logger.error("Monitor catch error:", e);
+                            }
                             if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
                                 boolean isFollowerTaskReady = followerTask.notifyParentReady();
@@ -134,7 +148,7 @@ public class StoragePhysicalTaskExecutor {
                                 } else {
                                     StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
                                     List<String> replicaIds = masterStorageUnit.getReplicas()
-                                        .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                            .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
                                     replicaIds.add(masterStorageUnit.getId());
                                     for (String replicaId : replicaIds) {
                                         if (replicaId.equals(task.getStorageUnit())) {
@@ -162,7 +176,7 @@ public class StoragePhysicalTaskExecutor {
         metaManager.registerStorageEngineChangeHook(storageEngineChangeHook);
         metaManager.registerStorageUnitHook(storageUnitHook);
         List<StorageEngineMeta> storages = metaManager.getStorageEngineList();
-        for (StorageEngineMeta storage: storages) {
+        for (StorageEngineMeta storage : storages) {
             if (storage.isHasData()) {
                 storageUnitHook.onChange(null, storage.getDummyStorageUnit());
             }
@@ -234,7 +248,7 @@ public class StoragePhysicalTaskExecutor {
                     // only need part of data.
                     List<Timeseries> tsList = new ArrayList<>();
                     int cur = 0, size = tsSetAfterFilter.size();
-                    for(Iterator<Timeseries> iter = tsSetAfterFilter.iterator(); iter.hasNext(); cur++) {
+                    for (Iterator<Timeseries> iter = tsSetAfterFilter.iterator(); iter.hasNext(); cur++) {
                         if (cur >= size || cur - offset >= limit) {
                             break;
                         }

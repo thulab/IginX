@@ -52,17 +52,29 @@ public class Config {
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor,parquet=cn.edu.tsinghua.iginx.parquet.parquetStorage";
     //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
 
-    private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
+    private String policyClassName = "cn.edu.tsinghua.iginx.policy.dynamic.DynamicPolicy";
 
-    private long reshardFragmentTimeMargin = 60;
+    private boolean enableMonitor = true;
 
-    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
+    private int loadBalanceCheckInterval = 10;
+
+    private double unbalanceThreshold = 0.1;
+
+    private double unbalanceFinalStatusThreshold = 0.5;
+
+    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 10000 * 0.8;
 
     private long migrationBatchSize = 100;
 
     private int maxReshardFragmentsNum = 3;
 
     private double maxTimeseriesLoadBalanceThreshold = 2;
+
+    private int timeseriesloadBalanceCheckInterval = 30;
+
+    private long reshardFragmentTimeMargin = 60;
+
+    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
 
     private String statisticsCollectorClassName = "";
 
@@ -318,6 +330,54 @@ public class Config {
 
     public void setMaxTimeseriesLoadBalanceThreshold(double maxTimeseriesLoadBalanceThreshold) {
         this.maxTimeseriesLoadBalanceThreshold = maxTimeseriesLoadBalanceThreshold;
+    }
+
+    public boolean isEnableMonitor() {
+        return enableMonitor;
+    }
+
+    public void setEnableMonitor(boolean enableMonitor) {
+        this.enableMonitor = enableMonitor;
+    }
+
+    public int getLoadBalanceCheckInterval() {
+        return loadBalanceCheckInterval;
+    }
+
+    public void setLoadBalanceCheckInterval(int loadBalanceCheckInterval) {
+        this.loadBalanceCheckInterval = loadBalanceCheckInterval;
+    }
+
+    public double getUnbalanceThreshold() {
+        return unbalanceThreshold;
+    }
+
+    public void setUnbalanceThreshold(double unbalanceThreshold) {
+        this.unbalanceThreshold = unbalanceThreshold;
+    }
+
+    public double getUnbalanceFinalStatusThreshold() {
+        return unbalanceFinalStatusThreshold;
+    }
+
+    public void setUnbalanceFinalStatusThreshold(double unbalanceFinalStatusThreshold) {
+        this.unbalanceFinalStatusThreshold = unbalanceFinalStatusThreshold;
+    }
+
+    public double getMaxLoadThreshold() {
+        return maxLoadThreshold;
+    }
+
+    public void setMaxLoadThreshold(double maxLoadThreshold) {
+        this.maxLoadThreshold = maxLoadThreshold;
+    }
+
+    public int getTimeseriesloadBalanceCheckInterval() {
+        return timeseriesloadBalanceCheckInterval;
+    }
+
+    public void setTimeseriesloadBalanceCheckInterval(int timeseriesloadBalanceCheckInterval) {
+        this.timeseriesloadBalanceCheckInterval = timeseriesloadBalanceCheckInterval;
     }
 
     public String getStatisticsCollectorClassName() {

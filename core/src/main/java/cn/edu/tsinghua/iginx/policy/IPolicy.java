@@ -8,6 +8,7 @@ import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IPolicy {
 
@@ -24,6 +25,10 @@ public interface IPolicy {
     Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
         String startPath, String endPath, long startTime, long endTime,
         List<Long> storageEngineList);
+
+    void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap,
+                                    Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+                                    Map<FragmentMeta, Long> fragmentReadLoadMap, List<Long> toScaleInNodes);
 
     boolean isNeedReAllocate();
 

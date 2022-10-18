@@ -14,6 +14,7 @@ statement
     | SHOW TIME SERIES (path (COMMA path)*)? withClause? limitClause? #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
+    | SCALE IN STORAGEENGINE storageEngineSpec #scaleInStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     | SHOW REGISTER PYTHON TASK #showRegisterTaskStatement
     | REGISTER udfType PYTHON TASK className=stringLiteral IN filePath=stringLiteral AS name=stringLiteral#registerTaskStatement

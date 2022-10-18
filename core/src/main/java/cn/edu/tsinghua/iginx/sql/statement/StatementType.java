@@ -6,6 +6,7 @@ public enum StatementType {
     INSERT,
     DELETE,
     INSERT_FROM_SELECT,
+    SCALE_IN_STORAGE_ENGINE,
     ADD_STORAGE_ENGINE,
     SHOW_REPLICATION,
     COUNT_POINTS,

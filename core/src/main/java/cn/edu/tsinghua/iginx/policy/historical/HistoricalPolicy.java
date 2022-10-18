@@ -37,10 +37,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -203,6 +200,11 @@ public class HistoricalPolicy implements IPolicy {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }
         return new Pair<>(fragment, storageUnit);
+    }
+
+    @Override
+    public void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap, Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap, List<Long> toScaleInNodes) {
+
     }
 
     @Override

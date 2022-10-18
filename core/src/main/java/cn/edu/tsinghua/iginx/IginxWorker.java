@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
+import cn.edu.tsinghua.iginx.monitor.MonitorManager;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
@@ -179,6 +180,36 @@ public class IginxWorker implements IService.Iface {
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getQueryDataResp();
+    }
+
+    @Override
+    public Status scaleInStorageEngines(ScaleInStorageEnginesReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        List<StorageEngine> storageEngines = req.getStorageEngines();
+        List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+
+        List<StorageEngineMeta> allStorageEngineMetas = metaManager.getStorageEngineList();
+        for (StorageEngine storageEngine : storageEngines) {
+            for(StorageEngineMeta existedStorageEngineMeta: allStorageEngineMetas){
+                if(existedStorageEngineMeta.getIp().equals(storageEngine.getIp()) && existedStorageEngineMeta.getPort() == storageEngine.getPort()){
+                    String type = storageEngine.getType();
+                    StorageEngineMeta meta = new StorageEngineMeta(existedStorageEngineMeta.getId(), storageEngine.getIp(), storageEngine.getPort(),
+                            storageEngine.getExtraParams(), type, metaManager.getIginxId());
+                    storageEngineMetas.add(meta);
+                    break;
+                }
+            }
+        }
+        Status status = RpcUtils.SUCCESS;
+
+        if (!MonitorManager.getInstance().scaleInStorageEngines(storageEngineMetas)) {
+            status = RpcUtils.FAILURE;
+        }
+        //完成负载均衡
+        DefaultMetaManager.getInstance().doneReshard();
+        return status;
     }
 
     @Override

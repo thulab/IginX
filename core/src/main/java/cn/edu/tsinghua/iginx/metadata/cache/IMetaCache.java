@@ -41,6 +41,8 @@ public interface IMetaCache {
 
     void deleteFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
+    List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval);
+
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     List<FragmentMeta> getDummyFragmentsByTimeSeriesInterval(TimeSeriesInterval tsInterval);
@@ -86,6 +88,8 @@ public interface IMetaCache {
     void addIginx(IginxMeta iginxMeta);
 
     void removeIginx(long id);
+
+    void removeStorageEngine(StorageEngineMeta storageEngineMeta);
 
     // 数据后端相关的缓存读写接口
     void addStorageEngine(StorageEngineMeta storageEngineMeta);

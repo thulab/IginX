@@ -219,6 +219,11 @@
             <artifactId>duckdb_jdbc</artifactId>
             <version>0.5.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.datumbox</groupId>
+            <artifactId>lpsolve</artifactId>
+            <version>5.5.2.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

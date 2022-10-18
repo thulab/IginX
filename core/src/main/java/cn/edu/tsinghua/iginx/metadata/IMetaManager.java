@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
@@ -33,6 +32,11 @@ import java.util.Map;
 import java.util.Set;
 
 public interface IMetaManager {
+
+    /**
+     * 批量缩容存储引擎节点
+     */
+    boolean scaleInStorageEngines(List<StorageEngineMeta> storageEngineMetas);
 
     /**
      * 批量新增存储引擎节点
@@ -231,11 +235,43 @@ public interface IMetaManager {
 
     List<TransformTaskMeta> getTransformTasks();
 
+    void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+                                Map<FragmentMeta, Long> readRequestsMap) throws Exception;
+
+    void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
+                            Map<FragmentMeta, Long> readHotspotMap) throws Exception;
+
+    void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception;
+
+    Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() throws Exception;
+
+    Map<FragmentMeta, Long> loadFragmentPoints() throws Exception;
+
+    Map<String, Long> loadTimeseriesHeat() throws Exception;
+
+    boolean isAllMonitorsCompleteCollection();
+
+    boolean isAllTimeseriesMonitorsCompleteCollection();
+
+    void clearMonitors();
+
+    boolean isResharding();
+
+    void executeReshardJudging();
+
+    boolean executeReshard();
+
+    void doneReshard();
+
     void addFragment(FragmentMeta fragmentMeta);
 
     void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries);
 
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
+
+    void updateFragmentPoints(FragmentMeta fragmentMeta, long points);
+
+    void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
 
     void updateMaxActiveEndTime(long endTime);
 

@@ -194,6 +194,11 @@ public class SimplePolicy implements IPolicy {
         return new Pair<>(fragment, storageUnit);
     }
 
+    @Override
+    public void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap, Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap, List<Long> toScaleInNodes) {
+
+    }
+
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {
         List<Long> storageEngineIdList = new ArrayList<>();
         List<StorageEngineMeta> storageEngines = iMetaManager.getWriteableStorageEngineList();

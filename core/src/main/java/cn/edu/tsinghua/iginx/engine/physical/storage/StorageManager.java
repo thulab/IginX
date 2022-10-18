@@ -167,4 +167,10 @@ public class StorageManager {
         }
         return true;
     }
+
+    public void removeStorage(StorageEngineMeta meta) {
+        Pair<IStorage, ThreadPoolExecutor> pair = storageMap.get(meta.getId());
+        pair.getV().shutdown();
+        storageMap.remove(meta.getId());
+    }
 }

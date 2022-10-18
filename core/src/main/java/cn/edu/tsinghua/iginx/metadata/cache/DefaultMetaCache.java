@@ -95,7 +95,7 @@ public class DefaultMetaCache implements IMetaCache {
     private DefaultMetaCache() {
         if (enableFragmentCacheControl) {
             long sizeOfFragment = FragmentMeta.sizeOf();
-            fragmentCacheMaxSize = (int) ((long)(config.getFragmentCacheThreshold() * 1024) / sizeOfFragment);
+            fragmentCacheMaxSize = (int) ((long) (config.getFragmentCacheThreshold() * 1024) / sizeOfFragment);
             fragmentCacheSize = 0;
         } else {
             fragmentCacheMaxSize = -1;
@@ -210,7 +210,7 @@ public class DefaultMetaCache implements IMetaCache {
         storageUnitLock.readLock().unlock();
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
-            .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
+                .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
         fragmentListMap.forEach(fragmentMetaListMap::put);
         if (enableFragmentCacheControl) {
             // 统计分片总数
@@ -224,7 +224,7 @@ public class DefaultMetaCache implements IMetaCache {
 
     private void kickOffHistoryFragment() {
         long nextMinTimestamp = 0L;
-        for (List<FragmentMeta> fragmentList: fragmentMetaListMap.values()) {
+        for (List<FragmentMeta> fragmentList : fragmentMetaListMap.values()) {
             FragmentMeta fragment = fragmentList.get(0);
             if (fragment.getTimeInterval().getStartTime() == minTimestamp) {
                 fragmentList.remove(0);
@@ -242,24 +242,26 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void addFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        // 更新 fragmentMetaListMap
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
-        if (fragmentMetaList.size() == 0) {
-            // 更新 sortedFragmentMetaLists
-            updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
-        }
-        fragmentMetaList.add(fragmentMeta);
-        if (enableFragmentCacheControl) {
-            if (fragmentMeta.getTimeInterval().getStartTime() < minTimestamp) {
-                minTimestamp = fragmentMeta.getTimeInterval().getStartTime();
+        try {
+            // 更新 fragmentMetaListMap
+            List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
+            if (fragmentMetaList.size() == 0) {
+                // 更新 sortedFragmentMetaLists
+                updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
             }
-            fragmentCacheSize++;
-            while (fragmentCacheSize > fragmentCacheMaxSize) {
-                kickOffHistoryFragment();
+            fragmentMetaList.add(fragmentMeta);
+            if (enableFragmentCacheControl) {
+                if (fragmentMeta.getTimeInterval().getStartTime() < minTimestamp) {
+                    minTimestamp = fragmentMeta.getTimeInterval().getStartTime();
+                }
+                fragmentCacheSize++;
+                while (fragmentCacheSize > fragmentCacheMaxSize) {
+                    kickOffHistoryFragment();
+                }
             }
+        } finally {
+            fragmentLock.writeLock().unlock();
         }
-
-        fragmentLock.writeLock().unlock();
     }
 
     private void updateSortedFragmentsList(TimeSeriesInterval tsInterval, List<FragmentMeta> fragmentMetas) {
@@ -291,15 +293,18 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void updateFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        // 更新 fragmentMetaListMap
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
-        fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
-        fragmentLock.writeLock().unlock();
+        try {
+            // 更新 fragmentMetaListMap
+            List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+            fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+        } finally {
+            fragmentLock.writeLock().unlock();
+        }
     }
 
     @Override
     public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval,
-        FragmentMeta fragmentMeta) {
+                                           FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
         try {
             // 更新 fragmentMetaListMap
@@ -343,6 +348,21 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        List<FragmentMeta> res = fragmentMetaListMap.getOrDefault(tsInterval, new ArrayList<>());
+        // 对象不匹配的情况需要手动匹配（?）
+        if (res.size() == 0) {
+            for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListEntry : fragmentMetaListMap
+                    .entrySet()) {
+                if (fragmentMetaListEntry.getKey().toString().equals(tsInterval.toString())) {
+                    return fragmentMetaListEntry.getValue();
+                }
+            }
+        }
+        return res;
+    }
+
+    @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
@@ -355,7 +375,7 @@ public class DefaultMetaCache implements IMetaCache {
     public List<FragmentMeta> getDummyFragmentsByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
-        for (FragmentMeta fragmentMeta: dummyFragments) {
+        for (FragmentMeta fragmentMeta : dummyFragments) {
             if (fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
                 results.add(fragmentMeta);
             }
@@ -369,7 +389,7 @@ public class DefaultMetaCache implements IMetaCache {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-            .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
         fragmentLock.readLock().unlock();
         return latestFragmentMap;
     }
@@ -379,7 +399,7 @@ public class DefaultMetaCache implements IMetaCache {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-            .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
         fragmentLock.readLock().unlock();
         return latestFragmentMap;
     }
@@ -402,7 +422,7 @@ public class DefaultMetaCache implements IMetaCache {
     public List<FragmentMeta> getDummyFragmentsByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
-        for (FragmentMeta fragmentMeta: dummyFragments) {
+        for (FragmentMeta fragmentMeta : dummyFragments) {
             if (fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
                 results.add(fragmentMeta);
             }
@@ -433,7 +453,7 @@ public class DefaultMetaCache implements IMetaCache {
         FragmentMeta result;
         fragmentLock.readLock().lock();
         result = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-            .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
+                .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
         fragmentLock.readLock().unlock();
         return result;
     }
@@ -443,7 +463,7 @@ public class DefaultMetaCache implements IMetaCache {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-            .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
+                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
         resultList = searchFragmentList(fragmentMetas, timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
@@ -454,7 +474,7 @@ public class DefaultMetaCache implements IMetaCache {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         List<FragmentMeta> fragmentMetas = sortedFragmentMetaLists.stream().map(e -> e.v).flatMap(List::stream)
-            .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
+                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
         resultList = searchFragmentList(fragmentMetas, storageUnitId);
         fragmentLock.readLock().unlock();
         return resultList;
@@ -548,6 +568,15 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void removeIginx(long id) {
         iginxMetaMap.remove(id);
+    }
+
+    @Override
+    public void removeStorageEngine(StorageEngineMeta storageEngineMeta) {
+        storageUnitLock.writeLock().lock();
+        fragmentLock.writeLock().lock();
+        storageEngineMetaMap.remove(storageEngineMeta.getId());
+        fragmentLock.writeLock().unlock();
+        storageUnitLock.writeLock().unlock();
     }
 
     @Override
@@ -746,7 +775,7 @@ public class DefaultMetaCache implements IMetaCache {
     public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
         insertRecordLock.readLock().lock();
         List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
-            .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
+                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
         insertRecordLock.readLock().unlock();
         return ret;
     }

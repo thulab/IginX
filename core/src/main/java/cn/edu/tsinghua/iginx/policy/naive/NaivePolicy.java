@@ -274,6 +274,11 @@ public class NaivePolicy implements IPolicy {
     }
 
     @Override
+    public void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap, Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap, List<Long> toScaleInNodes) {
+
+    }
+
+    @Override
     public boolean isNeedReAllocate() {
         return needReAllocate.getAndSet(false);
     }
