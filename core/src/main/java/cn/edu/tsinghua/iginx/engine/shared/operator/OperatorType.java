@@ -41,7 +41,9 @@ public enum OperatorType {
     Insert,
     CombineNonQuery,
 
-    ShowTimeSeries;
+    ShowTimeSeries,
+
+    Migration;
 
     public static boolean isBinaryOperator(OperatorType op) {
         return op == Join || op == Union;

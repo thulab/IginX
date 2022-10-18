@@ -419,6 +419,12 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+        throws MetaStorageException {
+
+    }
+
+    @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
             writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
@@ -557,6 +563,11 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception {
+
+    }
+
+    @Override
     public void registerTransformChangeHook(TransformChangeHook hook) {
         if (transformChangeHook != null) {
             transformChangeHook = hook;
@@ -619,5 +630,31 @@ public class FileMetaStorage implements IMetaStorage {
         if (transformChangeHook != null) {
             transformChangeHook.onChange(name, null);
         }
+    }
+
+    @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addOrUpdateMaxActiveEndTimeStatistics(long endTime) throws MetaStorageException {
+
+    }
+
+    @Override
+    public long getMaxActiveEndTimeStatistics() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(
+        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+
     }
 }

@@ -38,6 +38,8 @@ import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,10 @@ public class DefaultMetaManager implements IMetaManager {
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
     private final List<StorageUnitHook> storageUnitHooks;
     private long id;
+
+    // 当前活跃的最大的结束时间
+    private AtomicLong maxActiveEndTime = new AtomicLong(-1L);
+    private AtomicInteger maxActiveEndTimeStatisticsCounter = new AtomicInteger(0);
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -95,6 +101,7 @@ public class DefaultMetaManager implements IMetaManager {
             initPolicy();
             initUser();
             initTransform();
+            initMaxActiveEndTimeStatistics();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -110,6 +117,18 @@ public class DefaultMetaManager implements IMetaManager {
             }
         }
         return INSTANCE;
+    }
+
+    private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
+        storage.registerMaxActiveEndTimeStatisticsChangeHook((endTime) -> {
+            if (endTime <= 0L) {
+                return;
+            }
+            updateMaxActiveEndTime(endTime);
+            int updatedCounter = maxActiveEndTimeStatisticsCounter.incrementAndGet();
+            logger.info("iginx node {} increment max active end time statistics counter {}", this.id,
+                updatedCounter);
+        });
     }
 
     private void initIginx() throws MetaStorageException {
@@ -262,6 +281,8 @@ public class DefaultMetaManager implements IMetaManager {
         int num = 0;
         try {
             storage.registerPolicy(getIginxId(), num);
+            // 从元数据管理器取写入的最大时间戳
+            maxActiveEndTime.set(storage.getMaxActiveEndTimeStatistics());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -582,6 +603,125 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public FragmentMeta splitFragmentAndStorageUnit(StorageUnitMeta toAddStorageUnit,
+        FragmentMeta toAddFragment, FragmentMeta fragment) {
+        try {
+            storage.lockFragment();
+            storage.lockStorageUnit();
+
+            // 更新du
+            logger.info("update du");
+            toAddStorageUnit.setCreatedBy(id);
+            String actualName = storage.addStorageUnit();
+            StorageUnitMeta actualMasterStorageUnit = toAddStorageUnit
+                .renameStorageUnitMeta(actualName, actualName);
+            cache.updateStorageUnit(actualMasterStorageUnit);
+            for (StorageUnitHook hook : storageUnitHooks) {
+                hook.onChange(null, actualMasterStorageUnit);
+            }
+            storage.updateStorageUnit(actualMasterStorageUnit);
+            for (StorageUnitMeta slaveStorageUnit : toAddStorageUnit.getReplicas()) {
+                slaveStorageUnit.setCreatedBy(id);
+                String slaveActualName = storage.addStorageUnit();
+                StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit
+                    .renameStorageUnitMeta(slaveActualName, actualName);
+                actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                for (StorageUnitHook hook : storageUnitHooks) {
+                    hook.onChange(null, actualSlaveStorageUnit);
+                }
+                cache.updateStorageUnit(actualSlaveStorageUnit);
+                storage.updateStorageUnit(actualSlaveStorageUnit);
+            }
+
+            // 结束旧分片
+            cache.deleteFragmentByTsInterval(fragment.getTsInterval(), fragment);
+            fragment = fragment
+                .endFragmentMeta(toAddFragment.getTimeInterval().getStartTime());
+            cache.addFragment(fragment);
+            fragment.setUpdatedBy(id);
+            storage.updateFragment(fragment);
+
+            // 更新新分片
+            toAddFragment.setCreatedBy(id);
+            toAddFragment.setInitialFragment(false);
+            if (toAddStorageUnit.isMaster()) {
+                toAddFragment.setMasterStorageUnit(actualMasterStorageUnit);
+            } else {
+                toAddFragment.setMasterStorageUnit(getStorageUnit(actualMasterStorageUnit.getMasterId()));
+            }
+            cache.addFragment(toAddFragment);
+            storage.addFragment(toAddFragment);
+        } catch (MetaStorageException e) {
+            logger.error("create fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+                storage.releaseStorageUnit();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+
+        return fragment;
+    }
+
+    @Override
+    public void addFragment(FragmentMeta fragmentMeta) {
+        try {
+            storage.lockFragment();
+            cache.addFragment(fragmentMeta);
+            storage.addFragment(fragmentMeta);
+        } catch (MetaStorageException e) {
+            logger.error("add fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries) {
+        try {
+            storage.lockFragment();
+            TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+                fragmentMeta.getTsInterval().getStartTimeSeries(),
+                fragmentMeta.getTsInterval().getEndTimeSeries());
+            cache.deleteFragmentByTsInterval(fragmentMeta.getTsInterval(), fragmentMeta);
+            fragmentMeta.getTsInterval().setEndTimeSeries(endTimeSeries);
+            cache.addFragment(fragmentMeta);
+            storage.updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+        } catch (MetaStorageException e) {
+            logger.error("end fragment by time series interval error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) {
+        try {
+            storage.lockFragment();
+            cache.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+            storage.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+        } catch (Exception e) {
+            logger.error("update fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
     public boolean hasFragment() {
         return cache.hasFragment();
     }
@@ -677,6 +817,22 @@ public class DefaultMetaManager implements IMetaManager {
             }
         }
         return false;
+    }
+
+    @Override
+    public StorageUnitMeta generateNewStorageUnitMetaByFragment(FragmentMeta fragmentMeta,
+        long targetStorageId) throws MetaStorageException {
+        String actualName = storage.addStorageUnit();
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(actualName, targetStorageId, actualName,
+            true, false);
+        storageUnitMeta.setCreatedBy(getIginxId());
+
+        cache.updateStorageUnit(storageUnitMeta);
+        for (StorageUnitHook hook : storageUnitHooks) {
+            hook.onChange(null, storageUnitMeta);
+        }
+        storage.updateStorageUnit(storageUnitMeta);
+        return storageUnitMeta;
     }
 
     @Override
@@ -974,5 +1130,27 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<TransformTaskMeta> getTransformTasks() {
         return cache.getTransformTasks();
+    }
+
+    @Override
+    public void updateMaxActiveEndTime(long endTime) {
+        maxActiveEndTime.getAndUpdate(e -> Math.max(e, endTime
+            + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
+    }
+
+    @Override
+    public long getMaxActiveEndTime() {
+        return maxActiveEndTime.get();
+    }
+
+    @Override
+    public void submitMaxActiveEndTime() {
+        try {
+            storage.lockMaxActiveEndTimeStatistics();
+            storage.addOrUpdateMaxActiveEndTimeStatistics(maxActiveEndTime.get());
+            storage.releaseMaxActiveEndTimeStatistics();
+        } catch (MetaStorageException e) {
+            logger.error("encounter error when submitting max active time: ", e);
+        }
     }
 }
