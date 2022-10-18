@@ -151,11 +151,11 @@ public abstract class SQLSessionIT {
 
         testTimeRangeQuery();
 
-        testValueFilter();
+//        testValueFilter();
 
         testPathFilter();
 
-//        testOrderByQuery();
+        testOrderByQuery();
 
         testFirstLastQuery();
 
@@ -165,7 +165,7 @@ public abstract class SQLSessionIT {
 
         testRangeDownSampleQuery();
 
-        testFromMultiPath();
+//        testFromMultiPath();
 
         testAlias();
 
