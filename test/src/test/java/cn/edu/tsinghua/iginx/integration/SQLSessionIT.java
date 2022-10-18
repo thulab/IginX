@@ -165,12 +165,6 @@ public abstract class SQLSessionIT {
 
         testRangeDownSampleQuery();
 
-        testDelete();
-
-        testMultiRangeDelete();
-
-        testCrossRangeDelete();
-
         testFromMultiPath();
 
         testAlias();
@@ -186,6 +180,12 @@ public abstract class SQLSessionIT {
         testSpecialPath();
 
         testErrorClause();
+
+        testDelete();
+
+        testMultiRangeDelete();
+
+        testCrossRangeDelete();
 
         testClearData();
     }
