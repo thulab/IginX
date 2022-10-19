@@ -86,9 +86,9 @@ jobs:
       - name: A Lame Integration Test with Maven for IoTDB
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
           fi
       - uses: codecov/codecov-action@v1
         with:
