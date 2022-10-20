@@ -439,6 +439,7 @@ jobs:
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
+      - uses: actions/checkout@v2
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
