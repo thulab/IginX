@@ -1,0 +1,15 @@
+name: 'iginx-runner'
+description: 'iginx runner'
+inputs:
+  version:
+    description: 'iginx runner version'
+    required: false
+    default: 0.6.0-SNAPSHOT
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - name: Start IginX
+      shell: bash
+      run: |
+        chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${inputs.version}/sbin/start_iginx.sh"
+        nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${inputs.version}/sbin/start_iginx.sh" &

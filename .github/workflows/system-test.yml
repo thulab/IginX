@@ -72,72 +72,47 @@ jobs:
 #          file: ./**/target/site/jacoco/jacoco.xml
 #          name: codecov
 
-#  IoTDB11-SQL-Test:
-#    strategy:
-#      fail-fast: false
-#      max-parallel: 20
-#      matrix:
-#        java: [ 8 ]
-#        python-version: [ "3.7" ]
-#        os: [ ubuntu-latest, macos-latest ]
-#    runs-on: ${{ matrix.os }}
-#    env:
-#      VERSION: 0.6.0-SNAPSHOT
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Python ${{ matrix.python-version }}
-#        uses: actions/setup-python@v3
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#      - name: Install Python dependencies
-#        run: |
-#          python -m pip install --upgrade pip
-#      - name: Set up JDK ${{ matrix.java }}
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: ${{ matrix.java }}
-#      - name: Cache Maven packages
-#        uses: actions/cache@v2.1.5
-#        with:
-#          path: ~/.m2
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: ${{ runner.os }}-m2
-#      - name: Run ZooKeeper
-#        run: |
-#          if [ "$RUNNER_OS" == "Linux" ]; then
-#            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-#            "${GITHUB_WORKSPACE}/.github/zk.sh"
-#          elif [ "$RUNNER_OS" == "macOS" ]; then
-#            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
-#            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
-#          else
-#            echo "$RUNNER_OS is not supported"
-#            exit 1
-#          fi
-#      - name: Run IoTDB
-#        run: |
-#          if [ "$RUNNER_OS" == "Linux" ]; then
-#            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-#            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-#          elif [ "$RUNNER_OS" == "macOS" ]; then
-#            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
-#            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
-#          else
-#            echo "$RUNNER_OS is not supported"
-#            exit 1
-#          fi
-#      - name: Install with Maven
-#        run: mvn clean package -DskipTests
-#      - name: Start IginX
-#        run: |
-#          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-#          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
-#      - name: A Lame Integration Test with Maven for SQL
-#        run: mvn test -q -Dtest=IoTDBSQLSessionIT -DfailIfNoTests=false
-#      - uses: codecov/codecov-action@v1
-#        with:
-#          file: ./**/target/site/jacoco/jacoco.xml
-#          name: codecov
+  IoTDB11-SQL-Test:
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: 0.6.0-SNAPSHOT
+    steps:
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${python-version}
+          java: ${java}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: iotdb11
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for SQL
+        run: mvn test -q -Dtest=IoTDBSQLSessionIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
 #
 #  IoTDB11-Tag-Test:
 #    strategy:
