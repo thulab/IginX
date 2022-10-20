@@ -392,8 +392,17 @@ jobs:
           fi
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
+#      - name: Install with Maven
+#        run: mvn clean package -DskipTests
+      - name: Install with Maven Again
+        run: |
+          mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
+          mv test/pom.xml.backup test/pom.xml
+          mvn clean package -DskipTests
+      - name: Start IginX
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 
 #  IoTDB-Rest-Test:
 #    needs: setup
@@ -410,19 +419,6 @@ jobs:
 #      VERSION: 0.6.0-SNAPSHOT
 #    steps:
 #      - uses: actions/checkout@v2
-#      - name: Write history Data
-#        run: |
-#          mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{matrix.Test-Way}} -DfailIfNoTests=false
-#          sleep 10
-#      - name: Install with Maven Again
-#        run: |
-#          mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
-#          mv test/pom.xml.backup test/pom.xml
-#          mvn clean package -DskipTests
-#      - name: Start IginX
-#        run: |
-#          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-#          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 #      - name: A Lame Integration Test with Maven for IoTDB
 #        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 #      - uses: codecov/codecov-action@v1
@@ -439,25 +435,10 @@ jobs:
         java: [ 8 ]
         os: [ ubuntu-latest, macos-latest ]
         DB-name: [ "iotdb11", "iotdb12" ]
-        Test-Way: [ OriHasDataExpHasData, OriHasDataExpNoData, OriNoDataExpHasData, OriNoDataExpNoData ]
     runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
-      - uses: actions/checkout@v2
-      - name: Write history Data
-        run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{matrix.Test-Way}} -DfailIfNoTests=false
-          sleep 10
-      - name: Install with Maven Again
-        run: |
-          mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
-          mv test/pom.xml.backup test/pom.xml
-          mvn clean package -DskipTests
-      - name: Start IginX
-        run: |
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
