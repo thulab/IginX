@@ -14,7 +14,7 @@ jobs:
   IoTDB11-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -54,7 +54,7 @@ jobs:
   IoTDB11-SQL-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -96,7 +96,7 @@ jobs:
   IoTDB11-Tag-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -137,7 +137,7 @@ jobs:
   IoTDB11-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -178,14 +178,12 @@ jobs:
   IoTDB11-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -221,7 +219,7 @@ jobs:
   IoTDB12-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -262,7 +260,7 @@ jobs:
   IoTDB12-SQL-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
@@ -303,14 +301,12 @@ jobs:
   Parquet-SQL-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -370,14 +366,12 @@ jobs:
   IoTDB12-Tag-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -413,14 +407,12 @@ jobs:
   IoTDB12-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -456,14 +448,12 @@ jobs:
   IoTDB12-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -499,14 +489,12 @@ jobs:
   InfluxDB-Capacity-Expansion-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -559,14 +547,12 @@ jobs:
   InfluxDB-SQL-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -626,14 +612,12 @@ jobs:
   InfluxDB-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -693,14 +677,12 @@ jobs:
   Parquet-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -760,14 +742,12 @@ jobs:
   UDF-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -787,11 +767,6 @@ jobs:
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
 
       - name: Start IginX
         run: |
@@ -816,14 +791,12 @@ jobs:
   REST-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -859,14 +832,12 @@ jobs:
   Annotation-Test:
     strategy:
       fail-fast: false
-      max-parallel: 20
+      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
