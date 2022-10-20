@@ -84,6 +84,7 @@ jobs:
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
+      - uses: actions/checkout@v2
       - name: Environmet Dependence
         uses: ./.github/actions/dependence
         with:
