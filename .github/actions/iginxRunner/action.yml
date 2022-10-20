@@ -11,5 +11,5 @@ runs:
     - name: Start IginX
       shell: bash
       run: |
-        chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${inputs.version}/sbin/start_iginx.sh"
-        nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${inputs.version}/sbin/start_iginx.sh" &
+        chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh"
+        nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh" &
