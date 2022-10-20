@@ -441,7 +441,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        DB-name: [ "iotdb11", "iotdb12" ]
+        run: mvn test -q -Dtest=TagCapExpIT#${{DB-name}}_IT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
