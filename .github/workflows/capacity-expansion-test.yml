@@ -409,6 +409,7 @@ jobs:
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 
   IoTDB-Rest-Test:
+    needs: setup
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -423,7 +424,6 @@ jobs:
       VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
-      - needs: setup
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
