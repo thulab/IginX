@@ -13,7 +13,7 @@ inputs:
 runs:
   using: "composite" # Mandatory parameter
   steps:
-    - if: if-CapExp=='false'
+    - if: inputs.if-CapExp=='false'
       name: Run IoTDB
       shell: bash
       run: |
@@ -28,7 +28,7 @@ runs:
           exit 1
         fi
 
-    - if: if-CapExp=='true'
+    - if: inputs.if-CapExp=='true'
       name: Run IoTDB and change default config
       shell: bash
       run: |
