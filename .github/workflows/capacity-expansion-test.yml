@@ -431,6 +431,7 @@ jobs:
 #          name: codecov
 
   IoTDB-Tag-Test:
+    needs: setup
     strategy:
       fail-fast: false
       max-parallel: 20
