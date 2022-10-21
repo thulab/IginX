@@ -42,3 +42,5 @@ runs:
           echo "$RUNNER_OS is not supported"
           exit 1
         fi
+        mv test/pom.xml test/pom.xml.backup
+        mv test/pom.xml.${{matrix.DB-name}} test/pom.xml

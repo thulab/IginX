@@ -16,17 +16,17 @@ inputs:
 runs:
   using: "composite" # Mandatory parameter
   steps:
-#    - name: clear IoTDB history data
-#      uses: ./.github/actions/iotdbWriter
-#      with:
-#        version: ${{inputs.DB-name}}
-#        Test-Way: clearData
-
-    - name: Stop Iginx
-      uses: ./.github/actions/iginxRunner
+    - name: clear IoTDB history data
+      uses: ./.github/actions/iotdbWriter
       with:
-        version: ${{inputs.VERSION}}
-        if-stop: true
+        version: ${{inputs.DB-name}}
+        Test-Way: clearData
+
+#    - name: Stop Iginx
+#      uses: ./.github/actions/iginxRunner
+#      with:
+#        version: ${{inputs.VERSION}}
+#        if-stop: true
 
     - name: Stop and Clear ZooKeeper
       uses: ./.github/actions/zookeeperRunner
@@ -41,6 +41,13 @@ runs:
       with:
         version: ${{inputs.DB-name}}
         Test-Way: ${{inputs.Test-Way}}
+
+    - name: Install with Maven Again
+      shell: bash
+      run: |
+        mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
+        mv test/pom.xml.backup test/pom.xml
+        mvn clean package -DskipTests
 
     - name: Start IginX
       uses: ./.github/actions/iginxRunner
