@@ -30,16 +30,20 @@ public class IoTDBHistoryDataGenerator {
     }
 
     @Test
-    public void clearData() throws Exception {
-        Session sessionA = new Session("127.0.0.1", 6667, "root", "root");
-        sessionA.open();
-        sessionA.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
-        sessionA.close();
+    public void clearData() {
+        try {
+            Session sessionA = new Session("127.0.0.1", 6667, "root", "root");
+            sessionA.open();
+            sessionA.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
+            sessionA.close();
 
-        Session sessionB = new Session("127.0.0.1", 6668, "root", "root");
-        sessionB.open();
-        sessionB.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
-        sessionB.close();
+            Session sessionB = new Session("127.0.0.1", 6668, "root", "root");
+            sessionB.open();
+            sessionB.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
+            sessionB.close();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
 
         logger.info("clear data success!");
     }
