@@ -35,6 +35,8 @@ runs:
 
     - name: Run ZooKeeper
       uses: ./.github/actions/zookeeperRunner
+      with:
+        if-rerun: true
 
     - name: Write IoTDB history data
       uses: ./.github/actions/iotdbWriter

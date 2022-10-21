@@ -9,10 +9,14 @@ inputs:
     description: 'to stop the zookeeper'
     required: false
     default: "false"
+  if-rerun:
+    description: 'to rerun the zookeeper'
+    required: false
+    default: "false"
 runs:
   using: "composite" # Mandatory parameter
   steps:
-    - if: inputs.if-stop=='false'
+    - if: inputs.if-stop=='false' && inputs.if-rerun=='false'
       name: Run ZooKeeper
       shell: bash
       run: |
@@ -26,6 +30,12 @@ runs:
         echo "$RUNNER_OS is not supported"
         exit 1
         fi
+
+    - if: inputs.if-rerun=='true'
+      name: ReRun ZooKeeper
+      shell: bash
+      run: |
+        zookeeper/bin/zkServer.sh start
 
     - if: inputs.if-stop=='true'
       name : Stop Zookeeper
