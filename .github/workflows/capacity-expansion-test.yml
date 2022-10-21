@@ -221,6 +221,7 @@ jobs:
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
+        if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
         with:
           version: ${VERSION}
@@ -232,6 +233,7 @@ jobs:
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
+        if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
         with:
           version: ${VERSION}
@@ -243,6 +245,7 @@ jobs:
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
+        if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
         with:
           version: ${VERSION}
