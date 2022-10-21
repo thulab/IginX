@@ -13,7 +13,7 @@ public class SQLCapExpSessioinIT extends SQLSessionIT{
         this.ifClearData = false;
         this.storageEngineType = "iotdb11";
         try {
-            this.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+            SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
             capacityExpansion();
         } catch (ExecutionException | SessionException e) {
             logger.error(e.getMessage());
@@ -26,7 +26,7 @@ public class SQLCapExpSessioinIT extends SQLSessionIT{
         this.ifClearData = false;
         this.storageEngineType = "iotdb12";
         try {
-            this.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+            SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
             capacityExpansion();
         } catch (ExecutionException | SessionException e) {
             logger.error(e.getMessage());

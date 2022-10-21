@@ -5,11 +5,22 @@ inputs:
     description: 'iginx runner version'
     required: false
     default: 0.6.0-SNAPSHOT
+  if-stop:
+    description: 'to stop the iginx'
+    required: false
+    default: "false"
 runs:
   using: "composite" # Mandatory parameter
   steps:
-    - name: Start IginX
+    - if: inputs.if-stop=='false'
+      name: Start IginX
       shell: bash
       run: |
         chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh"
         nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh" &
+    - if: inputs.if-stop=='true'
+      name: Stop Iginx
+      shell: bash
+      run: |
+        chmod +x "${GITHUB_WORKSPACE}/.github/iginxKill.sh"
+        "${GITHUB_WORKSPACE}/.github/iginxKill.sh"

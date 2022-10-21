@@ -5,10 +5,15 @@ inputs:
     description: 'zookeeper runner environment'
     required: false
     default: ubuntu-latest
+  if-stop:
+    description: 'to stop the zookeeper'
+    required: false
+    default: "false"
 runs:
   using: "composite" # Mandatory parameter
   steps:
-    - name: Run ZooKeeper
+    - if: inputs.if-stop=='false'
+      name: Run ZooKeeper
       shell: bash
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
@@ -21,3 +26,10 @@ runs:
         echo "$RUNNER_OS is not supported"
         exit 1
         fi
+
+    - if: inputs.if-stop=='true'
+      name : Stop Zookeeper
+      shell: bash
+      run: |
+        chmod +x "${GITHUB_WORKSPACE}/.github/zkClear.sh"
+        "${GITHUB_WORKSPACE}/.github/zkClear.sh"
