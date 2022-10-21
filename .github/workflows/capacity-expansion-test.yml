@@ -214,9 +214,9 @@ jobs:
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriHasDataExpHasData
+          Test-Way: OriNoDataExpNoData
 
-      - name: OriHasDataExpHasData IT
+      - name: OriNoDataExpNoData IT
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
@@ -227,7 +227,7 @@ jobs:
           DB-name: ${{matrix.DB-name}}
           Test-Way: OriHasDataExpNoData
 
-      - name: OriHasDataExpHasData IT
+      - name: OriHasDataExpNoData IT
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
@@ -238,7 +238,7 @@ jobs:
           DB-name: ${{matrix.DB-name}}
           Test-Way: OriNoDataExpHasData
 
-      - name: OriHasDataExpHasData IT
+      - name: OriNoDataExpHasData IT
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
@@ -247,7 +247,7 @@ jobs:
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpNoData
+          Test-Way: OriHasDataExpHasData
 
       - name: OriHasDataExpHasData IT
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
