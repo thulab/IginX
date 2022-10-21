@@ -8,12 +8,11 @@ on:
       - main
 env:
   VERSION: 0.6.0-SNAPSHOT
-  JOB-TIMEOUT: 20
 
 jobs:
 
   IoTDB-Test:
-    timeout-minutes: ${JOB-TIMEOUT}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -120,7 +119,7 @@ jobs:
           name: codecov
 
   IoTDB-Tag-Test:
-    timeout-minutes: ${JOB-TIMEOUT}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -207,7 +206,7 @@ jobs:
           name: codecov
 
   IoTDB-SQLSession-Test:
-    timeout-minutes: ${JOB-TIMEOUT}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -294,7 +293,7 @@ jobs:
           name: codecov
 
   IoTDB-Session-Test:
-    timeout-minutes: ${JOB-TIMEOUT}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -381,7 +380,7 @@ jobs:
           name: codecov
 
   IoTDB-Rest-Test:
-    timeout-minutes: ${JOB-TIMEOUT}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
