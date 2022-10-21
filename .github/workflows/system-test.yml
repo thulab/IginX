@@ -778,8 +778,8 @@ jobs:
             echo "$RUNNER_OS is not supported"
             exit 1
           fi
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh" &
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=UDFIT -DfailIfNoTests=false
