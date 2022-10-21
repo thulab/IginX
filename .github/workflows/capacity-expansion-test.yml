@@ -229,6 +229,7 @@ jobs:
           Test-Way: OriHasDataExpNoData
 
       - name: OriHasDataExpNoData IT
+        if: always()
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
@@ -241,6 +242,7 @@ jobs:
           Test-Way: OriNoDataExpHasData
 
       - name: OriNoDataExpHasData IT
+        if: always()
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
@@ -253,6 +255,7 @@ jobs:
           Test-Way: OriHasDataExpHasData
 
       - name: OriHasDataExpHasData IT
+        if: always()
         run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
