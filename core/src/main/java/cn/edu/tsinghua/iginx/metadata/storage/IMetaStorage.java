@@ -67,6 +67,8 @@ public interface IMetaStorage {
 
     void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
+    void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) throws MetaStorageException;
+
     void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
     void releaseFragment() throws MetaStorageException;
@@ -97,6 +99,8 @@ public interface IMetaStorage {
 
     int updateVersion();
 
+    void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception;
+
     void registerTransformChangeHook(TransformChangeHook hook);
 
     List<TransformTaskMeta> loadTransformTask() throws MetaStorageException;
@@ -106,4 +110,14 @@ public interface IMetaStorage {
     void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException;
 
     void dropTransformTask(String name) throws MetaStorageException;
+
+    void lockMaxActiveEndTimeStatistics() throws MetaStorageException;
+
+    void addOrUpdateMaxActiveEndTimeStatistics(long endTime) throws MetaStorageException;
+
+    long getMaxActiveEndTimeStatistics() throws MetaStorageException;
+
+    void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
+
+    void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException;
 }

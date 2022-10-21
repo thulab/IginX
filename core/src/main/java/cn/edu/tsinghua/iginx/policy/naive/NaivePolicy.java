@@ -59,7 +59,7 @@ public class NaivePolicy implements IPolicy {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement) {
-        List<String> paths = Utils.getPathListFromStatement(statement);
+        List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
         TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
@@ -263,7 +263,7 @@ public class NaivePolicy implements IPolicy {
         return storageEngineIdList;
     }
 
-    private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    public Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
         FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);
@@ -282,4 +282,5 @@ public class NaivePolicy implements IPolicy {
     public void setNeedReAllocate(boolean needReAllocate) {
         this.needReAllocate.set(needReAllocate);
     }
+
 }

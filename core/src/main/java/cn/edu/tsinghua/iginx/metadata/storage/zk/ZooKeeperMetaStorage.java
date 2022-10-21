@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
+import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -77,6 +78,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK_NODE = "/lock/user";
 
+    private static final String ACTIVE_END_TIME_COUNTER_LOCK_NODE = "/lock/counter/end/time/active/max";
+
     private static final String POLICY_NODE_PREFIX = "/policy";
 
     private static final String POLICY_LEADER = "/policy/leader";
@@ -84,6 +87,30 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String POLICY_VERSION = "/policy/version";
 
     private static final String POLICY_LOCK_NODE = "/lock/policy";
+
+    private static final String STATISTICS_FRAGMENT_POINTS_PREFIX = "/statistics/fragment/points";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_PREFIX_WRITE = "/statistics/fragment/requests/write";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_PREFIX_READ = "/statistics/fragment/requests/read";
+
+    private static final String STATISTICS_MONITOR_CLEAR_COUNTER_PREFIX = "/statistics/monitor/clear/counter";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_COUNTER_PREFIX = "/statistics/fragment/requests/counter";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE = "/statistics/fragment/heat/write";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_PREFIX_READ = "/statistics/fragment/heat/read";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_COUNTER_PREFIX = "/statistics/fragment/heat/counter";
+
+    private static final String STATISTICS_TIMESERIES_HEAT_PREFIX = "/statistics/timeseries/heat";
+
+    private static final String STATISTICS_TIMESERIES_HEAT_COUNTER_PREFIX = "/statistics/timeseries/heat/counter";
+
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE = "/statistics/end/time/active/max/node";
+
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX = "/statistics/end/time/active/max";
 
     private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
 
@@ -100,11 +127,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final InterProcessMutex storageUnitMutex;
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
+    private final Lock maxActiveEndTimeStatisticsMutexLock = new ReentrantLock();
+    private final InterProcessMutex maxActiveEndTimeStatisticsMutex;
     protected TreeCache schemaMappingsCache;
     protected TreeCache iginxCache;
     protected TreeCache storageEngineCache;
     protected TreeCache storageUnitCache;
     protected TreeCache fragmentCache;
+    protected TreeCache maxActiveEndTimeStatisticsCache;
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
     private IginxChangeHook iginxChangeHook = null;
     private StorageChangeHook storageChangeHook = null;
@@ -114,6 +144,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private TimeSeriesChangeHook timeSeriesChangeHook = null;
     private VersionChangeHook versionChangeHook = null;
     private TransformChangeHook transformChangeHook = null;
+    private MaxActiveEndTimeStatisticsChangeHook maxActiveEndTimeStatisticsChangeHook = null;
 
     protected TreeCache userCache;
 
@@ -135,6 +166,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
+        maxActiveEndTimeStatisticsMutex = new InterProcessMutex(client,
+            ACTIVE_END_TIME_COUNTER_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -752,6 +785,27 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+        throws MetaStorageException {
+        try {
+            this.client.delete()
+                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsInterval.toString() + "/" + fragmentMeta
+                    .getTimeInterval().toString());
+            List<String> timeIntervalNames = this.client.getChildren()
+                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsInterval.toString());
+            if (timeIntervalNames.isEmpty()) {
+                this.client.delete()
+                    .forPath(FRAGMENT_NODE_PREFIX + "/" + tsInterval.toString());
+            }
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/"
+                    + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when update fragment", e);
+        }
+    }
+
+    @Override
     public void releaseFragment() throws MetaStorageException {
         try {
             fragmentMutex.release();
@@ -759,6 +813,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             throw new MetaStorageException("release fragment mutex error: ", e);
         } finally {
             fragmentMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception {
+        for (Entry<String, Long> timeseriesLoadEntry : timeseriesLoadMap.entrySet()) {
+            String path = STATISTICS_TIMESERIES_HEAT_PREFIX + "/" + timeseriesLoadEntry.getKey();
+            if (this.client.checkExists().forPath(path) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(path, JsonUtils.toJson(timeseriesLoadEntry.getValue()));
+            }
+            byte[] data = this.client.getData().forPath(path);
+            long heat = JsonUtils.fromJson(data, Long.class);
+            this.client.setData()
+                .forPath(path, JsonUtils.toJson(heat + timeseriesLoadEntry.getValue()));
         }
     }
 
@@ -1259,6 +1328,100 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 throw new MetaStorageException("get error when release interprocess lock for " + TRANSFORM_LOCK_NODE, e);
             }
         }
+    }
+
+    private void registerMaxActiveEndTimeStatisticsListener() throws Exception {
+        this.maxActiveEndTimeStatisticsCache = new TreeCache(this.client,
+            MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (maxActiveEndTimeStatisticsChangeHook == null) {
+                return;
+            }
+            String path;
+            byte[] data;
+            long endTime;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    path = event.getData().getPath();
+                    data = event.getData().getData();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 7) {
+                        endTime = JsonUtils.fromJson(data, Long.class);
+                        maxActiveEndTimeStatisticsChangeHook.onChange(endTime);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.maxActiveEndTimeStatisticsCache.getListenable().addListener(listener);
+        this.maxActiveEndTimeStatisticsCache.start();
+    }
+
+    @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+        try {
+            maxActiveEndTimeStatisticsMutexLock.lock();
+            maxActiveEndTimeStatisticsMutex.acquire();
+        } catch (Exception e) {
+            maxActiveEndTimeStatisticsMutexLock.unlock();
+            throw new MetaStorageException(
+                "encounter error when acquiring mac active end time statistics mutex: ", e);
+        }
+    }
+
+    @Override
+    public void addOrUpdateMaxActiveEndTimeStatistics(long endTime)
+        throws MetaStorageException {
+        try {
+            if (this.client.checkExists()
+                .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE, JsonUtils.toJson(endTime));
+            } else {
+                this.client.setData()
+                    .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE, JsonUtils.toJson(endTime));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException(
+                "encounter error when adding or updating max active end time statistics: ", e);
+        }
+    }
+
+    @Override
+    public long getMaxActiveEndTimeStatistics() throws MetaStorageException {
+        try {
+            if (this.client.checkExists()
+                .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE) != null) {
+                return JsonUtils.fromJson(
+                    this.client.getData()
+                        .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE),
+                    Long.class);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException(
+                "encounter error when adding or updating max active end time statistics: ", e);
+        }
+        return -1;
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+        try {
+            maxActiveEndTimeStatisticsMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException(
+                "encounter error when releasing max active end time statistics mutex: ", e);
+        } finally {
+            maxActiveEndTimeStatisticsMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(
+        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+        this.maxActiveEndTimeStatisticsChangeHook = hook;
     }
 
     public static boolean isNumeric(String str) {

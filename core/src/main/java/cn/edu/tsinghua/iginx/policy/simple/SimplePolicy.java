@@ -59,7 +59,7 @@ public class SimplePolicy implements IPolicy {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement) {
-        List<String> paths = Utils.getPathListFromStatement(statement);
+        List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
         TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
@@ -184,7 +184,7 @@ public class SimplePolicy implements IPolicy {
         return new Pair<>(fragmentList, storageUnitList);
     }
 
-    private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    public Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true, false);
         FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);

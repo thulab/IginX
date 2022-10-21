@@ -54,6 +54,16 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
+    private long reshardFragmentTimeMargin = 60;
+
+    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
+
+    private long migrationBatchSize = 100;
+
+    private int maxReshardFragmentsNum = 3;
+
+    private double maxTimeseriesLoadBalanceThreshold = 2;
+
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 5000;
@@ -262,12 +272,52 @@ public class Config {
         this.databaseClassNames = databaseClassNames;
     }
 
+    public long getReshardFragmentTimeMargin() {
+        return reshardFragmentTimeMargin;
+    }
+
+    public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {
+        this.reshardFragmentTimeMargin = reshardFragmentTimeMargin;
+    }
+
+    public String getMigrationPolicyClassName() {
+        return migrationPolicyClassName;
+    }
+
+    public void setMigrationPolicyClassName(String migrationPolicyClassName) {
+        this.migrationPolicyClassName = migrationPolicyClassName;
+    }
+
     public String getPolicyClassName() {
         return policyClassName;
     }
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public long getMigrationBatchSize() {
+        return migrationBatchSize;
+    }
+
+    public void setMigrationBatchSize(long migrationBatchSize) {
+        this.migrationBatchSize = migrationBatchSize;
+    }
+
+    public int getMaxReshardFragmentsNum() {
+        return maxReshardFragmentsNum;
+    }
+
+    public void setMaxReshardFragmentsNum(int maxReshardFragmentsNum) {
+        this.maxReshardFragmentsNum = maxReshardFragmentsNum;
+    }
+
+    public double getMaxTimeseriesLoadBalanceThreshold() {
+        return maxTimeseriesLoadBalanceThreshold;
+    }
+
+    public void setMaxTimeseriesLoadBalanceThreshold(double maxTimeseriesLoadBalanceThreshold) {
+        this.maxTimeseriesLoadBalanceThreshold = maxTimeseriesLoadBalanceThreshold;
     }
 
     public String getStatisticsCollectorClassName() {
