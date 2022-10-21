@@ -16,11 +16,11 @@ inputs:
 runs:
   using: "composite" # Mandatory parameter
   steps:
-    - name: clear IoTDB history data
-      uses: ./.github/actions/iotdbWriter
-      with:
-        version: ${{inputs.DB-name}}
-        Test-Way: clearData
+#    - name: clear IoTDB history data
+#      uses: ./.github/actions/iotdbWriter
+#      with:
+#        version: ${{inputs.DB-name}}
+#        Test-Way: clearData
 
     - name: Stop Iginx
       uses: ./.github/actions/iginxRunner
