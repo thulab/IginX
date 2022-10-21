@@ -15,7 +15,7 @@ runs:
     - name: Write history Data
       shell: bash
       run: |
-        mv test/pom.xml test/pom.xml.backup
-        mv test/pom.xml.${{inputs.version}} test/pom.xml
+        mv ${GITHUB_WORKSPACE}/test/pom.xml ${GITHUB_WORKSPACE}/test/pom.xml.backup
+        mv ${GITHUB_WORKSPACE}/test/pom.xml.${{inputs.version}} ${GITHUB_WORKSPACE}/test/pom.xml
         mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{inputs.Test-Way}} -DfailIfNoTests=false
         sleep 5

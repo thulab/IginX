@@ -45,8 +45,8 @@ runs:
     - name: Install with Maven Again
       shell: bash
       run: |
-        mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
-        mv test/pom.xml.backup test/pom.xml
+        mv ${GITHUB_WORKSPACE}/test/pom.xml ${GITHUB_WORKSPACE}/test/pom.xml.${{inputs.DB-name}}
+        mv ${GITHUB_WORKSPACE}/test/pom.xml.backup ${GITHUB_WORKSPACE}/test/pom.xml
         mvn clean package -DskipTests
 
     - name: Start IginX
