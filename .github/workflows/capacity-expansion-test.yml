@@ -208,6 +208,11 @@ jobs:
           if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
+      - name: Change pom
+        run: |
+          mv test/pom.xml test/pom.xml.backup
+          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
         uses: ./.github/actions/capacityExpansionUnionTest
