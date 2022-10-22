@@ -182,6 +182,7 @@ public class ParquetStorage implements IStorage {
             return new TaskExecuteResult(new PhysicalException("fail to create du dir"));
         }
 
+        boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) {
             Project project = (Project) op;
             Filter filter;
@@ -192,7 +193,7 @@ public class ParquetStorage implements IStorage {
                     .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
                         new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
             }
-            return executeProjectTask(project, filter, storageUnit);
+            return executeProjectTask(project, filter, storageUnit, isDummyStorageUnit);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(insert, storageUnit);
@@ -203,14 +204,14 @@ public class ParquetStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    private TaskExecuteResult executeProjectTask(Project project, Filter filter, String storageUnit) {
+    private TaskExecuteResult executeProjectTask(Project project, Filter filter, String storageUnit, boolean isDummyStorageUnit) {
         try {
 //            Connection conn = pool.getConnection();
             Connection conn = ((DuckDBConnection) connection).duplicate();
             Statement stmt = conn.createStatement();
 
             StringBuilder builder = new StringBuilder();
-            List<String> pathList = determinePathListWithTagFilter(storageUnit, project.getPatterns(), project.getTagFilter());
+            List<String> pathList = determinePathListWithTagFilter(storageUnit, project.getPatterns(), project.getTagFilter(), isDummyStorageUnit);
             if (pathList.isEmpty()) {
                 RowStream rowStream = new ClearEmptyRowStreamWrapper(
                     ParquetQueryRowStream.EMPTY_PARQUET_ROW_STREAM
@@ -219,6 +220,9 @@ public class ParquetStorage implements IStorage {
             }
             pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
             Path path = Paths.get(dataDir, storageUnit, "*", "*.parquet");
+            if (isDummyStorageUnit) {
+                path = Paths.get(dataDir, "*.parquet");
+            }
 
             ResultSet rs = stmt.executeQuery(
                 String.format(SELECT_STMT,
@@ -228,7 +232,6 @@ public class ParquetStorage implements IStorage {
             stmt.close();
 //            pool.pushBack(conn);
             conn.close();
-
 
             RowStream rowStream = new ClearEmptyRowStreamWrapper(
                 new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, project)));
@@ -240,12 +243,17 @@ public class ParquetStorage implements IStorage {
     }
 
     private List<String> determinePathListWithTagFilter(String storageUnit, List<String> patterns,
-        TagFilter tagFilter) throws PhysicalException {
+        TagFilter tagFilter, boolean isDummyStorageUnit) throws PhysicalException {
         if (tagFilter == null) {
             return determinePathList(storageUnit, patterns);
         }
 
-        List<Timeseries> timeSeries = getTimeSeriesOfStorageUnit(storageUnit);
+        List<Timeseries> timeSeries = new ArrayList<>();
+        if (isDummyStorageUnit) {
+            timeSeries.addAll(getTimeSeriesOfDir(Paths.get(dataDir, "*.parquet")));
+        } else {
+            timeSeries.addAll(getTimeSeriesOfStorageUnit(storageUnit));
+        }
 
         List<String> pathList = new ArrayList<>();
         for (Timeseries ts: timeSeries) {
@@ -590,7 +598,7 @@ public class ParquetStorage implements IStorage {
             } else {
                 List<String> deletedPaths;
                 try {
-                    deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter());
+                    deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter(), false);
                 } catch (PhysicalException e) {
                     logger.warn("encounter error when delete path: " + e.getMessage());
                     return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete path task in parquet failure", e));
@@ -601,7 +609,7 @@ public class ParquetStorage implements IStorage {
             }
         } else {
             try {
-                List<String> deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter());
+                List<String> deletedPaths = determinePathListWithTagFilter(storageUnit, delete.getPatterns(), delete.getTagFilter(), false);
                 for (String path : deletedPaths) {
                     deleteDataInAllFiles(storageUnit, path, delete.getTimeRanges());
                 }
@@ -690,8 +698,12 @@ public class ParquetStorage implements IStorage {
     }
 
     private List<Timeseries> getTimeSeriesOfStorageUnit(String storageUnit) throws PhysicalTaskExecuteFailureException {
-        Set<Timeseries> timeseries = new HashSet<>();
         Path path = Paths.get(dataDir, storageUnit, /*timePartition*/"*", /*pathPartition*/"*.parquet");
+        return getTimeSeriesOfDir(path);
+    }
+
+    private List<Timeseries> getTimeSeriesOfDir(Path path) throws PhysicalTaskExecuteFailureException {
+        Set<Timeseries> timeseries = new HashSet<>();
         try {
 //            Connection conn = pool.getConnection();
             Connection conn = ((DuckDBConnection) connection).duplicate();
@@ -719,15 +731,42 @@ public class ParquetStorage implements IStorage {
 
     @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
-        List<Timeseries> timeseries = getTimeSeries();
-        TimeSeriesInterval timeSeriesInterval = new TimeSeriesInterval(
-            timeseries.get(0).getPath(),
-            timeseries.get(timeseries.size() - 1).getPath());
+        File rootDir = new File(dataDir);
+        List<String> parquetFiles = new ArrayList<>();
+        findParquetFiles(parquetFiles, rootDir);
 
-        Path path = Paths.get(dataDir, /*du*/"*", /*timePartition*/"*", /*pathPartition*/"*.parquet");
+        long startTime = Long.MAX_VALUE, endTime = Long.MIN_VALUE;
+        TreeSet<String> pathTreeSet = new TreeSet<>();
+        for (String filepath : parquetFiles) {
+            Pair<Set<String>, Pair<Long, Long>> ret = getBoundaryOfSingleFile(filepath);
+            if (ret != null) {
+                pathTreeSet.addAll(ret.getK());
+                startTime = Math.min(startTime, ret.getV().getK());
+                endTime = Math.max(endTime, ret.getV().getV());
+            }
+        }
+
+        startTime = startTime == Long.MAX_VALUE ? 0 : startTime;
+        endTime = endTime == Long.MIN_VALUE ? Long.MAX_VALUE : endTime;
+
+        if (!pathTreeSet.isEmpty()) {
+            return new Pair<>(
+                new TimeSeriesInterval(pathTreeSet.first(), pathTreeSet.last()),
+                new TimeInterval(startTime, endTime));
+        } else {
+            return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(startTime, endTime));
+        }
+    }
+
+    private Pair<Set<String>, Pair<Long, Long>> getBoundaryOfSingleFile(String filepath) throws PhysicalTaskExecuteFailureException {
+        Path path = Paths.get(filepath);
+        if (Files.notExists(path)) {
+            return null;
+        }
+
         long startTime = 0, endTime = Long.MAX_VALUE;
+        Set<String> pathSet = new HashSet<>();
         try {
-//            Connection conn = pool.getConnection();
             Connection conn = ((DuckDBConnection) connection).duplicate();
             Statement stmt = conn.createStatement();
 
@@ -743,14 +782,36 @@ public class ParquetStorage implements IStorage {
             }
             lastTimeRS.close();
 
+            ResultSet rs = stmt.executeQuery(String.format(SELECT_PARQUET_SCHEMA, path.toString()));
+            while (rs.next()) {
+                String pathName = ((String) rs.getObject(NAME)).replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR);
+                if (!pathName.equals(DUCKDB_SCHEMA) && !pathName.equals(COLUMN_TIME)) {
+                    pathSet.add(pathName);
+                }
+            }
+            rs.close();
+
             stmt.close();
-//            pool.pushBack(conn);
             conn.close();
         } catch (SQLException e) {
-            throw new PhysicalTaskExecuteFailureException("get boundary of storage failure: ", e);
+            throw new PhysicalTaskExecuteFailureException("get boundary of file failure: " + filepath);
         }
+        return new Pair<>(pathSet, new Pair<>(startTime, endTime));
+    }
 
-        return new Pair<>(timeSeriesInterval, new TimeInterval(startTime, endTime));
+    private void findParquetFiles(List<String> parquetFiles, File file) {
+        File[] files = file.listFiles();
+        if (files == null || files.length == 0) {
+            return;
+        }
+        for (File subFile : files) {
+            if (subFile.isDirectory()) {
+                findParquetFiles(parquetFiles, subFile);
+            }
+            if (subFile.getName().endsWith(".parquet")) {
+                parquetFiles.add(subFile.getPath());
+            }
+        }
     }
 
     @Override
