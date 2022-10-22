@@ -22,6 +22,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class RestIT {
+    protected String storageEngineType;
+    protected boolean ifClearData = true;
     private String insertJson = "[\n" +
             "    {\n" +
             "        \"name\": \"archive_file_tracked\",\n" +
@@ -45,9 +47,9 @@ public class RestIT {
             "      }\n" +
             "]";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
+    protected static final Logger logger = LoggerFactory.getLogger(MetricsResource.class);
 
-    private static Session session;
+    protected static Session session;
 
     @BeforeClass
     public static void setUp() {
@@ -55,7 +57,7 @@ public class RestIT {
         try {
             session.openSession();
         } catch (SessionException e) {
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -64,7 +66,7 @@ public class RestIT {
         try {
             session.closeSession();
         } catch (SessionException e) {
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 
@@ -74,7 +76,7 @@ public class RestIT {
             String json = insertJson;
             execute("insert.json",TYPE.INSERT);
         } catch (Exception e) {
-            LOGGER.error("Error occurred during execution ", e);
+            logger.error("Error occurred during execution ", e);
         }
     }
 
@@ -84,7 +86,7 @@ public class RestIT {
 
         SessionExecuteSqlResult res = session.executeSql(clearData);
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
-            LOGGER.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
+            logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
             fail();
         }
     }
@@ -142,9 +144,38 @@ public class RestIT {
         try {
             result = execute(json,TYPE.QUERY);
         } catch (Exception e) {
-            LOGGER.error("Error occurred during execution ", e);
+            logger.error("Error occurred during execution ", e);
         }
         assertEquals(output, result);
+    }
+
+    @Test
+    public void iotdb11_IT() {
+    }
+
+    @Test
+    public void iotdb12_IT() {
+    }
+
+    @Test
+    public void capacityExpansion() throws Exception {
+        if(ifClearData) return;
+
+        testQueryWithoutTags();
+        testQueryWithTags();
+        testQueryWrongTags();
+        testQueryOneTagWrong();
+        testQueryWrongName();
+        testQueryWrongTime();
+        testQueryAvg();
+        testQueryCount();
+        testQueryFirst();
+        testQueryLast();
+        testQueryMax();
+        testQueryMin();
+        testQuerySum();
+        testDelete();
+        testDeleteMetric();
     }
 
     @Test

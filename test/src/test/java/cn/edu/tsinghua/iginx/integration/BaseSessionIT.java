@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 
 public abstract class BaseSessionIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseSessionIT.class);
+    protected static final Logger logger = LoggerFactory.getLogger(BaseSessionIT.class);
     private static final long TIME_PERIOD = 100000L;
     private static final long START_TIME = 1000L;
     private static final long END_TIME = START_TIME + TIME_PERIOD - 1;
@@ -54,10 +54,11 @@ public abstract class BaseSessionIT {
     //params for datatype test
     private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int STRING_LEN = 1000;
-    private static Session session;
+    protected static Session session;
     protected boolean isAbleToDelete;
     protected String storageEngineType;
     protected int defaultPort2;
+    protected boolean ifClearData = true;
     protected Map<String, String> extraParams;
     long factSampleLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
     double originAvg = (START_TIME + END_TIME) / 2.0;
@@ -280,6 +281,7 @@ public abstract class BaseSessionIT {
 
     @After
     public void tearDown() throws SessionException {
+        if(!ifClearData) return;
         try {
             clearData();
             session.closeSession();
@@ -296,6 +298,21 @@ public abstract class BaseSessionIT {
             logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
             fail();
         }
+    }
+
+    @Test
+    public void iotdb11_IT() {
+    }
+
+    @Test
+    public void iotdb12_IT() {
+    }
+
+    @Test
+    public void capacityExpansion() throws ExecutionException, SessionException, InterruptedException {
+        if(ifClearData) return;
+
+        sessionTest();
     }
 
     @Test
