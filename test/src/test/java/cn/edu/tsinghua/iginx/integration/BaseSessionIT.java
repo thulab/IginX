@@ -44,6 +44,22 @@ import static org.junit.Assert.*;
 
 public abstract class BaseSessionIT {
 
+    //parameters to be flexibly configured by inheritance
+    protected static MultiConnection session;
+    protected boolean ifClearData = true;
+
+    protected boolean isAbleToDelete;
+    protected String storageEngineType;
+    protected int defaultPort2;
+    protected Map<String, String> extraParams;
+
+    //host info
+    protected String defaultTestHost = "127.0.0.1";
+    protected int defaultTestPort = 6888;
+    protected String defaultTestUser = "root";
+    protected String defaultTestPass = "root";
+
+    //original variables
     protected static final Logger logger = LoggerFactory.getLogger(BaseSessionIT.class);
     private static final long TIME_PERIOD = 100000L;
     private static final long START_TIME = 1000L;
@@ -54,12 +70,7 @@ public abstract class BaseSessionIT {
     //params for datatype test
     private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int STRING_LEN = 1000;
-    protected static Session session;
-    protected boolean isAbleToDelete;
-    protected String storageEngineType;
-    protected int defaultPort2;
-    protected boolean ifClearData = true;
-    protected Map<String, String> extraParams;
+
     long factSampleLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
     double originAvg = (START_TIME + END_TIME) / 2.0;
     private int currPath = 0;
@@ -272,7 +283,7 @@ public abstract class BaseSessionIT {
     @Before
     public void setUp() {
         try {
-            session = new Session("127.0.0.1", 6888, "root", "root");
+            session = new MultiConnection (new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
             session.openSession();
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -1649,7 +1660,7 @@ public abstract class BaseSessionIT {
         private Object queryDataSet;
         private AggregateType aggregateType;
 
-        private Session localSession;
+        private MultiConnection localSession;
 
         public MultiThreadTask(int type, List<String> path, long startTime, long endTime,
                                long pointNum, int step, AggregateType aggrType, int portNum) throws SessionException {
@@ -1661,8 +1672,9 @@ public abstract class BaseSessionIT {
             this.step = step;
             this.queryDataSet = null;
             this.aggregateType = aggrType;
-            this.localSession = new Session("127.0.0.1", portNum,
-                "root", "root");
+
+            this.localSession = session.isSession()?new MultiConnection( new Session(defaultTestHost, defaultTestPort,
+                    defaultTestUser, defaultTestPass) ):session;
             this.localSession.openSession();
         }
 
