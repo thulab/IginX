@@ -1,0 +1,55 @@
+name: 'CapExp-Union-Test'
+description: 'steps to test the capacity expansion'
+inputs:
+  VERSION:
+    description: 'iginx runner version'
+    required: false
+    default: 0.6.0-SNAPSHOT
+  DB-name:
+    description: 'the db version'
+    required: false
+    default: iotdb11
+  Test-Way:
+    description: 'the way to test'
+    required: false
+    default: clearData
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - name: clear IoTDB history data
+      uses: ./.github/actions/iotdbWriter
+      with:
+        version: ${{inputs.DB-name}}
+        Test-Way: clearData
+
+#    - name: Stop Iginx
+#      uses: ./.github/actions/iginxRunner
+#      with:
+#        version: ${{inputs.VERSION}}
+#        if-stop: true
+
+    - name: Stop and Clear ZooKeeper
+      uses: ./.github/actions/zookeeperRunner
+      with:
+        if-stop: true
+
+    - name: Run ZooKeeper
+      uses: ./.github/actions/zookeeperRunner
+      with:
+        if-rerun: true
+
+    - name: Write IoTDB history data
+      uses: ./.github/actions/iotdbWriter
+      with:
+        version: ${{inputs.DB-name}}
+        Test-Way: ${{inputs.Test-Way}}
+
+    - name: Install with Maven Again
+      shell: bash
+      run: |
+        mvn clean package -DskipTests
+
+    - name: Start IginX
+      uses: ./.github/actions/iginxRunner
+      with:
+        version: ${{inputs.VERSION}}
