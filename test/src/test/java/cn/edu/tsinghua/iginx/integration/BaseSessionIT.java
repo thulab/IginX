@@ -1730,7 +1730,8 @@ public abstract class BaseSessionIT {
                     break;
             }
             try {
-                this.localSession.closeSession();
+                if(session.isSession())
+                    this.localSession.closeSession();
             } catch (SessionException e) {
                 logger.error(e.getMessage());
             }
