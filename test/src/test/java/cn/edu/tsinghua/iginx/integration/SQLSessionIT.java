@@ -2,8 +2,10 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.pool.SessionPool;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import com.sun.org.apache.xpath.internal.operations.Mult;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -17,9 +19,17 @@ import static org.junit.Assert.fail;
 
 public abstract class SQLSessionIT {
 
-    protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
+    protected static MultiConnection session;
+    protected static boolean isForSession = true, isForSessionPool = false;
+    protected static int MaxMultiThreadTaskNum = -1;
 
-    protected static Session session;
+    //host info
+    protected static String defaultTestHost = "127.0.0.1";
+    protected static int defaultTestPort = 6888;
+    protected static String defaultTestUser = "root";
+    protected static String defaultTestPass = "root";
+
+    protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
     protected boolean isAbleToDelete;
 
@@ -37,7 +47,16 @@ public abstract class SQLSessionIT {
 
     @BeforeClass
     public static void setUp() {
-        session = new Session("127.0.0.1", 6888, "root", "root");
+        if(isForSession)
+            session = new MultiConnection (new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
+        else if(isForSessionPool)
+            session = new MultiConnection ( new SessionPool.Builder()
+                    .host(defaultTestHost)
+                    .port(defaultTestPort)
+                    .user(defaultTestUser)
+                    .password(defaultTestPass)
+                    .maxSize(MaxMultiThreadTaskNum)
+                    .build());
         try {
             session.openSession();
         } catch (SessionException e) {
