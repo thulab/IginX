@@ -1123,7 +1123,7 @@ public abstract class BaseSessionIT {
 
 
         //multiThreadTest
-
+/*
         //query test, multithread insert for storage; multithread query
         int mulStQueryLen = 5;
         List<String> mulStPaths = getPaths(currPath, mulStQueryLen);
@@ -1525,7 +1525,7 @@ public abstract class BaseSessionIT {
             }
 
             currPath += mulDelATLen;
-        }
+        }*/
 
 
         //addSameTypeOfStorageEngineTest
