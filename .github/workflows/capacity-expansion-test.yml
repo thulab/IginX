@@ -10,7 +10,6 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
-
   IoTDB-Test:
     timeout-minutes: 20
     strategy:
