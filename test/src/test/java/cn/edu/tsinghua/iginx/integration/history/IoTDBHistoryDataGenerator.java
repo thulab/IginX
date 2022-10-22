@@ -5,11 +5,49 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IoTDBHistoryDataGeneratorTest {
+public class IoTDBHistoryDataGenerator {
 
-    private static final Logger logger = LoggerFactory.getLogger(IoTDBHistoryDataGeneratorTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(IoTDBHistoryDataGenerator.class);
 
     @Test
+    public void OriHasDataExpHasData() throws Exception {
+        writeHistoryDataToA();
+        writeHistoryDataToB();
+    }
+
+    @Test
+    public void OriHasDataExpNoData() throws Exception {
+        writeHistoryDataToA();
+    }
+
+    @Test
+    public void OriNoDataExpHasData() throws Exception {
+        writeHistoryDataToB();
+    }
+
+    @Test
+    public void OriNoDataExpNoData() throws Exception {
+    }
+
+    @Test
+    public void clearData() {
+        try {
+            Session sessionA = new Session("127.0.0.1", 6667, "root", "root");
+            sessionA.open();
+            sessionA.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
+            sessionA.close();
+
+            Session sessionB = new Session("127.0.0.1", 6668, "root", "root");
+            sessionB.open();
+            sessionB.executeNonQueryStatement("DELETE STORAGE GROUP root.*");
+            sessionB.close();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+
+        logger.info("clear data success!");
+    }
+
     public void writeHistoryDataToA() throws Exception {
         Session session = new Session("127.0.0.1", 6667, "root", "root");
         session.open();
@@ -22,7 +60,6 @@ public class IoTDBHistoryDataGeneratorTest {
         logger.info("write data to 127.0.0.1:6667 success!");
     }
 
-    @Test
     public void writeHistoryDataToB() throws Exception {
         Session session = new Session("127.0.0.1", 6668, "root", "root");
         session.open();

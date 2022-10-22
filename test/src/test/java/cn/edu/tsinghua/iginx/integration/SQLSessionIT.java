@@ -17,9 +17,9 @@ import static org.junit.Assert.fail;
 
 public abstract class SQLSessionIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
+    protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
-    private static Session session;
+    protected static Session session;
 
     protected boolean isAbleToDelete;
 
@@ -30,6 +30,10 @@ public abstract class SQLSessionIT {
     private final long startTimestamp = 0L;
 
     private final long endTimestamp = 15000L;
+
+    protected boolean ifClearData = true;
+
+    protected String storageEngineType;
 
     @BeforeClass
     public static void setUp() {
@@ -80,6 +84,8 @@ public abstract class SQLSessionIT {
 
     @After
     public void clearData() throws ExecutionException, SessionException {
+        if(!ifClearData) return;
+
         String clearData = "CLEAR DATA;";
 
         SessionExecuteSqlResult res = session.executeSql(clearData);
@@ -125,6 +131,63 @@ public abstract class SQLSessionIT {
             logger.info("Statement: \"{}\" execute fail. Because: {}", statement, e.getMessage());
             assertEquals(expectedErrMsg, e.getMessage());
         }
+    }
+
+    @Test
+    public void iotdb11_IT() {
+    }
+
+    @Test
+    public void iotdb12_IT() {
+    }
+
+    @Test
+    public void capacityExpansion() {
+        if (ifClearData) return;
+
+        testCountPath();
+
+        testShowReplicaNum();
+
+        testTimeRangeQuery();
+
+//        testValueFilter();
+
+        testPathFilter();
+
+        testOrderByQuery();
+
+        testFirstLastQuery();
+
+        testAggregateQuery();
+
+        testDownSampleQuery();
+
+        testRangeDownSampleQuery();
+
+//        testFromMultiPath();
+
+        testAlias();
+
+        testAggregateSubQuery();
+
+        testValueFilterSubQuery();
+
+        testMultiSubQuery();
+
+        testDateFormat();
+
+        testSpecialPath();
+
+        testErrorClause();
+
+        testDelete();
+
+        testMultiRangeDelete();
+
+        testCrossRangeDelete();
+
+        testClearData();
     }
 
     @Test
@@ -371,13 +434,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testPathFilter() {
-        String insert = "INSERT INTO us.d2(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        String insert = "INSERT INTO us.d9(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
         execute(insert);
 
-        String query = "SELECT a, b FROM us.d2 WHERE a > b;";
+        String query = "SELECT a, b FROM us.d9 WHERE a > b;";
         String expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   6|      6|      4|\n" +
             "|   7|      7|      3|\n" +
@@ -387,10 +450,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a >= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a >= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "|   6|      6|      4|\n" +
@@ -401,10 +464,10 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a < b;";
+        query = "SELECT a, b FROM us.d9 WHERE a < b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -414,10 +477,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a <= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a <= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -428,20 +491,20 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a = b;";
+        query = "SELECT a, b FROM us.d9 WHERE a = b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "+----+-------+-------+\n" +
             "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a != b;";
+        query = "SELECT a, b FROM us.d9 WHERE a != b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
