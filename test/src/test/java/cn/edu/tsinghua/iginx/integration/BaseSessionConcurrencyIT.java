@@ -84,7 +84,8 @@ public abstract class BaseSessionConcurrencyIT {
         }
     }
 
-    //TODO:
+    //TODO: a very suspicious test; somebody should do something
+    //TODO: The following test must be added after bug fix
     //@Test
     public void multiThreadTestBad() throws SessionException, InterruptedException, ExecutionException {
         //query test, multithread insert for storage; multithread query
