@@ -1,4 +1,6 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.parquet;
+
+import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
 
 public class ParquetSQLSessionIT extends SQLSessionIT {
     public ParquetSQLSessionIT() {

@@ -1,10 +1,11 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.influxdb;
+
+import cn.edu.tsinghua.iginx.integration.BaseSessionPoolIT;
 
 import java.util.LinkedHashMap;
 
-public class InfluxDBSessionIT extends BaseSessionIT {
-
-    public InfluxDBSessionIT() {
+public class InfluxDBSessionPoolIT  extends BaseSessionPoolIT {
+    public InfluxDBSessionPoolIT() {
         super();
         this.defaultPort2 = 8087;
         this.isAbleToDelete = false;

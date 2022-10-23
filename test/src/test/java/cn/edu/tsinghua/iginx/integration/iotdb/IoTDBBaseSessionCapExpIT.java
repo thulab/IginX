@@ -1,7 +1,8 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.iotdb;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.integration.BaseSessionIT;
 
 import java.util.LinkedHashMap;
 
@@ -21,7 +22,6 @@ public class IoTDBBaseSessionCapExpIT extends BaseSessionIT {
         this.extraParams.put("sessionPoolSize", "100");
 
         this.ifClearData = false;
-        this.storageEngineType = "iotdb11";
         try {
             BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
             capacityExpansion();
@@ -42,7 +42,6 @@ public class IoTDBBaseSessionCapExpIT extends BaseSessionIT {
         this.extraParams.put("sessionPoolSize", "100");
 
         this.ifClearData = false;
-        this.storageEngineType = "iotdb12";
         try {
             BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
             capacityExpansion();
