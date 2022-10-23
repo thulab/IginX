@@ -403,7 +403,7 @@ public abstract class MigrationPolicy {
     sortQueueListByFirstItem(migrationTaskQueueList);
   }
 
-  private void migrateData(long sourceStorageId, long targetStorageId,
+  public void migrateData(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
     try {
       // 在目标节点创建新du
@@ -437,7 +437,6 @@ public abstract class MigrationPolicy {
           fragmentMeta, new ArrayList<>(pathSet), storageUnitMeta);
       physicalEngine.execute(migration);
       // 迁移完开始删除原数据
-
       List<String> paths = new ArrayList<>();
       paths.add(fragmentMeta.getMasterStorageUnitId() + "*");
       List<TimeRange> timeRanges = new ArrayList<>();
@@ -453,7 +452,7 @@ public abstract class MigrationPolicy {
     }
   }
 
-  private FragmentMeta reshardFragment(long sourceStorageId, long targetStorageId,
+  public FragmentMeta reshardFragment(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
     try {
       migrationLogger.logMigrationExecuteTaskStart(
