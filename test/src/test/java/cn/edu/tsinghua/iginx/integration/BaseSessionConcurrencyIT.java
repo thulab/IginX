@@ -4,7 +4,10 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ public abstract class BaseSessionConcurrencyIT {
 
     //parameters to be flexibly configured by inheritance
     protected static MultiConnection session;
+    protected boolean ifClearData = true;
 
     //host info
     protected String defaultTestHost = "127.0.0.1";
@@ -47,6 +51,38 @@ public abstract class BaseSessionConcurrencyIT {
     protected int currPath = 0;
 
     protected static final Logger logger = LoggerFactory.getLogger(BaseSessionIT.class);
+
+    @Before
+    public void setUp() {
+        try {
+            session = new MultiConnection (new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
+            session.openSession();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    @After
+    public void tearDown() throws SessionException {
+        if(!ifClearData) return;
+
+        try {
+            clearData();
+            session.closeSession();
+        } catch (ExecutionException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    protected void clearData() throws ExecutionException, SessionException {
+        String clearData = "CLEAR DATA;";
+
+        SessionExecuteSqlResult res = session.executeSql(clearData);
+        if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
+            logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
+            fail();
+        }
+    }
 
     //TODO:
     //@Test

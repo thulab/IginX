@@ -44,9 +44,6 @@ import static org.junit.Assert.*;
 
 public abstract class BaseSessionIT extends BaseSessionConcurrencyIT{
 
-    //parameters to be flexibly configured by inheritance
-    protected boolean ifClearData = true;
-
     protected String storageEngineType;
     protected int defaultPort2;
     protected Map<String, String> extraParams;
@@ -189,38 +186,6 @@ public abstract class BaseSessionIT extends BaseSessionConcurrencyIT{
             }
         }
         return result;
-    }
-
-    @Before
-    public void setUp() {
-        try {
-            session = new MultiConnection (new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
-            session.openSession();
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
-    }
-
-    @After
-    public void tearDown() throws SessionException {
-        if(!ifClearData) return;
-
-        try {
-            clearData();
-            session.closeSession();
-        } catch (ExecutionException e) {
-            logger.error(e.getMessage());
-        }
-    }
-
-    private void clearData() throws ExecutionException, SessionException {
-        String clearData = "CLEAR DATA;";
-
-        SessionExecuteSqlResult res = session.executeSql(clearData);
-        if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
-            logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
-            fail();
-        }
     }
 
     @Test
