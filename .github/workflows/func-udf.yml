@@ -1,4 +1,4 @@
-name: System Test
+name: Function Test for UDF
 
 on:
   push:

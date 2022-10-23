@@ -1,4 +1,4 @@
-name: System Test
+name: API Test for RESTful
 
 on:
   push:
