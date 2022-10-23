@@ -1,10 +1,12 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.iotdb;
+
+import cn.edu.tsinghua.iginx.integration.BaseSessionPoolIT;
 
 import java.util.LinkedHashMap;
 
-public class IoTDB11SessionIT extends BaseSessionIT {
+public class IoTDB11SessionPoolIT extends BaseSessionPoolIT {
 
-    public IoTDB11SessionIT() {
+    public IoTDB11SessionPoolIT() {
         super();
         this.defaultPort2 = 6668;
         this.isAbleToDelete = true;
