@@ -1,4 +1,6 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.iotdb;
+
+import cn.edu.tsinghua.iginx.integration.SQLSessionPoolIT;
 
 public class IoTDBSQLSessionPoolIT extends SQLSessionPoolIT {
 

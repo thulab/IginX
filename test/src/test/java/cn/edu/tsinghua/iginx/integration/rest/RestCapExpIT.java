@@ -1,10 +1,4 @@
-package cn.edu.tsinghua.iginx.integration;
-
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import org.slf4j.Logger;
-
-import java.util.LinkedHashMap;
+package cn.edu.tsinghua.iginx.integration.rest;
 
 public class RestCapExpIT extends RestIT {
     public RestCapExpIT() {

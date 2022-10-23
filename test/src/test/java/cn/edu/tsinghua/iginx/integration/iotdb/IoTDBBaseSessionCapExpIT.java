@@ -1,7 +1,8 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.iotdb;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.integration.BaseSessionIT;
 
 import java.util.LinkedHashMap;
 

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.mds;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
