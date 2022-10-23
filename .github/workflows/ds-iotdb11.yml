@@ -11,7 +11,7 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
-  IoTDB12-Test:
+  IoTDB11-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -34,7 +34,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb12
+          version: iotdb11
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -43,15 +43,14 @@ jobs:
         uses: ./.github/actions/iginxRunner
         with:
           version: ${VERSION}
-
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB12-SQL-Test:
+  IoTDB11-SQL-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -59,6 +58,7 @@ jobs:
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -74,7 +74,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb12
+          version: iotdb11
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -91,7 +91,7 @@ jobs:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB12-Tag-Test:
+  IoTDB11-Tag-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -114,7 +114,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb12
+          version: iotdb11
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -131,7 +131,7 @@ jobs:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB12-SessionPool-Test:
+  IoTDB11-SessionPool-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -154,7 +154,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb12
+          version: iotdb11
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -165,13 +165,13 @@ jobs:
           version: ${VERSION}
 
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDB11SessionPoolIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB12-SQL-SessionPool-Test:
+  IoTDB11-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
       matrix:
@@ -194,7 +194,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb12
+          version: iotdb11
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -204,8 +204,8 @@ jobs:
         with:
           version: ${VERSION}
 
-      - name: A Lame Integration Test with Maven for SQL
-        run: mvn test -q -Dtest=SQLSessionPoolIT -DfailIfNoTests=false
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=IoTDBSQLSessionPoolIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
