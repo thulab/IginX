@@ -1,4 +1,4 @@
-name: System Test
+name: System IT for datasource IoTDB
 
 on:
   push:
