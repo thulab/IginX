@@ -523,6 +523,51 @@ struct CurveMatchResp {
     3: optional i64 matchedTimestamp
 }
 
+enum DebugInfoType {
+    GET_META,
+}
+
+struct GetMetaReq {
+    1: required bool byCache
+}
+
+struct Fragment {
+    1: required string storageUnitId
+    2: required i64 startTime
+    3: required i64 endTime
+    4: required string startTs
+    5: required string endTs
+}
+
+struct Storage {
+    1: required i64 id
+    2: required string ip
+    3: required i64 port
+    4: required string type
+}
+
+struct StorageUnit {
+    1: required string id
+    2: required string masterId
+    3: required i64 storageId
+}
+
+struct GetMetaResp {
+    1: required list<Fragment> fragments
+    2: required list<Storage> storages
+    3: required list<StorageUnit> storageUnits
+}
+
+struct DebugInfoReq {
+    1: required DebugInfoType payloadType
+    2: required binary payload
+}
+
+struct DebugInfoResp {
+    1: required Status status
+    2: optional binary payload
+}
+
 service IService {
 
     OpenSessionResp openSession(1: OpenSessionReq req);
@@ -588,4 +633,6 @@ service IService {
     GetRegisterTaskInfoResp getRegisterTaskInfo(1: GetRegisterTaskInfoReq req);
 
     CurveMatchResp curveMatch(1: CurveMatchReq req);
+
+    DebugInfoResp debugInfo(1: DebugInfoReq req);
 }

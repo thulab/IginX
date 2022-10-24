@@ -73,6 +73,11 @@ public interface IMetaManager {
     long getIginxId();
 
     /**
+     * 获取所有的分片，用于 debug
+     */
+    List<FragmentMeta> getFragments();
+
+    /**
      * 获取某个du的时空范围
      * */
     Pair<TimeSeriesInterval,TimeInterval> getBoundaryOfStorageUnit(String storageUnitId);

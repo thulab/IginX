@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
+import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
@@ -707,5 +708,50 @@ public class IginxWorker implements IService.Iface {
         resp.setMatchedTimestamp(globalMatchedTimestamp);
         resp.setMatchedPath(globalMatchedPath);
         return resp;
+    }
+
+    @Override
+    public DebugInfoResp debugInfo(DebugInfoReq req) {
+        byte[] payload = null;
+        boolean parseFailure = false;
+        switch (req.payloadType) {
+            case GET_META:
+                GetMetaReq getMetaReq;
+                try {
+                    getMetaReq = JsonUtils.fromJson(req.getPayload(), GetMetaReq.class);
+                } catch (RuntimeException e) {
+                    logger.error("parse request failure: ", e);
+                    parseFailure = true;
+                    break;
+                }
+                payload = JsonUtils.toJson(getMeta(getMetaReq));
+                break;
+            default:
+                Status status = new Status(RpcUtils.FAILURE.code);
+                status.message = "unknown debug info type";
+                return new DebugInfoResp(status);
+        }
+        if (parseFailure) {
+            Status status = new Status(RpcUtils.FAILURE.code);
+            status.message = "unknown payload for type " + req.payloadType;
+            return new DebugInfoResp(status);
+        }
+        DebugInfoResp resp = new DebugInfoResp(RpcUtils.SUCCESS);
+        resp.setPayload(payload);
+        return resp;
+    }
+
+    public GetMetaResp getMeta(GetMetaReq req) {
+        List<Storage> storages = metaManager.getStorageEngineList().stream().map(
+                e -> new Storage(e.getId(), e.getIp(), e.getPort(), e.getStorageEngine())
+        ).collect(Collectors.toList());
+        List<StorageUnit> units = metaManager.getStorageUnits().stream().map(
+                u -> new StorageUnit(u.getId(), u.getMasterId(), u.getStorageEngineId())
+        ).collect(Collectors.toList());
+        List<Fragment> fragments = metaManager.getFragments().stream().map(
+                f -> new Fragment(f.getMasterStorageUnitId(), f.getTimeInterval().getStartTime(), f.getTimeInterval().getEndTime(),
+                        f.getTsInterval().getStartTimeSeries(), f.getTsInterval().getEndTimeSeries())
+        ).collect(Collectors.toList());
+        return new GetMetaResp(fragments, storages, units);
     }
 }
