@@ -203,7 +203,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
-      - name: A Lame Integration Test with Maven for IoTDB
+      - name: A Lame Integration Test with Maven for parquet
         run: mvn test -q -Dtest=ParquetHistoryDataCapacityExpansionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
