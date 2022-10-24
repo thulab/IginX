@@ -2,8 +2,10 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.pool.SessionPool;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import com.sun.org.apache.xpath.internal.operations.Mult;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -17,9 +19,17 @@ import static org.junit.Assert.fail;
 
 public abstract class SQLSessionIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
+    protected static MultiConnection session;
+    protected static boolean isForSession = true, isForSessionPool = false;
+    protected static int MaxMultiThreadTaskNum = -1;
 
-    private static Session session;
+    //host info
+    protected static String defaultTestHost = "127.0.0.1";
+    protected static int defaultTestPort = 6888;
+    protected static String defaultTestUser = "root";
+    protected static String defaultTestPass = "root";
+
+    protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
     protected boolean isAbleToDelete;
 
@@ -31,9 +41,22 @@ public abstract class SQLSessionIT {
 
     private final long endTimestamp = 15000L;
 
+    protected boolean ifClearData = true;
+
+    protected String storageEngineType;
+
     @BeforeClass
     public static void setUp() {
-        session = new Session("127.0.0.1", 6888, "root", "root");
+        if(isForSession)
+            session = new MultiConnection (new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
+        else if(isForSessionPool)
+            session = new MultiConnection ( new SessionPool.Builder()
+                    .host(defaultTestHost)
+                    .port(defaultTestPort)
+                    .user(defaultTestUser)
+                    .password(defaultTestPass)
+                    .maxSize(MaxMultiThreadTaskNum)
+                    .build());
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -80,6 +103,8 @@ public abstract class SQLSessionIT {
 
     @After
     public void clearData() throws ExecutionException, SessionException {
+        if(!ifClearData) return;
+
         String clearData = "CLEAR DATA;";
 
         SessionExecuteSqlResult res = session.executeSql(clearData);
@@ -125,6 +150,63 @@ public abstract class SQLSessionIT {
             logger.info("Statement: \"{}\" execute fail. Because: {}", statement, e.getMessage());
             assertEquals(expectedErrMsg, e.getMessage());
         }
+    }
+
+    @Test
+    public void iotdb11_IT() {
+    }
+
+    @Test
+    public void iotdb12_IT() {
+    }
+
+    @Test
+    public void capacityExpansion() {
+        if (ifClearData) return;
+
+        testCountPath();
+
+        testShowReplicaNum();
+
+        testTimeRangeQuery();
+
+//        testValueFilter();
+
+        testPathFilter();
+
+        testOrderByQuery();
+
+        testFirstLastQuery();
+
+        testAggregateQuery();
+
+        testDownSampleQuery();
+
+        testRangeDownSampleQuery();
+
+//        testFromMultiPath();
+
+        testAlias();
+
+        testAggregateSubQuery();
+
+        testValueFilterSubQuery();
+
+        testMultiSubQuery();
+
+        testDateFormat();
+
+        testSpecialPath();
+
+        testErrorClause();
+
+        testDelete();
+
+        testMultiRangeDelete();
+
+        testCrossRangeDelete();
+
+        testClearData();
     }
 
     @Test
@@ -371,13 +453,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testPathFilter() {
-        String insert = "INSERT INTO us.d2(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        String insert = "INSERT INTO us.d9(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
         execute(insert);
 
-        String query = "SELECT a, b FROM us.d2 WHERE a > b;";
+        String query = "SELECT a, b FROM us.d9 WHERE a > b;";
         String expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   6|      6|      4|\n" +
             "|   7|      7|      3|\n" +
@@ -387,10 +469,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a >= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a >= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "|   6|      6|      4|\n" +
@@ -401,10 +483,10 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a < b;";
+        query = "SELECT a, b FROM us.d9 WHERE a < b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -414,10 +496,10 @@ public abstract class SQLSessionIT {
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a <= b;";
+        query = "SELECT a, b FROM us.d9 WHERE a <= b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +
@@ -428,20 +510,20 @@ public abstract class SQLSessionIT {
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a = b;";
+        query = "SELECT a, b FROM us.d9 WHERE a = b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   5|      5|      5|\n" +
             "+----+-------+-------+\n" +
             "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT a, b FROM us.d2 WHERE a != b;";
+        query = "SELECT a, b FROM us.d9 WHERE a != b;";
         expected = "ResultSets:\n" +
             "+----+-------+-------+\n" +
-            "|Time|us.d2.a|us.d2.b|\n" +
+            "|Time|us.d9.a|us.d9.b|\n" +
             "+----+-------+-------+\n" +
             "|   1|      1|      9|\n" +
             "|   2|      2|      8|\n" +

@@ -1,0 +1,45 @@
+name: 'iotdb-runner'
+description: 'iotdb runner'
+inputs:
+  if-CapExp:
+    description: 'if you need capacity expansion'
+    required: false
+    default: "false"
+  version:
+    description: 'IoTDB version'
+    required: false
+    default: iotdb11
+
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - if: inputs.if-CapExp=='false'
+      name: Run IoTDB
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          chmod +x "${GITHUB_WORKSPACE}/.github/${{inputs.version}}.sh"
+          "${GITHUB_WORKSPACE}/.github/${{inputs.version}}.sh"
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          chmod +x "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_macos.sh"
+          "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_macos.sh"
+        else
+          echo "$RUNNER_OS is not supported"
+          exit 1
+        fi
+
+    - if: inputs.if-CapExp=='true'
+      name: Run IoTDB and change default config
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          chmod +x "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_history_data.sh"
+          "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_history_data.sh"
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          chmod +x "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_history_data_macos.sh"
+          "${GITHUB_WORKSPACE}/.github/${{inputs.version}}_history_data_macos.sh"
+        else
+          echo "$RUNNER_OS is not supported"
+          exit 1
+        fi
+        

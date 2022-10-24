@@ -1,0 +1,217 @@
+name: System IT for datasource IoTDB
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+  VERSION: 0.6.0-SNAPSHOT
+
+jobs:
+  IoTDB-Session-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: ${{ matrix.iotdb-version }}
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
+  IoTDB-SQL-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: ${{ matrix.iotdb-version }}
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for SQL
+        run: mvn test -q -Dtest=IoTDBSQLSessionIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
+  IoTDB-Tag-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: ${{ matrix.iotdb-version }}
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=TagIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
+  IoTDB-SessionPool-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: ${{ matrix.iotdb-version }}
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
+  IoTDB-SQL-SessionPool-Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          if-CapExp: "false"
+          version: ${{ matrix.iotdb-version }}
+
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Start IginX
+        uses: ./.github/actions/iginxRunner
+        with:
+          version: ${VERSION}
+
+      - name: A Lame Integration Test with Maven for SQL
+        run: mvn test -q -Dtest=SQLSessionPoolIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
