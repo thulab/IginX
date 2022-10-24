@@ -88,9 +88,9 @@ public class ParquetStorage implements IStorage {
     private static final String CONN_URL = "jdbc:duckdb:";
 
     // data-startTime-startPath
-    private static final String DATA_FILE_NAME_FORMATTER = "data_%s_%s.parquet";
+    private static final String DATA_FILE_NAME_FORMATTER = "data__%s__%s.parquet";
 
-    private static final String APPENDIX_DATA_FILE_NAME_FORMATTER = "appendix_data_%s_%s.parquet";
+    private static final String APPENDIX_DATA_FILE_NAME_FORMATTER = "appendixData__%s__%s.parquet";
 
     private static final String CREATE_TABLE_STMT = "CREATE TABLE %s (%s)";
 
@@ -245,7 +245,7 @@ public class ParquetStorage implements IStorage {
     private List<String> determinePathListWithTagFilter(String storageUnit, List<String> patterns,
         TagFilter tagFilter, boolean isDummyStorageUnit) throws PhysicalException {
         if (tagFilter == null) {
-            return determinePathList(storageUnit, patterns);
+            return determinePathList(storageUnit, patterns, isDummyStorageUnit);
         }
 
         List<Timeseries> timeSeries = new ArrayList<>();
@@ -269,7 +269,8 @@ public class ParquetStorage implements IStorage {
         return pathList;
     }
 
-    private List<String> determinePathList(String storageUnit, List<String> patterns) throws PhysicalException {
+    private List<String> determinePathList(String storageUnit, List<String> patterns,
+        boolean isDummyStorageUnit) throws PhysicalException {
         Set<String> patternWithoutStarSet = new HashSet<>();
         List<String> patternWithStarList = new ArrayList<>();
         patterns.forEach(pattern -> {
@@ -281,7 +282,12 @@ public class ParquetStorage implements IStorage {
         });
 
         List<String> pathList = new ArrayList<>();
-        List<Timeseries> timeSeries = getTimeSeriesOfStorageUnit(storageUnit);
+        List<Timeseries> timeSeries = new ArrayList<>();
+        if (isDummyStorageUnit) {
+            timeSeries.addAll(getTimeSeriesOfDir(Paths.get(dataDir, "*.parquet")));
+        } else {
+            timeSeries.addAll(getTimeSeriesOfStorageUnit(storageUnit));
+        }
         for (Timeseries ts : timeSeries) {
             if (patternWithoutStarSet.contains(ts.getPath())) {
                 String path = TagKVUtils.toFullName(ts.getPath(), ts.getTags());
