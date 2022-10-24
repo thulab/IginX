@@ -182,17 +182,17 @@ jobs:
             exit 1
           fi
       - name: Set Parquet
-          run: |
-            if [ "$RUNNER_OS" == "Linux" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/.github/parquet.sh"
-              "${GITHUB_WORKSPACE}/.github/parquet.sh"
-            elif [ "$RUNNER_OS" == "macOS" ]; then
-              chmod +x "${GITHUB_WORKSPACE}/.github/parquet_macos.sh"
-              "${GITHUB_WORKSPACE}/.github/parquet_macos.sh"
-            else
-              echo "$RUNNER_OS is not supported"
-              exit 1
-            fi
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/parquet.sh"
+            "${GITHUB_WORKSPACE}/.github/parquet.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/parquet_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/parquet_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Write history Data
