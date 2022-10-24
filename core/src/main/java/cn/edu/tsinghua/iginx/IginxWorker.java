@@ -209,7 +209,7 @@ public class IginxWorker implements IService.Iface {
         List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
         for (StorageEngineMeta storageEngine : storageEngineMetas) {
             for (StorageEngineMeta currentStorageEngine : currentStorageEngines) {
-                if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
+                if (isDuplicated(storageEngine, currentStorageEngine)) {
                     duplicatedStorageEngine.add(storageEngine);
                     break;
                 }
@@ -250,6 +250,18 @@ public class IginxWorker implements IService.Iface {
             PhysicalEngineImpl.getInstance().getStorageManager().addStorage(meta);
         }
         return status;
+    }
+
+    private boolean isDuplicated(StorageEngineMeta engine1, StorageEngineMeta engine2) {
+        if (!engine1.getStorageEngine().equals(engine2.getStorageEngine())) {
+            return false;
+        }
+        if (engine1.getStorageEngine().equals("parquet")) {  // parquet storage does not have ip and port.
+            String dir1 = engine1.getExtraParams().get("dir");
+            String dir2 = engine2.getExtraParams().get("dir");
+            return dir1.equals(dir2);
+        }
+        return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort();
     }
 
     @Override
