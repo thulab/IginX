@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.history;
+package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import org.apache.iotdb.session.Session;
 import org.junit.Test;
