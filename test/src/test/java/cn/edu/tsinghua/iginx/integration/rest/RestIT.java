@@ -154,14 +154,6 @@ public class RestIT {
     }
 
     @Test
-    public void iotdb11_IT() {
-    }
-
-    @Test
-    public void iotdb12_IT() {
-    }
-
-    @Test
     public void capacityExpansion() throws Exception {
         if(ifClearData) return;
 

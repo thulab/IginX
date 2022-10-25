@@ -2,8 +2,8 @@ package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import cn.edu.tsinghua.iginx.integration.rest.RestIT;
 
-public class RestCapExpIT extends RestIT {
-    public RestCapExpIT() {
+public class IoTDBRestfulScaleOutIT extends RestIT implements IoTDBBaseScaleOutIT{
+    public IoTDBRestfulScaleOutIT() {
         super();
     }
 

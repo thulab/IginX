@@ -20,29 +20,20 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
-import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
-public abstract class BaseSessionIT extends BaseSessionConcurrencyIT{
+public abstract class BaseSessionIT extends IoTDBBaseSessionConcurrencyIT {
 
     protected String storageEngineType;
     protected int defaultPort2;
@@ -186,14 +177,6 @@ public abstract class BaseSessionIT extends BaseSessionConcurrencyIT{
             }
         }
         return result;
-    }
-
-    @Test
-    public void iotdb11_IT() {
-    }
-
-    @Test
-    public void iotdb12_IT() {
     }
 
     @Test
