@@ -23,12 +23,6 @@ on:
     - cron: '22 22 * * 6'
 
 jobs:
-  cancel:
-    name: 'Cancel Previous Runs'
-    steps:
-      - uses: styfle/cancel-workflow-action
-        with:
-          workflow_id: all
   analyze:
     name: Analyze
     runs-on: ubuntu-latest

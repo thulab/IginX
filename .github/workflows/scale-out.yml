@@ -10,12 +10,6 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
-  cancel:
-    name: 'Cancel Previous Runs'
-    steps:
-      - uses: styfle/cancel-workflow-action
-        with:
-          workflow_id: all
   IoTDB-Tag-Test:
     timeout-minutes: 20
     strategy:
