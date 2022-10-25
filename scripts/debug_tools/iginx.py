@@ -1,3 +1,0 @@
-
-class IGinXMetaServer(object):
-    pass

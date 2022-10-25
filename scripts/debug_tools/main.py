@@ -1,6 +1,7 @@
 import argparse
 
 from zk import ZooKeeperMetaServer
+from iginx_db import IGinXMetaServer
 from plt import plot
 
 ZK = 'zookeeper'
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     if args.source == ZK:
         meta_server = ZooKeeperMetaServer(args.ip + ':' + args.port)
     elif args.source == IGINX:
-        meta_server = ZooKeeperMetaServer(args.ip + ':' +args.port)
+        meta_server = IGinXMetaServer(args.ip, args.port)
 
     if meta_server is None:
         print("unknown source " + args.source)

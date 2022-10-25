@@ -280,6 +280,18 @@ class UDFType(object):
     }
 
 
+class DebugInfoType(object):
+    GET_META = 0
+
+    _VALUES_TO_NAMES = {
+        0: "GET_META",
+    }
+
+    _NAMES_TO_VALUES = {
+        "GET_META": 0,
+    }
+
+
 class Status(object):
     """
     Attributes:
@@ -6738,6 +6750,614 @@ class CurveMatchResp(object):
 
     def __ne__(self, other):
         return not (self == other)
+
+
+class GetMetaReq(object):
+    """
+    Attributes:
+     - byCache
+
+    """
+
+
+    def __init__(self, byCache=None,):
+        self.byCache = byCache
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.BOOL:
+                    self.byCache = iprot.readBool()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('GetMetaReq')
+        if self.byCache is not None:
+            oprot.writeFieldBegin('byCache', TType.BOOL, 1)
+            oprot.writeBool(self.byCache)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.byCache is None:
+            raise TProtocolException(message='Required field byCache is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class Fragment(object):
+    """
+    Attributes:
+     - storageUnitId
+     - startTime
+     - endTime
+     - startTs
+     - endTs
+
+    """
+
+
+    def __init__(self, storageUnitId=None, startTime=None, endTime=None, startTs=None, endTs=None,):
+        self.storageUnitId = storageUnitId
+        self.startTime = startTime
+        self.endTime = endTime
+        self.startTs = startTs
+        self.endTs = endTs
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.storageUnitId = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.I64:
+                    self.startTime = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I64:
+                    self.endTime = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.startTs = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 5:
+                if ftype == TType.STRING:
+                    self.endTs = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('Fragment')
+        if self.storageUnitId is not None:
+            oprot.writeFieldBegin('storageUnitId', TType.STRING, 1)
+            oprot.writeString(self.storageUnitId.encode('utf-8') if sys.version_info[0] == 2 else self.storageUnitId)
+            oprot.writeFieldEnd()
+        if self.startTime is not None:
+            oprot.writeFieldBegin('startTime', TType.I64, 2)
+            oprot.writeI64(self.startTime)
+            oprot.writeFieldEnd()
+        if self.endTime is not None:
+            oprot.writeFieldBegin('endTime', TType.I64, 3)
+            oprot.writeI64(self.endTime)
+            oprot.writeFieldEnd()
+        if self.startTs is not None:
+            oprot.writeFieldBegin('startTs', TType.STRING, 4)
+            oprot.writeString(self.startTs.encode('utf-8') if sys.version_info[0] == 2 else self.startTs)
+            oprot.writeFieldEnd()
+        if self.endTs is not None:
+            oprot.writeFieldBegin('endTs', TType.STRING, 5)
+            oprot.writeString(self.endTs.encode('utf-8') if sys.version_info[0] == 2 else self.endTs)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.storageUnitId is None:
+            raise TProtocolException(message='Required field storageUnitId is unset!')
+        if self.startTime is None:
+            raise TProtocolException(message='Required field startTime is unset!')
+        if self.endTime is None:
+            raise TProtocolException(message='Required field endTime is unset!')
+        if self.startTs is None:
+            raise TProtocolException(message='Required field startTs is unset!')
+        if self.endTs is None:
+            raise TProtocolException(message='Required field endTs is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class Storage(object):
+    """
+    Attributes:
+     - id
+     - ip
+     - port
+     - type
+
+    """
+
+
+    def __init__(self, id=None, ip=None, port=None, type=None,):
+        self.id = id
+        self.ip = ip
+        self.port = port
+        self.type = type
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I64:
+                    self.id = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I64:
+                    self.port = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.STRING:
+                    self.type = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('Storage')
+        if self.id is not None:
+            oprot.writeFieldBegin('id', TType.I64, 1)
+            oprot.writeI64(self.id)
+            oprot.writeFieldEnd()
+        if self.ip is not None:
+            oprot.writeFieldBegin('ip', TType.STRING, 2)
+            oprot.writeString(self.ip.encode('utf-8') if sys.version_info[0] == 2 else self.ip)
+            oprot.writeFieldEnd()
+        if self.port is not None:
+            oprot.writeFieldBegin('port', TType.I64, 3)
+            oprot.writeI64(self.port)
+            oprot.writeFieldEnd()
+        if self.type is not None:
+            oprot.writeFieldBegin('type', TType.STRING, 4)
+            oprot.writeString(self.type.encode('utf-8') if sys.version_info[0] == 2 else self.type)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.id is None:
+            raise TProtocolException(message='Required field id is unset!')
+        if self.ip is None:
+            raise TProtocolException(message='Required field ip is unset!')
+        if self.port is None:
+            raise TProtocolException(message='Required field port is unset!')
+        if self.type is None:
+            raise TProtocolException(message='Required field type is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class StorageUnit(object):
+    """
+    Attributes:
+     - id
+     - masterId
+     - storageId
+
+    """
+
+
+    def __init__(self, id=None, masterId=None, storageId=None,):
+        self.id = id
+        self.masterId = masterId
+        self.storageId = storageId
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.id = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.masterId = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I64:
+                    self.storageId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('StorageUnit')
+        if self.id is not None:
+            oprot.writeFieldBegin('id', TType.STRING, 1)
+            oprot.writeString(self.id.encode('utf-8') if sys.version_info[0] == 2 else self.id)
+            oprot.writeFieldEnd()
+        if self.masterId is not None:
+            oprot.writeFieldBegin('masterId', TType.STRING, 2)
+            oprot.writeString(self.masterId.encode('utf-8') if sys.version_info[0] == 2 else self.masterId)
+            oprot.writeFieldEnd()
+        if self.storageId is not None:
+            oprot.writeFieldBegin('storageId', TType.I64, 3)
+            oprot.writeI64(self.storageId)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.id is None:
+            raise TProtocolException(message='Required field id is unset!')
+        if self.masterId is None:
+            raise TProtocolException(message='Required field masterId is unset!')
+        if self.storageId is None:
+            raise TProtocolException(message='Required field storageId is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class GetMetaResp(object):
+    """
+    Attributes:
+     - fragments
+     - storages
+     - storageUnits
+
+    """
+
+
+    def __init__(self, fragments=None, storages=None, storageUnits=None,):
+        self.fragments = fragments
+        self.storages = storages
+        self.storageUnits = storageUnits
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.LIST:
+                    self.fragments = []
+                    (_etype709, _size706) = iprot.readListBegin()
+                    for _i710 in range(_size706):
+                        _elem711 = Fragment()
+                        _elem711.read(iprot)
+                        self.fragments.append(_elem711)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.LIST:
+                    self.storages = []
+                    (_etype715, _size712) = iprot.readListBegin()
+                    for _i716 in range(_size712):
+                        _elem717 = Storage()
+                        _elem717.read(iprot)
+                        self.storages.append(_elem717)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.LIST:
+                    self.storageUnits = []
+                    (_etype721, _size718) = iprot.readListBegin()
+                    for _i722 in range(_size718):
+                        _elem723 = StorageUnit()
+                        _elem723.read(iprot)
+                        self.storageUnits.append(_elem723)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('GetMetaResp')
+        if self.fragments is not None:
+            oprot.writeFieldBegin('fragments', TType.LIST, 1)
+            oprot.writeListBegin(TType.STRUCT, len(self.fragments))
+            for iter724 in self.fragments:
+                iter724.write(oprot)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.storages is not None:
+            oprot.writeFieldBegin('storages', TType.LIST, 2)
+            oprot.writeListBegin(TType.STRUCT, len(self.storages))
+            for iter725 in self.storages:
+                iter725.write(oprot)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.storageUnits is not None:
+            oprot.writeFieldBegin('storageUnits', TType.LIST, 3)
+            oprot.writeListBegin(TType.STRUCT, len(self.storageUnits))
+            for iter726 in self.storageUnits:
+                iter726.write(oprot)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.fragments is None:
+            raise TProtocolException(message='Required field fragments is unset!')
+        if self.storages is None:
+            raise TProtocolException(message='Required field storages is unset!')
+        if self.storageUnits is None:
+            raise TProtocolException(message='Required field storageUnits is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class DebugInfoReq(object):
+    """
+    Attributes:
+     - payloadType
+     - payload
+
+    """
+
+
+    def __init__(self, payloadType=None, payload=None,):
+        self.payloadType = payloadType
+        self.payload = payload
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I32:
+                    self.payloadType = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.payload = iprot.readBinary()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('DebugInfoReq')
+        if self.payloadType is not None:
+            oprot.writeFieldBegin('payloadType', TType.I32, 1)
+            oprot.writeI32(self.payloadType)
+            oprot.writeFieldEnd()
+        if self.payload is not None:
+            oprot.writeFieldBegin('payload', TType.STRING, 2)
+            oprot.writeBinary(self.payload)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.payloadType is None:
+            raise TProtocolException(message='Required field payloadType is unset!')
+        if self.payload is None:
+            raise TProtocolException(message='Required field payload is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class DebugInfoResp(object):
+    """
+    Attributes:
+     - status
+     - payload
+
+    """
+
+
+    def __init__(self, status=None, payload=None,):
+        self.status = status
+        self.payload = payload
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRUCT:
+                    self.status = Status()
+                    self.status.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.payload = iprot.readBinary()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('DebugInfoResp')
+        if self.status is not None:
+            oprot.writeFieldBegin('status', TType.STRUCT, 1)
+            self.status.write(oprot)
+            oprot.writeFieldEnd()
+        if self.payload is not None:
+            oprot.writeFieldBegin('payload', TType.STRING, 2)
+            oprot.writeBinary(self.payload)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.status is None:
+            raise TProtocolException(message='Required field status is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
 all_structs.append(Status)
 Status.thrift_spec = (
     None,  # 0
@@ -7211,6 +7831,54 @@ CurveMatchResp.thrift_spec = (
     (1, TType.STRUCT, 'status', [Status, None], None, ),  # 1
     (2, TType.STRING, 'matchedPath', 'UTF8', None, ),  # 2
     (3, TType.I64, 'matchedTimestamp', None, None, ),  # 3
+)
+all_structs.append(GetMetaReq)
+GetMetaReq.thrift_spec = (
+    None,  # 0
+    (1, TType.BOOL, 'byCache', None, None, ),  # 1
+)
+all_structs.append(Fragment)
+Fragment.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'storageUnitId', 'UTF8', None, ),  # 1
+    (2, TType.I64, 'startTime', None, None, ),  # 2
+    (3, TType.I64, 'endTime', None, None, ),  # 3
+    (4, TType.STRING, 'startTs', 'UTF8', None, ),  # 4
+    (5, TType.STRING, 'endTs', 'UTF8', None, ),  # 5
+)
+all_structs.append(Storage)
+Storage.thrift_spec = (
+    None,  # 0
+    (1, TType.I64, 'id', None, None, ),  # 1
+    (2, TType.STRING, 'ip', 'UTF8', None, ),  # 2
+    (3, TType.I64, 'port', None, None, ),  # 3
+    (4, TType.STRING, 'type', 'UTF8', None, ),  # 4
+)
+all_structs.append(StorageUnit)
+StorageUnit.thrift_spec = (
+    None,  # 0
+    (1, TType.STRING, 'id', 'UTF8', None, ),  # 1
+    (2, TType.STRING, 'masterId', 'UTF8', None, ),  # 2
+    (3, TType.I64, 'storageId', None, None, ),  # 3
+)
+all_structs.append(GetMetaResp)
+GetMetaResp.thrift_spec = (
+    None,  # 0
+    (1, TType.LIST, 'fragments', (TType.STRUCT, [Fragment, None], False), None, ),  # 1
+    (2, TType.LIST, 'storages', (TType.STRUCT, [Storage, None], False), None, ),  # 2
+    (3, TType.LIST, 'storageUnits', (TType.STRUCT, [StorageUnit, None], False), None, ),  # 3
+)
+all_structs.append(DebugInfoReq)
+DebugInfoReq.thrift_spec = (
+    None,  # 0
+    (1, TType.I32, 'payloadType', None, None, ),  # 1
+    (2, TType.STRING, 'payload', 'BINARY', None, ),  # 2
+)
+all_structs.append(DebugInfoResp)
+DebugInfoResp.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'status', [Status, None], None, ),  # 1
+    (2, TType.STRING, 'payload', 'BINARY', None, ),  # 2
 )
 fix_spec(all_structs)
 del all_structs

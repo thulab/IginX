@@ -46,6 +46,7 @@ from .thrift.rpc.ttypes import (
     ExecuteStatementReq,
     FetchResultsReq,
     CloseStatementReq,
+    DebugInfoReq,
 
     StorageEngine,
 )
@@ -482,6 +483,12 @@ class Session(object):
         return StatementExecuteDataSet(self, resp.queryId, resp.columns, resp.dataTypeList, fetch_size,
                                        resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList)
 
+
+    def get_debug_info(self, payload, typ):
+        req = DebugInfoReq(payload=payload, payloadType=typ)
+        resp = self.__client.debugInfo(req)
+        Session.verify_status(resp.status)
+        return resp.payload
 
     def _fetch(self, query_id, fetch_size):
         req = FetchResultsReq(sessionId=self.__session_id, queryId=query_id, fetchSize=fetch_size)
