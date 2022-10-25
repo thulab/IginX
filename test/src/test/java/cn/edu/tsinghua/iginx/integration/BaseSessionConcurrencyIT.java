@@ -21,7 +21,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import static org.junit.Assert.*;
 
-public abstract class IoTDBBaseSessionConcurrencyIT {
+public abstract class BaseSessionConcurrencyIT {
 
     //parameters to be flexibly configured by inheritance
     protected static MultiConnection session;
@@ -90,10 +90,10 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
         //query test, multithread insert for storage; multithread query
         int mulStQueryLen = 5;
         List<String> mulStPaths = getPaths(currPath, mulStQueryLen);
-        IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] mulStInsertTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[mulStQueryLen];
+        BaseSessionConcurrencyIT.MultiThreadTask[] mulStInsertTasks = new BaseSessionConcurrencyIT.MultiThreadTask[mulStQueryLen];
         Thread[] mulStInsertThreads = new Thread[mulStQueryLen];
         for (int i = 0; i < mulStQueryLen; i++) {
-            mulStInsertTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(1, getPaths(currPath + i, 1), START_TIME, END_TIME,
+            mulStInsertTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(1, getPaths(currPath + i, 1), START_TIME, END_TIME,
                     TIME_PERIOD, 1, null, 6888);
             mulStInsertThreads[i] = new Thread(mulStInsertTasks[i]);
         }
@@ -107,12 +107,12 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
 
         //query
         int queryTaskNum = 4;
-        IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] mulStQueryTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[queryTaskNum];
+        BaseSessionConcurrencyIT.MultiThreadTask[] mulStQueryTasks = new BaseSessionConcurrencyIT.MultiThreadTask[queryTaskNum];
         Thread[] mulStQueryThreads = new Thread[queryTaskNum];
         //each query query one storage
 
         for (int i = 0; i < queryTaskNum; i++) {
-            mulStQueryTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(3, mulStPaths, START_TIME, END_TIME + 1,
+            mulStQueryTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(3, mulStPaths, START_TIME, END_TIME + 1,
                     0, 0, null, 6888);
             mulStQueryThreads[i] = new Thread(mulStQueryTasks[i]);
         }
@@ -167,10 +167,10 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
         //query test, multithread insert for time, multithread query
         int mulTimeQueryLen = 5;
         List<String> mulTimePaths = getPaths(currPath, mulTimeQueryLen);
-        IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] mulTimeInsertTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[mulTimeQueryLen];
+        BaseSessionConcurrencyIT.MultiThreadTask[] mulTimeInsertTasks = new BaseSessionConcurrencyIT.MultiThreadTask[mulTimeQueryLen];
         Thread[] mulTimeInsertThreads = new Thread[mulTimeQueryLen];
         for (int i = 0; i < mulTimeQueryLen; i++) {
-            mulTimeInsertTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(1, mulTimePaths, START_TIME + i, END_TIME - (4 - i),
+            mulTimeInsertTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(1, mulTimePaths, START_TIME + i, END_TIME - (4 - i),
                     TIME_PERIOD / mulTimeQueryLen, mulTimeQueryLen, null, 6888);
             mulTimeInsertThreads[i] = new Thread(mulTimeInsertTasks[i]);
         }
@@ -231,10 +231,10 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
             assertEquals(mulDelPSLen, bfPSPath.size());
             assertEquals(TIME_PERIOD, beforePSDataSet.getValues().size());
             int delPSThreadNum = mulDelPSLen - 1;
-            IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] delPSTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[delPSThreadNum];
+            BaseSessionConcurrencyIT.MultiThreadTask[] delPSTasks = new BaseSessionConcurrencyIT.MultiThreadTask[delPSThreadNum];
             Thread[] delPSThreads = new Thread[delPSThreadNum];
             for (int i = 0; i < delPSThreadNum; i++) {
-                delPSTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(2, getPaths(currPath + i, 1), delStartTime,
+                delPSTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(2, getPaths(currPath + i, 1), delStartTime,
                         delEndTime, delTimePeriod, 1, null, 6888);
                 delPSThreads[i] = new Thread(delPSTasks[i]);
             }
@@ -305,14 +305,14 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
             int delPTPathNum = 4;
             // the deleted paths of the data
             List<String> delPTPaths = getPaths(currPath, delPTPathNum);
-            IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] delPTTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[delPTThreadNum];
+            BaseSessionConcurrencyIT.MultiThreadTask[] delPTTasks = new BaseSessionConcurrencyIT.MultiThreadTask[delPTThreadNum];
             Thread[] delPTThreads = new Thread[delPTThreadNum];
             long delPTStartTime = START_TIME + TIME_PERIOD / 5;
             long delPTStep = TIME_PERIOD / 10;
             long delPTTimePeriod = delPTStep * delPTThreadNum;
             long delPTEndTime = delPTStartTime + TIME_PERIOD / 10 * delPTThreadNum - 1;
             for (int i = 0; i < delPTThreadNum; i++) {
-                delPTTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(2, delPTPaths, delPTStartTime + delPTStep * i,
+                delPTTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(2, delPTPaths, delPTStartTime + delPTStep * i,
                         delPTStartTime + delPTStep * (i + 1), delPTStep, 1, null, 6888);
                 delPTThreads[i] = new Thread(delPTTasks[i]);
             }
@@ -373,10 +373,10 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
             Thread.sleep(1000);
             // threadNum must < 5
             int delASThreadNum = 4;
-            IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] delASTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[delASThreadNum];
+            BaseSessionConcurrencyIT.MultiThreadTask[] delASTasks = new BaseSessionConcurrencyIT.MultiThreadTask[delASThreadNum];
             Thread[] delASThreads = new Thread[delASThreadNum];
             for (int i = 0; i < delASThreadNum; i++) {
-                delASTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(2, getPaths(currPath + i, 1), START_TIME,
+                delASTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(2, getPaths(currPath + i, 1), START_TIME,
                         END_TIME + 1, TIME_PERIOD, 1, null, 6888);
                 delASThreads[i] = new Thread(delASTasks[i]);
             }
@@ -436,11 +436,11 @@ public abstract class IoTDBBaseSessionConcurrencyIT {
             long delATStartTime = START_TIME;
             long delATStep = TIME_PERIOD / delATThreadNum;
 
-            IoTDBBaseSessionConcurrencyIT.MultiThreadTask[] delATTasks = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask[delATThreadNum];
+            BaseSessionConcurrencyIT.MultiThreadTask[] delATTasks = new BaseSessionConcurrencyIT.MultiThreadTask[delATThreadNum];
             Thread[] delATThreads = new Thread[delATThreadNum];
 
             for (int i = 0; i < delATThreadNum; i++) {
-                delATTasks[i] = new IoTDBBaseSessionConcurrencyIT.MultiThreadTask(2, delATPath, delATStartTime + delATStep * i,
+                delATTasks[i] = new BaseSessionConcurrencyIT.MultiThreadTask(2, delATPath, delATStartTime + delATStep * i,
                         delATStartTime + delATStep * (i + 1), delATStep, 1, null, 6888);
                 delATThreads[i] = new Thread(delATTasks[i]);
             }

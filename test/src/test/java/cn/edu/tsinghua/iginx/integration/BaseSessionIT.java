@@ -33,7 +33,7 @@ import java.util.Random;
 
 import static org.junit.Assert.*;
 
-public abstract class BaseSessionIT extends IoTDBBaseSessionConcurrencyIT {
+public abstract class BaseSessionIT extends BaseSessionConcurrencyIT {
 
     protected String storageEngineType;
     protected int defaultPort2;

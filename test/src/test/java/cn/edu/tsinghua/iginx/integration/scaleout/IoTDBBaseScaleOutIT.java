@@ -5,8 +5,8 @@ import org.junit.Test;
 public interface IoTDBBaseScaleOutIT {
 
     @Test
-    public void iotdb11_IT();
+    void iotdb11_IT();
 
     @Test
-    public void iotdb12_IT();
+    void iotdb12_IT();
 }
