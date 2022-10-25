@@ -41,6 +41,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -128,6 +129,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -215,6 +217,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -302,6 +305,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
