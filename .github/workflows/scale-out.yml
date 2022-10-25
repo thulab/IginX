@@ -9,6 +9,10 @@ on:
 env:
   VERSION: 0.6.0-SNAPSHOT
 
+concurrency:
+  group: scale-out
+  cancel-in-progress: true
+
 jobs:
   IoTDB-Tag-Test:
     timeout-minutes: 1

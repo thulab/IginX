@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: unit-mds
+  cancel-in-progress: true
+
 jobs:
   ZK-Test:
     strategy:

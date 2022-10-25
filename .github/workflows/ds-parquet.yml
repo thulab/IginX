@@ -10,6 +10,10 @@ on:
 env:
   VERSION: 0.6.0-SNAPSHOT
 
+concurrency:
+  group: ds-parquet
+  cancel-in-progress: true
+
 jobs:
   Parquet-SQL-Test:
     strategy:

@@ -10,6 +10,10 @@ on:
 env:
   VERSION: 0.6.0-SNAPSHOT
 
+concurrency:
+  group: api-rest
+  cancel-in-progress: true
+
 jobs:
   REST-Test:
     strategy:
