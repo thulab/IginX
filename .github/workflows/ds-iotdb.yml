@@ -46,7 +46,16 @@ jobs:
           version: ${VERSION}
 
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
+        run: |
+          if [ ${{ matrix.iotdb-version }} == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
+          elif [ ${{ matrix.iotdb-version }} == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
+          else
+            echo "${{ matrix.iotdb-version }} is not supported"
+            exit 1
+          fi
+
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -169,7 +178,15 @@ jobs:
           version: ${VERSION}
 
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
+        run: |
+          if [ ${{ matrix.iotdb-version }} == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11SessionPoolIT -DfailIfNoTests=false
+          elif [ ${{ matrix.iotdb-version }} == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
+          else
+            echo "${{ matrix.iotdb-version }} is not supported"
+            exit 1
+          fi
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
