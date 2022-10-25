@@ -1,12 +1,18 @@
 name: Cancel
+
 on:
-  workflow_run:
-    workflows: [ "API-Test-RESTful", "Capacity-Expansions-On-IoTDB", "System-IT-ds-InfluxDB", "CodeQL", "System-IT-ds-IoTDB", "System-IT-ds-Parquet", "Function-Test-UDF", "Scale-out-On-IoTDB", "Metadata-Service-Test" ]
-    types:
-      - requested
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   cancel:
+    name: 'Cancel Previous Runs'
+    timeout-minutes: 3
     steps:
-      - uses: styfle/cancel-workflow-action
+      - uses: styfle/cancel-workflow-action@0.9.1
         with:
-          workflow_id: ${{ github.event.workflow.id }}
+          workflow_id: all
