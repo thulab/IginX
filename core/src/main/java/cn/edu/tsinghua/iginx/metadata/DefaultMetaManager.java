@@ -385,7 +385,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public List<FragmentMeta> getFragments() {
-        return null;
+        return cache.getFragments();
     }
 
     @Override
