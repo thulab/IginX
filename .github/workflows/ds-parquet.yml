@@ -1,4 +1,4 @@
-name: System IT for datasource Parquet
+name: "System-IT-ds-Parquet"
 
 on:
   push:
@@ -9,6 +9,10 @@ on:
       - main
 env:
   VERSION: 0.6.0-SNAPSHOT
+
+concurrency:
+  group: ds-parquet
+  cancel-in-progress: true
 
 jobs:
   Parquet-SQL-Test:

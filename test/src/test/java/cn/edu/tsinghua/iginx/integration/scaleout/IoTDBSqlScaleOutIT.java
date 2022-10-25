@@ -1,10 +1,11 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
 
-public class SQLCapExpSessioinIT extends SQLSessionIT{
-    public SQLCapExpSessioinIT() {
+public class IoTDBSqlScaleOutIT extends SQLSessionIT implements IoTDBBaseScaleOutIT{
+    public IoTDBSqlScaleOutIT() {
         super();
     }
 

@@ -1,4 +1,4 @@
-name: Capacity Expansion Test
+name: "Scale-out-On-IoTDB"
 on:
   push:
     branches:
@@ -9,116 +9,13 @@ on:
 env:
   VERSION: 0.6.0-SNAPSHOT
 
+concurrency:
+  group: scale-out
+  cancel-in-progress: true
+
 jobs:
-  IoTDB-Test:
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-        DB-name: [ "iotdb11", "iotdb12" ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "true"
-          version: ${{matrix.DB-name}}
-
-      - name: Change pom
-        run: |
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
-
-      #第 1 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          version: ${VERSION}
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpNoData
-
-      - name: OriNoDataExpNoData IT
-        run: |
-          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          fi
-
-      #第 2 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        if: always()
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          version: ${VERSION}
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriHasDataExpNoData
-
-      - name: OriHasDataExpNoData IT
-        if: always()
-        run: |
-          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          fi
-
-      #第 3 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        if: always()
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          version: ${VERSION}
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpHasData
-
-      - name: OriNoDataExpHasData IT
-        if: always()
-        run: |
-          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          fi
-
-      #第 4 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        if: always()
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          version: ${VERSION}
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriHasDataExpHasData
-
-      - name: OriHasDataExpHasData IT
-        if: always()
-        run: |
-          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
-          fi
-
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
   IoTDB-Tag-Test:
-    timeout-minutes: 20
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -148,6 +45,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -158,7 +56,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -171,7 +69,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -184,7 +82,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -197,7 +95,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=TagCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -205,7 +103,7 @@ jobs:
           name: codecov
 
   IoTDB-SQLSession-Test:
-    timeout-minutes: 20
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -235,6 +133,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -245,7 +144,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -258,7 +157,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -271,7 +170,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -284,7 +183,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=SQLCapExpSessioinIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -292,7 +191,7 @@ jobs:
           name: codecov
 
   IoTDB-Session-Test:
-    timeout-minutes: 20
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -322,6 +221,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -332,7 +232,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -345,7 +245,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -358,7 +258,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -371,7 +271,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBBaseSessionCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -379,7 +279,7 @@ jobs:
           name: codecov
 
   IoTDB-Rest-Test:
-    timeout-minutes: 20
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -409,6 +309,7 @@ jobs:
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+          ls test/pom*
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -419,7 +320,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -432,7 +333,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -445,7 +346,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -458,7 +359,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=RestCapExpIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:

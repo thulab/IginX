@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.history;
+package cn.edu.tsinghua.iginx.integration.expansion;
 
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
@@ -38,17 +38,6 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
         } catch (SessionException e) {
             logger.error(e.getMessage());
         }
-    }
-
-    @Test
-    public void iotdb11() {
-        this.ENGINE_TYPE = "iotdb11";
-
-    }
-
-    @Test
-    public void iotdb12() {
-        this.ENGINE_TYPE = "iotdb12";
     }
 
     @Test

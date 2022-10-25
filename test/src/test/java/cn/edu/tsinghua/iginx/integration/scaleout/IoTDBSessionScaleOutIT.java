@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.iotdb;
+package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
@@ -6,8 +6,8 @@ import cn.edu.tsinghua.iginx.integration.BaseSessionIT;
 
 import java.util.LinkedHashMap;
 
-public class IoTDBBaseSessionCapExpIT extends BaseSessionIT {
-    public IoTDBBaseSessionCapExpIT() {
+public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseScaleOutIT{
+    public IoTDBSessionScaleOutIT() {
         super();
     }
 

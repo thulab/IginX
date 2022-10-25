@@ -1,4 +1,4 @@
-name: System IT for datasource InfluxDB
+name: "System-IT-ds-InfluxDB"
 
 on:
   push:
@@ -9,6 +9,10 @@ on:
       - main
 env:
   VERSION: 0.6.0-SNAPSHOT
+
+concurrency:
+  group: ds-influxdb
+  cancel-in-progress: true
 
 jobs:
   InfluxDB-Capacity-Expansion-Test:

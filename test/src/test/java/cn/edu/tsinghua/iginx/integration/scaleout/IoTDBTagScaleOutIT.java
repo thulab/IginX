@@ -1,11 +1,12 @@
-package cn.edu.tsinghua.iginx.integration;
+package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.integration.TagIT;
 
-public class TagCapExpIT extends TagIT{
+public class IoTDBTagScaleOutIT extends TagIT implements IoTDBBaseScaleOutIT{
 
-    public TagCapExpIT() {
+    public IoTDBTagScaleOutIT() {
         super();
     }
 
