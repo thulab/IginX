@@ -1,4 +1,4 @@
-name: Tests for Capacity Expansion On IoTDB
+name: "Capacity-Expansions-On-IoTDB"
 on:
   push:
     branches:
@@ -10,6 +10,12 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
+  cancel:
+    name: 'Cancel Previous Runs'
+    steps:
+      - uses: styfle/cancel-workflow-action
+        with:
+          workflow_id: all
   IoTDB-Test:
     timeout-minutes: 20
     strategy:

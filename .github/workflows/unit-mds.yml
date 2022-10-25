@@ -1,4 +1,4 @@
-name: Metadata Service Test
+name: "Metadata-Service-Test"
 
 on:
   push:
@@ -9,6 +9,12 @@ on:
       - main
 
 jobs:
+  cancel:
+    name: 'Cancel Previous Runs'
+    steps:
+      - uses: styfle/cancel-workflow-action
+        with:
+          workflow_id: all
   ZK-Test:
     strategy:
       fail-fast: false

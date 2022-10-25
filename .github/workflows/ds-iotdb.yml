@@ -1,4 +1,4 @@
-name: System IT for datasource IoTDB
+name: "System-IT-ds-IoTDB"
 
 on:
   push:
@@ -11,6 +11,12 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
+  cancel:
+    name: 'Cancel Previous Runs'
+    steps:
+      - uses: styfle/cancel-workflow-action
+        with:
+          workflow_id: all
   IoTDB-Session-Test:
     strategy:
       fail-fast: false

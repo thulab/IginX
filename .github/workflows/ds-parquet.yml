@@ -1,4 +1,4 @@
-name: System IT for datasource Parquet
+name: "System-IT-ds-Parquet"
 
 on:
   push:
@@ -11,6 +11,12 @@ env:
   VERSION: 0.6.0-SNAPSHOT
 
 jobs:
+  cancel:
+    name: 'Cancel Previous Runs'
+    steps:
+      - uses: styfle/cancel-workflow-action
+        with:
+          workflow_id: all
   Parquet-SQL-Test:
     strategy:
       fail-fast: false
