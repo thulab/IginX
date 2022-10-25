@@ -9,7 +9,7 @@ on:
       - main
 
 concurrency:
-  group: unit-mds
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
