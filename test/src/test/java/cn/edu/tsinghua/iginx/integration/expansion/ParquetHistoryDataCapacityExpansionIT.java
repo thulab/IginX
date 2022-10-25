@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.scaleout;
+package cn.edu.tsinghua.iginx.integration.expansion;
 
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;

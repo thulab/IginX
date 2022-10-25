@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.scaleout;
+package cn.edu.tsinghua.iginx.integration.expansion;
 
 import static org.junit.Assert.fail;
 

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.scaleout;
+package cn.edu.tsinghua.iginx.integration.expansion;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.iotdb;
+package cn.edu.tsinghua.iginx.integration.scaleout;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;

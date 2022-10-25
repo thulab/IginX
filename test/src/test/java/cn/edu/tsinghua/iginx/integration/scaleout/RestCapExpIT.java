@@ -1,4 +1,6 @@
-package cn.edu.tsinghua.iginx.integration.rest;
+package cn.edu.tsinghua.iginx.integration.scaleout;
+
+import cn.edu.tsinghua.iginx.integration.rest.RestIT;
 
 public class RestCapExpIT extends RestIT {
     public RestCapExpIT() {
