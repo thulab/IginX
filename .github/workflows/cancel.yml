@@ -10,8 +10,8 @@ on:
 
 jobs:
   cancel:
-    name: 'Cancel Previous Runs'
     timeout-minutes: 3
+    runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.9.1
         with:
