@@ -17,12 +17,15 @@ public class DeleteStatement extends DataStatement {
     private List<TimeRange> timeRanges;
     private TagFilter tagFilter;
 
+    private boolean involveDummyData;
+
     public DeleteStatement() {
         this.statementType = StatementType.DELETE;
         this.paths = new ArrayList<>();
         this.timeRanges = new ArrayList<>();
         this.deleteAll = false;
         this.tagFilter = null;
+        this.involveDummyData = false;
     }
 
     public DeleteStatement(List<String> paths, long startTime, long endTime) {
@@ -32,6 +35,7 @@ public class DeleteStatement extends DataStatement {
         this.timeRanges.add(new TimeRange(startTime, endTime));
         this.deleteAll = false;
         this.tagFilter = null;
+        this.involveDummyData = false;
     }
 
     public DeleteStatement(List<String> paths) {
@@ -44,6 +48,7 @@ public class DeleteStatement extends DataStatement {
         this.timeRanges = new ArrayList<>();
         this.deleteAll = true;
         this.tagFilter = tagFilter;
+        this.involveDummyData = false;
     }
 
     public List<String> getPaths() {
@@ -68,6 +73,14 @@ public class DeleteStatement extends DataStatement {
 
     public void setTagFilter(TagFilter tagFilter) {
         this.tagFilter = tagFilter;
+    }
+
+    public boolean isInvolveDummyData() {
+        return involveDummyData;
+    }
+
+    public void setInvolveDummyData(boolean involveDummyData) {
+        this.involveDummyData = involveDummyData;
     }
 
     public void setTimeRangesByFilter(Filter filter) {

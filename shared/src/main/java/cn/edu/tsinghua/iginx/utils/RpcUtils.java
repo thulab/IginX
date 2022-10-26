@@ -40,6 +40,8 @@ public class RpcUtils {
 
     public static Status SERVICE_UNAVAILABLE = new Status(StatusCode.SERVICE_UNAVAILABLE.getStatusCode());
 
+    public static Status MODIFY_DUMMY_FRAGMENTS_DATA = new Status(StatusCode.MODIFY_DUMMY_FRAGMENTS_DATA_ERROR.getStatusCode());
+
     public static Status JOB_FINISHED = new Status(StatusCode.JOB_FINISHED.getStatusCode());
     public static Status JOB_CREATED = new Status(StatusCode.JOB_CREATED.getStatusCode());
     public static Status JOB_RUNNING = new Status(StatusCode.JOB_RUNNING.getStatusCode());
@@ -54,6 +56,7 @@ public class RpcUtils {
         PARTIAL_SUCCESS.setMessage("partial success");
         FAILURE.setMessage("unexpected error");
         SERVICE_UNAVAILABLE.setMessage("service unavailable for the sake of high workload");
+        MODIFY_DUMMY_FRAGMENTS_DATA.setMessage("modify dummy fragments data");
     }
 
     public static void verifySuccess(Status status) throws ExecutionException {

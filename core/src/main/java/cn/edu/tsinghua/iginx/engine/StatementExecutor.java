@@ -320,8 +320,15 @@ public class StatementExecutor {
         Statement statement = ctx.getStatement();
         switch (statement.getType()) {
             case INSERT:
-            case DELETE:
                 ctx.setResult(new Result(RpcUtils.SUCCESS));
+                break;
+            case DELETE:
+                DeleteStatement deleteStatement = (DeleteStatement) statement;
+                if (deleteStatement.isInvolveDummyData()) {
+                    ctx.setResult(new Result(RpcUtils.MODIFY_DUMMY_FRAGMENTS_DATA));
+                } else {
+                    ctx.setResult(new Result(RpcUtils.SUCCESS));
+                }
                 break;
             case SELECT:
                 setResultFromRowStream(ctx, stream);
