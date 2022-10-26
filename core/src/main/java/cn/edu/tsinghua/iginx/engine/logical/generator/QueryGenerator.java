@@ -182,6 +182,15 @@ public class QueryGenerator extends AbstractGenerator {
             );
         }
 
+        List<String> order = new ArrayList<>();
+        selectStatement.getExpressions().forEach(expression -> {
+            String colName = expression.hasFunc()
+                ? expression.getFuncName().toLowerCase() + "(" + expression.getPathName() + ")"
+                : expression.getPathName();
+            order.add(colName);
+        });
+        root = new Reorder(new OperatorSource(root), order);
+
         Map<String, String> aliasMap = selectStatement.getAliasMap();
         if (!aliasMap.isEmpty()) {
             root = new Rename(new OperatorSource(root), aliasMap);

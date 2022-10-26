@@ -21,6 +21,7 @@ public class SelectStatement extends DataStatement {
     private boolean hasGroupByTime;
     private boolean ascending;
 
+    private List<Expression> expressions;
     private Map<String, List<Expression>> selectedFuncsAndExpressions;
     private Set<FuncType> funcTypeSet;
     private Set<String> pathSet;
@@ -42,6 +43,7 @@ public class SelectStatement extends DataStatement {
         this.statementType = StatementType.SELECT;
         this.queryType = QueryType.Unknown;
         this.ascending = true;
+        this.expressions = new ArrayList<>();
         this.selectedFuncsAndExpressions = new HashMap<>();
         this.funcTypeSet = new HashSet<>();
         this.pathSet = new HashSet<>();
@@ -57,7 +59,7 @@ public class SelectStatement extends DataStatement {
     public SelectStatement(List<String> paths, long startTime, long endTime) {
         this.queryType = QueryType.SimpleQuery;
 
-        List<Expression> expressions = new ArrayList<>();
+        this.expressions = new ArrayList<>();
         paths.forEach(path -> expressions.add(new Expression(path)));
 
         this.selectedFuncsAndExpressions = new HashMap<>();
@@ -77,7 +79,7 @@ public class SelectStatement extends DataStatement {
         }
 
         String func = aggregateType.toString().toLowerCase();
-        List<Expression> expressions = new ArrayList<>();
+        this.expressions = new ArrayList<>();
         paths.forEach(path -> expressions.add(new Expression(path, func)));
 
         this.selectedFuncsAndExpressions = new HashMap<>();
@@ -95,7 +97,7 @@ public class SelectStatement extends DataStatement {
         this.queryType = QueryType.DownSampleQuery;
 
         String func = aggregateType.toString().toLowerCase();
-        List<Expression> expressions = new ArrayList<>();
+        this.expressions = new ArrayList<>();
         paths.forEach(path -> expressions.add(new Expression(path, func)));
 
         this.selectedFuncsAndExpressions = new HashMap<>();
@@ -216,7 +218,7 @@ public class SelectStatement extends DataStatement {
     public void setSelectedFuncsAndPaths(String func, Expression expression) {
         func = func.trim().toLowerCase();
 
-
+        expressions.add(expression);
         List<Expression> expressions = this.selectedFuncsAndExpressions.get(func);
         if (expressions == null) {
             expressions = new ArrayList<>();
@@ -344,6 +346,10 @@ public class SelectStatement extends DataStatement {
 
     public void setSubStatement(SelectStatement subStatement) {
         this.subStatement = subStatement;
+    }
+
+    public List<Expression> getExpressions() {
+        return expressions;
     }
 
     public Map<String, String> getAliasMap() {
