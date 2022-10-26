@@ -318,7 +318,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
                     }
                 } else {
-                    if (Pattern.matches(StringUtils.reformatPath(pattern), field.getName())) {
+                    if (Pattern.matches(StringUtils.reformatColumnName(pattern), field.getName())) {
                         reorderMap.put(targetFields.size(), i);
                         targetFields.add(field);
                     }
