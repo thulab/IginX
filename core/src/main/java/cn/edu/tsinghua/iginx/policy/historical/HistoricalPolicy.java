@@ -100,7 +100,7 @@ public class HistoricalPolicy implements IPolicy {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
+        TimeInterval timeInterval = Utils.getTimeIntervalFromDataStatement(statement);
         List<StorageEngineMeta> storageEngineList = iMetaManager.getStorageEngineList();
         int storageEngineNum = storageEngineList.size();
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
