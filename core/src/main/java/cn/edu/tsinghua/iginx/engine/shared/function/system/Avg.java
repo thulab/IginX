@@ -90,16 +90,19 @@ public class Avg implements SetMappingFunction {
             Field field = fields.get(i);
             if (pattern.matcher(field.getFullName()).matches()) {
                 if (groupByLevels == null) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.DOUBLE));
+                    String name = getIdentifier() + "(" + field.getName() + ")";
+                    String fullName = getIdentifier() + "(" + field.getFullName() + ")";
+                    targetFields.add(new Field(name, fullName, DataType.DOUBLE));
                 } else {
-                    String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
-                    int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
+                    String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                    String targetFieldFullName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
+                    int index = groupNameIndexMap.getOrDefault(targetFieldFullName, -1);
                     if (index != -1) {
                         groupOrderIndexMap.put(i, index);
                     } else {
-                        groupNameIndexMap.put(targetFieldName, targetFields.size());
+                        groupNameIndexMap.put(targetFieldFullName, targetFields.size());
                         groupOrderIndexMap.put(i, targetFields.size());
-                        targetFields.add(new Field(targetFieldName, DataType.DOUBLE));
+                        targetFields.add(new Field(targetFieldName, targetFieldFullName, DataType.DOUBLE));
                     }
                 }
                 indices.add(i);

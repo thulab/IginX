@@ -73,6 +73,17 @@ public final class Field {
         }
     }
 
+    public Field(String name, String fullName, DataType type) {
+        this(name, fullName, type, Collections.emptyMap());
+    }
+
+    public Field(String name, String fullName, DataType type, Map<String, String> tags) {
+        this.name = name;
+        this.fullName = fullName;
+        this.type = type;
+        this.tags = tags;
+    }
+
     public String getName() {
         return name;
     }
