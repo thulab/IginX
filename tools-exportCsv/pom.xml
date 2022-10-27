@@ -11,8 +11,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>iginx-tools</artifactId>
-    <name>IginX Tools</name>
+    <artifactId>iginx-tools-expCsv</artifactId>
+    <name>IginX Tools for CSV export</name>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
