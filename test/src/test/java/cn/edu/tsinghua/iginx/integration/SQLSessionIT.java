@@ -1710,13 +1710,14 @@ public abstract class SQLSessionIT {
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d6";
-        expected = "ResultSets:\n" +
-            "+----+--------+--------+\n" +
-            "|Time|us.d6.s1|us.d6.s2|\n" +
-            "+----+--------+--------+\n" +
-            "|   0|   10255|  1074.5|\n" +
-            "+----+--------+--------+\n" +
-            "Total line number = 1\n";
+        expected =
+            "ResultSets:\n"
+                + "+----+--------+--------+\n"
+                + "|Time|us.d6.s1|us.d6.s2|\n"
+                + "+----+--------+--------+\n"
+                + "|   0|  1074.5|   10255|\n"
+                + "+----+--------+--------+\n"
+                + "Total line number = 1\n";
         executeAndCompare(query, expected);
     }
 

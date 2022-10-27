@@ -89,16 +89,19 @@ public class Count implements SetMappingFunction {
             Field field = rows.getHeader().getField(i);
             if (pattern.matcher(field.getFullName()).matches()) {
                 if (groupByLevels == null) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
+                    String name = getIdentifier() + "(" + field.getName() + ")";
+                    String fullName = getIdentifier() + "(" + field.getFullName() + ")";
+                    targetFields.add(new Field(name, fullName, DataType.LONG));
                 } else {
-                    String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
-                    int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
+                    String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                    String targetFieldFullName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
+                    int index = groupNameIndexMap.getOrDefault(targetFieldFullName, -1);
                     if (index != -1) {
                         groupOrderIndexMap.put(i, index);
                     } else {
-                        groupNameIndexMap.put(targetFieldName, targetFields.size());
+                        groupNameIndexMap.put(targetFieldFullName, targetFields.size());
                         groupOrderIndexMap.put(i, targetFields.size());
-                        targetFields.add(new Field(targetFieldName, DataType.LONG));
+                        targetFields.add(new Field(targetFieldName, targetFieldFullName, DataType.LONG));
                     }
                 }
                 indices.add(i);

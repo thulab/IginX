@@ -57,6 +57,8 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeMappingTransform((MappingTransform) operator, stream);
             case Rename:
                 return executeRename((Rename) operator, stream);
+            case Reorder:
+                return executeReorder((Reorder) operator, stream);
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -114,6 +116,10 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeRename(Rename rename, RowStream stream) {
         return new RenameLazyStream(rename, stream);
+    }
+
+    private RowStream executeReorder(Reorder reorder, RowStream stream) {
+        return new ReorderLazyStream(reorder, stream);
     }
 
     private RowStream executeJoin(Join join, RowStream streamA, RowStream streamB) throws PhysicalException {
