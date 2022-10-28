@@ -6,15 +6,13 @@ import cn.edu.tsinghua.iginx.rest.MetricsResource;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import com.alibaba.fastjson.JSONObject;
 import com.ibm.icu.impl.UCaseProps;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -130,7 +128,7 @@ public class RestAnnotationIT {
         }
     }
 
-//    @Before
+    //    @Before
     public void insertData(DataType dataType) {
         try {
             execute("insert.json", TYPE.INSERT, dataType);
@@ -153,8 +151,22 @@ public class RestAnnotationIT {
 
     public void executeAndCompare(String json, String output, TYPE type, DataType dataType) {
         try {
-            String result = execute(json, type, dataType);
-            assertEquals(output, removeSpecialChar(result));
+            ByteArrayOutputStream baoStream = new ByteArrayOutputStream(10240);
+            PrintStream cacheStream = new PrintStream(baoStream);
+            System.setOut(cacheStream);//不打印到控制台
+
+            System.out.print(JSONObject.parse(output));
+            String outputAns = baoStream.toString();
+
+            ByteArrayOutputStream baoStream2 = new ByteArrayOutputStream(10240);
+            PrintStream cacheStream2 = new PrintStream(baoStream2);
+            System.setOut(cacheStream2);//不打印到控制台
+
+            System.out.print(JSONObject.parse(execute(json, type, dataType)));
+            String result = baoStream.toString();
+
+//            String result = (String) JSONObject.parse(execute(json, type, dataType));
+            assertEquals(outputAns, removeSpecialChar(result));
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             fail();

@@ -60,13 +60,14 @@ public class NaivePolicy implements IPolicy {
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement) {
         List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
-        TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
+        TimeInterval timeInterval = Utils.getTimeIntervalFromDataStatement(statement);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
             Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
-        } else
+        } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
+        }
     }
 
     /**
@@ -82,6 +83,26 @@ public class NaivePolicy implements IPolicy {
         Pair<FragmentMeta, StorageUnitMeta> pair;
         int index = 0;
 
+        // [0, startTime) & (-∞, +∞)
+        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+        // TODO 考虑大规模插入历史数据的情况
+        if (timeInterval.getStartTime() != 0) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & (-∞, +∞)
+        // 在初始查询/删除等语句中没有具体路径，只有通配符的情况下创建初始分片
+        if (paths == null || paths.isEmpty()) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
+            return new Pair<>(fragmentList, storageUnitList);
+        }
+
         // [startTime, +∞) & [startPath, endPath)
         int splitNum = Math.max(Math.min(storageEngineNum, paths.size() - 1), 0);
         for (int i = 0; i < splitNum; i++) {
@@ -96,16 +117,6 @@ public class NaivePolicy implements IPolicy {
         pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
         fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
-
-        // [0, startTime) & (-∞, +∞)
-        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
-        // TODO 考虑大规模插入历史数据的情况
-        if (timeInterval.getStartTime() != 0) {
-            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
-            fragmentList.add(pair.k);
-            storageUnitList.add(pair.v);
-        }
 
         // [startTime, +∞) & (null, startPath)
         storageEngineIdList = generateStorageEngineIdList(index, replicaNum);

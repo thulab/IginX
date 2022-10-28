@@ -320,8 +320,15 @@ public class StatementExecutor {
         Statement statement = ctx.getStatement();
         switch (statement.getType()) {
             case INSERT:
-            case DELETE:
                 ctx.setResult(new Result(RpcUtils.SUCCESS));
+                break;
+            case DELETE:
+                DeleteStatement deleteStatement = (DeleteStatement) statement;
+                if (deleteStatement.isInvolveDummyData()) {
+                    throw new ExecutionException("Caution: can not clear the data of read-only node.");
+                } else {
+                    ctx.setResult(new Result(RpcUtils.SUCCESS));
+                }
                 break;
             case SELECT:
                 setResultFromRowStream(ctx, stream);

@@ -446,6 +446,12 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public boolean hasDummyFragment(TimeSeriesInterval tsInterval) {
+        List<FragmentMeta> fragmentList = cache.getDummyFragmentsByTimeSeriesInterval(tsInterval);
+        return !fragmentList.isEmpty();
+    }
+
+    @Override
     public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         return cache.getLatestFragmentMapByTimeSeriesInterval(tsInterval);
     }

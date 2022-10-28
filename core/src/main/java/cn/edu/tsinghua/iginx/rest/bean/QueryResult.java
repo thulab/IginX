@@ -258,7 +258,9 @@ public class QueryResult {
             long timeRes = TimeUtils.getTimeFromNsToSpecPrecision(queryResultDatasets.get(num).getTimestamps().get(i), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
             ret.append(String.format("[%d,", timeRes));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
+                ret.append("\"");
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
+                ret.append("\"");
             } else {
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             }
@@ -281,7 +283,9 @@ public class QueryResult {
             long timeInPrecision = TimeUtils.getTimeFromNsToSpecPrecision(timeLists.get(j), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
             ret.append(String.format("[%d,", timeInPrecision));
             if (valueLists.get(j) instanceof byte[]) {
+                ret.append("\"");
                 ret.append(new String((byte[]) valueLists.get(j)));
+                ret.append("\"");
             } else {
                 ret.append(valueLists.get(j).toString());
             }
