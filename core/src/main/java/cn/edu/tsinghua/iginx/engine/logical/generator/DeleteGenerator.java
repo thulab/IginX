@@ -62,6 +62,10 @@ public class DeleteGenerator extends AbstractGenerator {
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }
 
+        if (metaManager.hasDummyFragment(interval)) {
+            deleteStatement.setInvolveDummyData(true);
+        }
+
         TagFilter tagFilter = deleteStatement.getTagFilter();
 
         List<Delete> deleteList = new ArrayList<>();

@@ -88,6 +88,11 @@ public interface IMetaManager {
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval, boolean withDummyFragment);
 
     /**
+     * 查询某个时间序列区间是否有虚拟堆叠分片
+     */
+    boolean hasDummyFragment(TimeSeriesInterval tsInterval);
+
+    /**
      * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）
      */
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
