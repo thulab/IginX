@@ -1,5 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-set -e
+# below JavaApp is the name of running Java process
+jps
 
-sh -c "pkill -9 iginx"
+pids=( $(jps | grep Iginx | awk '{print $1}') )
+
+for pid in "${pids[@]}"; do
+     echo "killing $pid"
+     kill -9 $pid
+done

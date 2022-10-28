@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   IoTDB-Tag-Test:
-    timeout-minutes: 1
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +38,6 @@ jobs:
       - name: Run IoTDB
         uses: ./.github/actions/iotdbRunner
         with:
-          if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
       - name: Change pom
@@ -46,6 +45,11 @@ jobs:
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
           ls test/pom*
+
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -103,7 +107,7 @@ jobs:
           name: codecov
 
   IoTDB-SQLSession-Test:
-    timeout-minutes: 1
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -126,7 +130,6 @@ jobs:
       - name: Run IoTDB
         uses: ./.github/actions/iotdbRunner
         with:
-          if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
       - name: Change pom
@@ -134,6 +137,11 @@ jobs:
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
           ls test/pom*
+
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -191,7 +199,7 @@ jobs:
           name: codecov
 
   IoTDB-Session-Test:
-    timeout-minutes: 1
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -214,7 +222,6 @@ jobs:
       - name: Run IoTDB
         uses: ./.github/actions/iotdbRunner
         with:
-          if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
       - name: Change pom
@@ -222,6 +229,11 @@ jobs:
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
           ls test/pom*
+
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -279,7 +291,7 @@ jobs:
           name: codecov
 
   IoTDB-Rest-Test:
-    timeout-minutes: 1
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -302,7 +314,6 @@ jobs:
       - name: Run IoTDB
         uses: ./.github/actions/iotdbRunner
         with:
-          if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
       - name: Change pom
@@ -311,16 +322,10 @@ jobs:
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
           ls test/pom*
 
-      #第 1 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          version: ${VERSION}
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpNoData
-
-      - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -332,6 +337,19 @@ jobs:
           Test-Way: OriHasDataExpNoData
 
       - name: OriHasDataExpNoData IT
+        if: always()
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+
+      #第 1 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriNoDataExpNoData
+
+      - name: OriNoDataExpNoData IT
         if: always()
         run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
 

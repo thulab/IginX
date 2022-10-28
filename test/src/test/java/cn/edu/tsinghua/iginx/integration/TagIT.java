@@ -20,6 +20,8 @@ public class TagIT {
     protected String storageEngineType;
     protected static boolean ifClearData;
 
+    private String CLEARDATAEXCP = "cn.edu.tsinghua.iginx.exceptions.ExecutionException: Caution: can not clear the data of read-only node.";
+
     @BeforeClass
     public static void setUp() {
         ifClearData = true;
@@ -85,11 +87,18 @@ public class TagIT {
         try {
             res = session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
+            System.out.println("LHZ-DEBUG " + e.toString());
             logger.error("Statement: \"{}\" execute fail. Caused by:", statement, e);
-            fail();
+            if(e.toString().equals(CLEARDATAEXCP)){}
+            else fail();
+        }
+
+        if(res==null) {
+            return "";
         }
 
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
+            System.out.println("LHZ-DEBUG " + res.getParseErrorMsg());
             logger.error("Statement: \"{}\" execute fail. Caused by: {}.", statement, res.getParseErrorMsg());
             fail();
             return "";
@@ -134,7 +143,7 @@ public class TagIT {
 
         testDeleteTSWithMultiTags();
 
-        testClearData();
+        testCapExpClearData();
     }
 
     @Test
@@ -637,6 +646,7 @@ public class TagIT {
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "Total line number = 5\n";
         executeAndCompare(statement, expected);
+
     }
 
     @Test
@@ -1283,7 +1293,7 @@ public class TagIT {
                         + "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO copy.ah.hr02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
+        insert = "INSERT INTO copy.ah.hr02(TIME, v[t2=v2], s ) VALUES (SELECT v AS ts2, s AS ts1 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr02;";
@@ -1314,6 +1324,28 @@ public class TagIT {
                 "+----+\n" +
                 "+----+\n" +
                 "Empty set.\n";
+        executeAndCompare(showTimeSeries, expected);
+    }
+
+    @Test
+    public void testCapExpClearData() {
+        if(!ifClearData) return;
+        String clearData = "CLEAR DATA;";
+        execute(clearData);
+
+        String countPoints = "COUNT POINTS;";
+        String expected = "Points num: 3\n";
+        executeAndCompare(countPoints, expected);
+
+        String showTimeSeries = "SELECT * FROM *;";
+        expected = "ResultSets:\n" +
+                "+----+-------------------+------------------------+\n" +
+                "|Time|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "+----+-------------------+------------------------+\n" +
+                "|  77|               true|                    null|\n" +
+                "| 200|              false|                   77.71|\n" +
+                "+----+-------------------+------------------------+\n" +
+                "Total line number = 2\n";
         executeAndCompare(showTimeSeries, expected);
     }
 

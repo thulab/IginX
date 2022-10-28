@@ -1,0 +1,30 @@
+name: 'conf-writer'
+description: 'conf-writer'
+inputs:
+  if-CapExp:
+    description: 'if you need capacity expansion'
+    required: false
+    default: "false"
+  Test-Way:
+    description: 'the way to imp'
+    required: false
+    default: clearData
+  version:
+    description: 'IoTDB version'
+    required: false
+    default: iotdb11
+
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - if: inputs.if-CapExp=='true'
+      name: Change conf/config.properties
+      shell: bash
+      run: |
+        if [[ "${{inputs.Test-Way}}" == "OriHasDataExpHasData" || "${{inputs.Test-Way}}" == "OriHasDataExpNoData" ]]; then
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sed -i "s/has_data=false/has_data=true/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            sed -i "" "s/has_data=false/has_data=true/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          fi
+        fi

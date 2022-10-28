@@ -18,6 +18,7 @@ runs:
       run: |
         chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh"
         nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh" &
+
     - if: inputs.if-stop=='true'
       name: Stop Iginx
       shell: bash

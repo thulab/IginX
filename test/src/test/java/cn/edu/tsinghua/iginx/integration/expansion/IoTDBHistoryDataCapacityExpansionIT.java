@@ -75,6 +75,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     //@Test
     public void testQueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from *";
+//        String statement = "show time series";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+\n" +
                 "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|\n" +
@@ -102,6 +103,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
     public void testQueryHistoryDataFromNoInitialNode() throws Exception {
         String statement = "select * from ln";
+//        String statement = "show time seires";
         String expect = "ResultSets:\n" +
                 "+----+\n" +
                 "|Time|\n" +
@@ -183,7 +185,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
     //@Test
     public void testCapacityExpansion_oriHasDataExpNoData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:no, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -214,7 +216,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriHasDataExpHasData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -248,7 +250,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriNoDataExpHasData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -282,7 +284,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriNoDataExpNoData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:false, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -413,7 +415,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     public void testWriteAndQueryAfterCapacityExpansion_oriNoDataExpNoData() throws Exception {
         session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
 
-        String statement = "select * from ln";
+        String statement = "select * from *";
         String expect = "ResultSets:\n" +
                 "+----+--------------+---------------+\n" +
                 "|Time|ln.wf02.status|ln.wf02.version|\n" +

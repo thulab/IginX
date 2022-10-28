@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.integration.scaleout;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.BaseSessionIT;
+import org.junit.Test;
 
 import java.util.LinkedHashMap;
 
@@ -11,10 +12,10 @@ public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseSc
         super();
     }
 
-    @Override
-    public void iotdb11_IT() {
+    @Test
+    public void iotdb11_IT() throws Exception {
         this.defaultPort2 = 6668;
-        this.isAbleToDelete = true;
+        this.isAbleToDelete = false;
         this.storageEngineType = "iotdb11";
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");
@@ -22,19 +23,14 @@ public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseSc
         this.extraParams.put("sessionPoolSize", "100");
 
         this.ifClearData = false;
-        try {
-            BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
-            capacityExpansion();
-        } catch (InterruptedException | ExecutionException | SessionException e) {
-            logger.error(e.getMessage());
-        }
-
+        BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        capacityExpansion();
     }
 
-    @Override
-    public void iotdb12_IT() {
+    @Test
+    public void iotdb12_IT() throws Exception {
         this.defaultPort2 = 6668;
-        this.isAbleToDelete = true;
+        this.isAbleToDelete = false;
         this.storageEngineType = "iotdb12";
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");
@@ -42,12 +38,8 @@ public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseSc
         this.extraParams.put("sessionPoolSize", "100");
 
         this.ifClearData = false;
-        try {
-            BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
-            capacityExpansion();
-        } catch (InterruptedException | ExecutionException | SessionException e) {
-            logger.error(e.getMessage());
-        }
+        BaseSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        capacityExpansion();
     }
 
 }
