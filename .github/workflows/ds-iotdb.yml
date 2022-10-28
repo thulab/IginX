@@ -1,4 +1,4 @@
-name: System Test
+name: "System-IT-ds-IoTDB"
 
 on:
   push:
@@ -10,14 +10,19 @@ on:
 env:
   VERSION: 0.6.0-SNAPSHOT
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  IoTDB11-Test:
+  IoTDB-Session-Test:
     strategy:
       fail-fast: false
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -34,7 +39,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb11
+          version: ${{ matrix.iotdb-version }}
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -43,23 +48,32 @@ jobs:
         uses: ./.github/actions/iginxRunner
         with:
           version: ${VERSION}
+
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
+        run: |
+          if [ ${{ matrix.iotdb-version }} == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
+          elif [ ${{ matrix.iotdb-version }} == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
+          else
+            echo "${{ matrix.iotdb-version }} is not supported"
+            exit 1
+          fi
+
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB11-SQL-Test:
+  IoTDB-SQL-Test:
     strategy:
       fail-fast: false
-      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v2
       - name: Environmet Dependence
@@ -75,7 +89,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb11
+          version: ${{ matrix.iotdb-version }}
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -92,14 +106,14 @@ jobs:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB11-Tag-Test:
+  IoTDB-Tag-Test:
     strategy:
       fail-fast: false
-      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -116,7 +130,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb11
+          version: ${{ matrix.iotdb-version }}
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -133,14 +147,14 @@ jobs:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB11-SessionPool-Test:
+  IoTDB-SessionPool-Test:
     strategy:
       fail-fast: false
-      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -157,7 +171,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb11
+          version: ${{ matrix.iotdb-version }}
 
       - name: Install with Maven
         run: mvn clean package -DskipTests
@@ -168,20 +182,28 @@ jobs:
           version: ${VERSION}
 
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB11SessionPoolIT -DfailIfNoTests=false
+        run: |
+          if [ ${{ matrix.iotdb-version }} == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11SessionPoolIT -DfailIfNoTests=false
+          elif [ ${{ matrix.iotdb-version }} == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
+          else
+            echo "${{ matrix.iotdb-version }} is not supported"
+            exit 1
+          fi
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  IoTDB11-SQL-SessionPool-Test:
+  IoTDB-SQL-SessionPool-Test:
     strategy:
       fail-fast: false
-      #max-parallel: 20
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        iotdb-version: [ iotdb11, iotdb12 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -198,212 +220,7 @@ jobs:
         uses: ./.github/actions/iotdbRunner
         with:
           if-CapExp: "false"
-          version: iotdb11
-
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
-
-      - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBSQLSessionPoolIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
-  IoTDB12-Test:
-    strategy:
-      fail-fast: false
-      #max-parallel: 20
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "false"
-          version: iotdb12
-
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
-
-      - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
-  IoTDB12-SQL-Test:
-    strategy:
-      fail-fast: false
-      #max-parallel: 20
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "false"
-          version: iotdb12
-
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
-
-      - name: A Lame Integration Test with Maven for SQL
-        run: mvn test -q -Dtest=IoTDBSQLSessionIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
-  IoTDB12-Tag-Test:
-    strategy:
-      fail-fast: false
-      #max-parallel: 20
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "false"
-          version: iotdb12
-
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
-
-      - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=TagIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
-  IoTDB12-SessionPool-Test:
-    strategy:
-      fail-fast: false
-      #max-parallel: 20
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "false"
-          version: iotdb12
-
-      - name: Install with Maven
-        run: mvn clean package -DskipTests
-
-      - name: Start IginX
-        uses: ./.github/actions/iginxRunner
-        with:
-          version: ${VERSION}
-
-      - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB12SessionPoolIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
-
-  IoTDB12-SQL-SessionPool-Test:
-    strategy:
-      fail-fast: false
-      #max-parallel: 20
-      matrix:
-        java: [ 8 ]
-        python-version: [ "3.7" ]
-        os: [ ubuntu-latest, macos-latest ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environmet Dependence
-        uses: ./.github/actions/dependence
-        with:
-          python-version: ${{ matrix.python-version }}
-          java: ${{ matrix.java }}
-
-      - name: Run ZooKeeper
-        uses: ./.github/actions/zookeeperRunner
-
-      - name: Run IoTDB
-        uses: ./.github/actions/iotdbRunner
-        with:
-          if-CapExp: "false"
-          version: iotdb12
+          version: ${{ matrix.iotdb-version }}
 
       - name: Install with Maven
         run: mvn clean package -DskipTests

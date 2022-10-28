@@ -73,6 +73,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeMappingTransform((MappingTransform) operator, transformToTable(stream));
             case Rename:
                 return executeRename((Rename) operator, transformToTable(stream));
+            case Reorder:
+                return executeReorder((Reorder) operator, transformToTable(stream));
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -297,6 +299,46 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         });
 
+        return new Table(newHeader, rows);
+    }
+
+    private RowStream executeReorder(Reorder reorder, Table table) throws PhysicalException {
+        List<String> patterns = reorder.getPatterns();
+        Header header = table.getHeader();
+        List<Field> targetFields = new ArrayList<>();
+        Map<Integer, Integer> reorderMap = new HashMap<>();
+
+        for (String pattern : patterns) {
+            for (int i = 0; i < header.getFields().size(); i++) {
+                Field field  = header.getField(i);
+                if (!StringUtils.isPattern(pattern)) {
+                    if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
+                        reorderMap.put(targetFields.size(), i);
+                        targetFields.add(field);
+
+                    }
+                } else {
+                    if (Pattern.matches(StringUtils.reformatColumnName(pattern), field.getName())) {
+                        reorderMap.put(targetFields.size(), i);
+                        targetFields.add(field);
+                    }
+                }
+            }
+        }
+
+        Header newHeader = new Header(header.getTime(), targetFields);
+        List<Row> rows = new ArrayList<>();
+        table.getRows().forEach(row -> {
+            Object[] values = new Object[targetFields.size()];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = row.getValue(reorderMap.get(i));
+            }
+            if (newHeader.hasTimestamp()) {
+                rows.add(new Row(newHeader, row.getTimestamp(), values));
+            } else {
+                rows.add(new Row(newHeader, values));
+            }
+        });
         return new Table(newHeader, rows);
     }
 

@@ -83,7 +83,9 @@ public class LastValue implements SetMappingFunction {
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             if (pattern.matcher(field.getFullName()).matches()) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
+                String name = getIdentifier() + "(" + field.getName() + ")";
+                String fullName = getIdentifier() + "(" + field.getFullName() + ")";
+                targetFields.add(new Field(name, fullName, field.getType()));
                 indices.add(i);
             }
         }

@@ -1,4 +1,4 @@
-name: Unit Test
+name: "Metadata-Service-Test"
 
 on:
   push:
@@ -7,6 +7,10 @@ on:
   pull_request:
     branches:
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ZK-Test:

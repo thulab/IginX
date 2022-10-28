@@ -99,14 +99,6 @@ public class TagIT {
     }
 
     @Test
-    public void iotdb11_IT() {
-    }
-
-    @Test
-    public void iotdb12_IT() {
-    }
-
-    @Test
     public void capacityExpansion() {
         if(ifClearData) return;
 

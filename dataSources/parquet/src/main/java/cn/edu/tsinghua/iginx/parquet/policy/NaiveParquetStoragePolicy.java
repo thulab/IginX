@@ -87,8 +87,8 @@ public class NaiveParquetStoragePolicy implements ParquetStoragePolicy {
         } else {
             List<String> startPaths = new ArrayList<>();
             for (File pathPartitionFile : pathPartition) {
-                String startPath = pathPartitionFile.getName().split("_")[2];
-                startPath = startPath.substring(0, startPath.indexOf(".parquet"));
+                String startPath = pathPartitionFile.getName().split("__")[2];
+                startPath = startPath.substring(0, startPath.lastIndexOf(".parquet"));
                 startPaths.add(startPath);
             }
             return new Pair<>(startTime, startPaths);
@@ -164,8 +164,8 @@ public class NaiveParquetStoragePolicy implements ParquetStoragePolicy {
                 File[] pathPartition = tDir.listFiles();
                 if (pathPartition != null && pathPartition.length != 0) {
                     for (File pathPartitionFile : pathPartition) {
-                        String startPath = pathPartitionFile.getName().split("_")[2];
-                        startPath = startPath.substring(0, startPath.indexOf(".parquet"));
+                        String startPath = pathPartitionFile.getName().split("__")[2];
+                        startPath = startPath.substring(0, startPath.lastIndexOf(".parquet"));
                         collectInMap(res, startTime, startPath);
                     }
                 } else {
