@@ -384,6 +384,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public List<FragmentMeta> getFragments() {
+        return cache.getFragments();
+    }
+
+    @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorageUnit(String storageUnitId) {
         List<FragmentMeta> fragmentMetaList = cache.getFragmentListByStorageUnitId(storageUnitId);
 

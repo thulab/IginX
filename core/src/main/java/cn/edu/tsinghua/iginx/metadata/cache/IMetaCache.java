@@ -94,6 +94,8 @@ public interface IMetaCache {
 
     StorageEngineMeta getStorageEngine(long id);
 
+    List<FragmentMeta> getFragments();
+
     // schemaMapping 相关的缓存读写接口
     Map<String, Integer> getSchemaMapping(String schema);
 

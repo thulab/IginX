@@ -56,6 +56,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
     print('  Status dropTask(DropTaskReq req)')
     print('  GetRegisterTaskInfoResp getRegisterTaskInfo(GetRegisterTaskInfoReq req)')
     print('  CurveMatchResp curveMatch(CurveMatchReq req)')
+    print('  DebugInfoResp debugInfo(DebugInfoReq req)')
     print('')
     sys.exit(0)
 
@@ -326,6 +327,12 @@ elif cmd == 'curveMatch':
         print('curveMatch requires 1 args')
         sys.exit(1)
     pp.pprint(client.curveMatch(eval(args[0]),))
+
+elif cmd == 'debugInfo':
+    if len(args) != 1:
+        print('debugInfo requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.debugInfo(eval(args[0]),))
 
 else:
     print('Unrecognized method %s' % cmd)
