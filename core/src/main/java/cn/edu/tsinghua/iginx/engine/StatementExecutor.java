@@ -325,7 +325,7 @@ public class StatementExecutor {
             case DELETE:
                 DeleteStatement deleteStatement = (DeleteStatement) statement;
                 if (deleteStatement.isInvolveDummyData()) {
-                    ctx.setResult(new Result(RpcUtils.MODIFY_DUMMY_FRAGMENTS_DATA));
+                    throw new ExecutionException("Caution: can not clear the data of read-only node.");
                 } else {
                     ctx.setResult(new Result(RpcUtils.SUCCESS));
                 }
