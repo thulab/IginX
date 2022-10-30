@@ -89,7 +89,9 @@ public class TagIT {
         } catch (SessionException | ExecutionException e) {
             System.out.println("LHZ-DEBUG " + e.toString());
             logger.error("Statement: \"{}\" execute fail. Caused by:", statement, e);
-            if(e.toString().equals(CLEARDATAEXCP)){}
+            if(e.toString().equals(CLEARDATAEXCP)){
+                logger.error("clear data fail and go on....");
+            }
             else fail();
         }
 
@@ -142,8 +144,6 @@ public class TagIT {
 //        testDeleteTSWithTag();
 
         testDeleteTSWithMultiTags();
-
-        testCapExpClearData();
     }
 
     @Test
@@ -1324,28 +1324,6 @@ public class TagIT {
                 "+----+\n" +
                 "+----+\n" +
                 "Empty set.\n";
-        executeAndCompare(showTimeSeries, expected);
-    }
-
-    @Test
-    public void testCapExpClearData() {
-        if(!ifClearData) return;
-        String clearData = "CLEAR DATA;";
-        execute(clearData);
-
-        String countPoints = "COUNT POINTS;";
-        String expected = "Points num: 3\n";
-        executeAndCompare(countPoints, expected);
-
-        String showTimeSeries = "SELECT * FROM *;";
-        expected = "ResultSets:\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|Time|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|  77|               true|                    null|\n" +
-                "| 200|              false|                   77.71|\n" +
-                "+----+-------------------+------------------------+\n" +
-                "Total line number = 2\n";
         executeAndCompare(showTimeSeries, expected);
     }
 

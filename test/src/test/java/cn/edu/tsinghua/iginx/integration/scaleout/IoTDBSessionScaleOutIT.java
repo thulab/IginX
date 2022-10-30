@@ -16,6 +16,7 @@ public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseSc
     public void iotdb11_IT() throws Exception {
         this.defaultPort2 = 6668;
         this.isAbleToDelete = false;
+        this.ifNeedCapExp = false;
         this.storageEngineType = "iotdb11";
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");
@@ -31,6 +32,7 @@ public class IoTDBSessionScaleOutIT extends BaseSessionIT implements IoTDBBaseSc
     public void iotdb12_IT() throws Exception {
         this.defaultPort2 = 6668;
         this.isAbleToDelete = false;
+        this.ifNeedCapExp = false;
         this.storageEngineType = "iotdb12";
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");
