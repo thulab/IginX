@@ -78,4 +78,9 @@ public class Table implements RowStream {
     public void close() {
 
     }
+
+    public void reset() {
+        this.index = 0;
+    }
+
 }

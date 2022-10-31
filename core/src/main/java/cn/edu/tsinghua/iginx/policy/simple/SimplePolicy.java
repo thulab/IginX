@@ -60,7 +60,7 @@ public class SimplePolicy implements IPolicy {
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement) {
         List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
-        TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
+        TimeInterval timeInterval = Utils.getTimeIntervalFromDataStatement(statement);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
             Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
@@ -135,7 +135,7 @@ public class SimplePolicy implements IPolicy {
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> inspaths, TimeInterval timeInterval) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-        List<String> paths = new ArrayList<String>();
+        List<String> paths = new ArrayList<>();
         if (inspaths.size() > 0) {
             paths.add(inspaths.get(0));
         }
@@ -157,6 +157,16 @@ public class SimplePolicy implements IPolicy {
             pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
             fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & (-∞, +∞)
+        // 在初始查询/删除等语句中没有具体路径，只有通配符的情况下创建初始分片
+        if (paths.isEmpty()) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
+            return new Pair<>(fragmentList, storageUnitList);
         }
 
         // [startTime, +∞) & (null, startPath)

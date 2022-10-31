@@ -73,6 +73,11 @@ public interface IMetaManager {
     long getIginxId();
 
     /**
+     * 获取所有的分片，用于 debug
+     */
+    List<FragmentMeta> getFragments();
+
+    /**
      * 获取某个du的时空范围
      * */
     Pair<TimeSeriesInterval,TimeInterval> getBoundaryOfStorageUnit(String storageUnitId);
@@ -86,6 +91,11 @@ public interface IMetaManager {
      * 获取某个时间序列区间的所有分片，根据参数决定是否返回虚拟堆叠分片
      */
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval, boolean withDummyFragment);
+
+    /**
+     * 查询某个时间序列区间是否有虚拟堆叠分片
+     */
+    boolean hasDummyFragment(TimeSeriesInterval tsInterval);
 
     /**
      * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）

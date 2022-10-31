@@ -109,6 +109,95 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     }
 
     @Test
+    public void testReorder() throws PhysicalException {
+        Table table = generateTableForUnaryOperator(true);
+
+        // without wildcast
+        {
+            table.reset();
+            Reorder reorder = new Reorder(EmptySource.EMPTY_SOURCE, Arrays.asList("a.a.b", "a.a.c", "a.b.c"));
+            RowStream stream = getExecutor().executeUnaryOperator(reorder, table);
+            Header targetHeader = stream.getHeader();
+            assertTrue(targetHeader.hasTimestamp());
+            assertEquals(3, targetHeader.getFields().size());
+            assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(0).getType());
+            assertEquals("a.a.c", targetHeader.getFields().get(1).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(1).getType());
+            assertEquals("a.b.c", targetHeader.getFields().get(2).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(2).getType());
+
+            int index = 0;
+            while (stream.hasNext()) {
+                Row targetRow = stream.next();
+                assertEquals(index, targetRow.getTimestamp());
+                assertEquals(index, targetRow.getValue(0));
+                assertEquals(index + 2, targetRow.getValue(1));
+                assertEquals(index + 1, targetRow.getValue(2));
+                index++;
+            }
+            assertEquals(table.getRowSize(), index);
+        }
+
+        // with wildcast 1
+        {
+            table.reset();
+            Reorder reorder = new Reorder(EmptySource.EMPTY_SOURCE, Arrays.asList("a.a.*", "a.b.c"));
+            RowStream stream = getExecutor().executeUnaryOperator(reorder, table);
+            Header targetHeader = stream.getHeader();
+            assertTrue(targetHeader.hasTimestamp());
+            assertEquals(3, targetHeader.getFields().size());
+            assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(0).getType());
+            assertEquals("a.a.c", targetHeader.getFields().get(1).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(1).getType());
+            assertEquals("a.b.c", targetHeader.getFields().get(2).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(2).getType());
+
+            int index = 0;
+            while (stream.hasNext()) {
+                Row targetRow = stream.next();
+                assertEquals(index, targetRow.getTimestamp());
+                assertEquals(index, targetRow.getValue(0));
+                assertEquals(index + 2, targetRow.getValue(1));
+                assertEquals(index + 1, targetRow.getValue(2));
+                index++;
+            }
+            assertEquals(table.getRowSize(), index);
+        }
+
+        // with wildcast 2
+        {
+            table.reset();
+            Reorder reorder = new Reorder(EmptySource.EMPTY_SOURCE, Arrays.asList("a.*", "a.b.c"));
+            RowStream stream = getExecutor().executeUnaryOperator(reorder, table);
+            Header targetHeader = stream.getHeader();
+            assertTrue(targetHeader.hasTimestamp());
+            assertEquals(4, targetHeader.getFields().size());
+            assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(0).getType());
+            assertEquals("a.b.c", targetHeader.getFields().get(1).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(1).getType());
+            assertEquals("a.a.c", targetHeader.getFields().get(2).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(2).getType());
+            assertEquals("a.b.c", targetHeader.getFields().get(3).getFullName());
+            assertEquals(DataType.INTEGER, targetHeader.getFields().get(3).getType());
+
+            int index = 0;
+            while (stream.hasNext()) {
+                Row targetRow = stream.next();
+                assertEquals(index, targetRow.getTimestamp());
+                assertEquals(index, targetRow.getValue(0));
+                assertEquals(index + 1, targetRow.getValue(1));
+                assertEquals(index + 2, targetRow.getValue(2));
+                assertEquals(index + 1, targetRow.getValue(3));
+                index++;
+            }
+            assertEquals(table.getRowSize(), index);
+        }
+    }
+
+    @Test
     public void testProjectWithoutPattern() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
         Project project = new Project(EmptySource.EMPTY_SOURCE, Collections.singletonList("a.a.b"), null);

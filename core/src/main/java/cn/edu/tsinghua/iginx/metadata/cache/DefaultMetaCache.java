@@ -579,6 +579,17 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public List<FragmentMeta> getFragments() {
+        List<FragmentMeta> fragments = new ArrayList<>();
+        this.fragmentLock.readLock().lock();
+        for (Pair<TimeSeriesInterval, List<FragmentMeta>> pair: sortedFragmentMetaLists) {
+            fragments.addAll(pair.v);
+        }
+        this.fragmentLock.readLock().unlock();
+        return fragments;
+    }
+
+    @Override
     public Map<String, Integer> getSchemaMapping(String schema) {
         if (this.schemaMappings.get(schema) == null)
             return null;

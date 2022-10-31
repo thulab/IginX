@@ -90,10 +90,12 @@ public class Sum implements SetMappingFunction {
             Field field = fields.get(i);
             if (pattern.matcher(field.getFullName()).matches()) {
                 if (groupByLevels == null) {
+                    String name = getIdentifier() + "(" + field.getName() + ")";
+                    String fullName = getIdentifier() + "(" + field.getFullName() + ")";
                     if (DataTypeUtils.isWholeNumber(field.getType())) {
-                        targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
+                        targetFields.add(new Field(name, fullName, DataType.LONG));
                     } else {
-                        targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.DOUBLE));
+                        targetFields.add(new Field(name, fullName, DataType.DOUBLE));
                     }
                 } else {
                     String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";

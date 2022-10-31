@@ -384,6 +384,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public List<FragmentMeta> getFragments() {
+        return cache.getFragments();
+    }
+
+    @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorageUnit(String storageUnitId) {
         List<FragmentMeta> fragmentMetaList = cache.getFragmentListByStorageUnitId(storageUnitId);
 
@@ -443,6 +448,12 @@ public class DefaultMetaManager implements IMetaManager {
             mergeToFragmentMap(fragmentsMap, fragmentList);
         }
         return fragmentsMap;
+    }
+
+    @Override
+    public boolean hasDummyFragment(TimeSeriesInterval tsInterval) {
+        List<FragmentMeta> fragmentList = cache.getDummyFragmentsByTimeSeriesInterval(tsInterval);
+        return !fragmentList.isEmpty();
     }
 
     @Override
@@ -536,6 +547,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> fragments) {
+        checkFragmentCompletion(fragments);
         try {
             storage.lockFragment();
             storage.lockStorageUnit();
@@ -726,11 +738,106 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.hasFragment();
     }
 
+    private void checkInitialFragmentCompletion(List<FragmentMeta> fragments) {
+        Map<Long, List<FragmentMeta>> fragmentsByStartTime = new HashMap<>();
+        for (FragmentMeta fragment: fragments) {
+            List<FragmentMeta> fragmentList = fragmentsByStartTime.computeIfAbsent(fragment.getTimeInterval().getStartTime(), e -> new ArrayList<>());
+            fragmentList.add(fragment);
+        }
+        // 检查空间边界是否完备
+        for (long startTime: fragmentsByStartTime.keySet()) {
+            List<FragmentMeta> fragmentList = fragmentsByStartTime.get(startTime);
+            long endTime = -1;
+            Map<String, Integer> borders = new HashMap<>();
+            for (FragmentMeta fragment: fragmentList) {
+                if (endTime == -1) {
+                    endTime = fragment.getTimeInterval().getEndTime();
+                }
+                if (endTime != fragment.getTimeInterval().getEndTime()) {
+                    logger.error("fragments which have the same start time should also have the same end time");
+                    return;
+                }
+                String startTs = fragment.getTsInterval().getStartTimeSeries();
+                String endTs = fragment.getTsInterval().getEndTimeSeries();
+                borders.put(startTs, borders.getOrDefault(startTs, 0) - 1);
+                borders.put(endTs, borders.getOrDefault(endTs, 0) + 1);
+            }
+            for (String border: borders.keySet()) {
+                if (borders.get(border) != 0) {
+                    logger.error("initial fragments should be completion");
+                    return;
+                }
+            }
+        }
+        // 检查时间边界是否完备
+        Map<Long, Integer> timeBorders = new HashMap<>();
+        for (long startTime: fragmentsByStartTime.keySet()) {
+            long endTime = fragmentsByStartTime.get(startTime).get(0).getTimeInterval().getEndTime();
+            timeBorders.put(startTime, timeBorders.getOrDefault(startTime, 0) - 1);
+            timeBorders.put(endTime, timeBorders.getOrDefault(endTime, 0) + 1);
+        }
+        boolean seeZeroTime = false, seeMaxTime = false;
+        for (long time: timeBorders.keySet()) {
+            if (time == 0) {
+                seeZeroTime = true;
+                if (timeBorders.get(time) != -1) {
+                    logger.error("initial fragments should be completion");
+                    return;
+                }
+                continue;
+            }
+            if (time == Long.MAX_VALUE) {
+                seeMaxTime = true;
+                if (timeBorders.get(time) != 1) {
+                    logger.error("initial fragments should be completion");
+                    return;
+                }
+                continue;
+            }
+            if (timeBorders.get(time) != 0) {
+                logger.error("initial fragments should be completion");
+                return;
+            }
+        }
+        if (!seeZeroTime || !seeMaxTime) {
+            logger.error("initial fragments should be completion");
+        }
+    }
+    private void checkFragmentCompletion(List<FragmentMeta> fragments) {
+        long startTime = -1;
+        Map<String, Integer> borders = new HashMap<>();
+        for (FragmentMeta fragment: fragments) {
+            if (fragment.getTimeInterval().getEndTime() != Long.MAX_VALUE) {
+                logger.error("end time for new fragment should be Long.MAX_VALUE");
+                return;
+            }
+            if (startTime == -1) {
+                startTime = fragment.getTimeInterval().getStartTime();
+            }
+            if (startTime != fragment.getTimeInterval().getStartTime()) {
+                logger.error("new fragments created at the same time should have the same start time");
+                return;
+            }
+            String startTs = fragment.getTsInterval().getStartTimeSeries();
+            String endTs = fragment.getTsInterval().getEndTimeSeries();
+            borders.put(startTs, borders.getOrDefault(startTs, 0) - 1);
+            borders.put(endTs, borders.getOrDefault(endTs, 0) + 1);
+        }
+        for (String border: borders.keySet()) {
+            if (borders.get(border) != 0) {
+                logger.error("new fragments created at the same time should be completion");
+                return;
+            }
+
+        }
+    }
+
     @Override
     public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) { // 必须同时初始化 fragment 和 cache，并且这个方法的主体部分在任意时刻只能由某个 iginx 的某个线程执行
         if (cache.hasFragment() && cache.hasStorageUnit()) {
             return false;
         }
+        checkInitialFragmentCompletion(initialFragments);
         List<StorageUnitMeta> newStorageUnits = new ArrayList<>();
         try {
             storage.lockFragment();

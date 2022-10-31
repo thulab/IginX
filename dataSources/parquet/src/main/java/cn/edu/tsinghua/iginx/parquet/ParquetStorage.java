@@ -502,6 +502,9 @@ public class ParquetStorage implements IStorage {
     }
 
     private List<WritePlan> getWritePlans(DataViewWrapper data, String storageUnit) {
+        if (data.getTimeSize() == 0) {  // empty data section
+            return new ArrayList<>();
+        }
         TimeInterval timeInterval = new TimeInterval(
             data.getTimestamp(0),
             data.getTimestamp(data.getTimeSize() - 1)
