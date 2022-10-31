@@ -107,6 +107,8 @@ public class StreamStageRunner implements Runner {
 
     @Override
     public void close() {
-        reader.close();
+        if (reader != null) {
+            reader.close();
+        }
     }
 }
