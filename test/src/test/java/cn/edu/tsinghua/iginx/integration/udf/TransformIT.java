@@ -314,7 +314,7 @@ public class TransformIT {
         }
     }
 
-    @Test
+//    @Test
     public void commitSinglePythonJobByYamlTest() {
         logger.info("commitSinglePythonJobByYamlTest");
         try {
@@ -355,7 +355,7 @@ public class TransformIT {
         assertTrue(Files.deleteIfExists(Paths.get(outputFileName)));
     }
 
-    @Test
+//    @Test
     public void commitMultiplePythonJobsTest() {
         logger.info("commitMultiplePythonJobsTest");
         try {
@@ -390,7 +390,7 @@ public class TransformIT {
         }
     }
 
-    @Test
+//    @Test
     public void commitMultiplePythonJobsByYamlTest() {
         logger.info("commitMultiplePythonJobsByYamlTest");
         try {
