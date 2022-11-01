@@ -170,6 +170,7 @@ public class TransformIT {
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             Thread.sleep(500);
             jobState = session.queryTransformJobStatus(jobId);
+            logger.info("job {} state is {}", jobId, jobState.toString());
         }
         logger.info("job {} state is {}", jobId, jobState.toString());
         assertEquals(JobState.JOB_FINISHED, jobState);
@@ -197,20 +198,20 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitSingleSqlStatementByYamlTest() {
-//        logger.info("commitSingleSqlStatementByYamlTest");
-//        try {
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformSingleSqlStatement.yaml";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//
-//            long jobId = result.getJobId();
-//            verifyJobState(jobId);
-//        } catch (SessionException | ExecutionException | InterruptedException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitSingleSqlStatementByYamlTest() {
+        logger.info("commitSingleSqlStatementByYamlTest");
+        try {
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformSingleSqlStatement.yaml";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+
+            long jobId = result.getJobId();
+            verifyJobState(jobId);
+        } catch (SessionException | ExecutionException | InterruptedException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     @Test
     public void commitMultipleSqlStatementsTest() {
@@ -246,22 +247,22 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitMultipleSqlStatementsByYamlTest() {
-//        logger.info("commitMultipleSqlStatementsByYamlTest");
-//        try {
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultipleSqlStatements.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_sql_statements_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifyMultipleSqlStatements(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitMultipleSqlStatementsByYamlTest() {
+        logger.info("commitMultipleSqlStatementsByYamlTest");
+        try {
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultipleSqlStatements.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_sql_statements_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifyMultipleSqlStatements(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     private void verifyMultipleSqlStatements(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
@@ -313,25 +314,25 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitSinglePythonJobByYamlTest() {
-//        logger.info("commitSinglePythonJobByYamlTest");
-//        try {
-//            String task = "RowSumTransformer";
-//            registerTask(task);
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformSinglePythonJob.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_single_python_job_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifySinglePythonJob(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitSinglePythonJobByYamlTest() {
+        logger.info("commitSinglePythonJobByYamlTest");
+        try {
+            String task = "RowSumTransformer";
+            registerTask(task);
+
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformSinglePythonJob.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_single_python_job_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifySinglePythonJob(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     private void verifySinglePythonJob(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
@@ -389,73 +390,73 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitMultiplePythonJobsByYamlTest() {
-//        logger.info("commitMultiplePythonJobsByYamlTest");
-//        try {
-//            String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
-//            for (String task : taskList) {
-//                registerTask(task);
-//            }
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultiplePythonJobs.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifyMultiplePythonJobs(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitMultiplePythonJobsByYamlTest() {
+        logger.info("commitMultiplePythonJobsByYamlTest");
+        try {
+            String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
+            for (String task : taskList) {
+                registerTask(task);
+            }
 
-//    @Test
-//    public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
-//        logger.info("commitMultiplePythonJobsByYamlWithExportToIginxTest");
-//        try {
-//            String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
-//            for (String task : taskList) {
-//                registerTask(task);
-//            }
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultiplePythonJobsWithExportToIginx.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs_by_yaml_with_export_to_iginx.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            logger.info("yamlFileName = " + yamlFileName);
-//            BufferedReader reader = new BufferedReader(new FileReader(yamlFileName));
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                logger.info(line);
-//            }
-//            reader.close();
-//
-//            logger.info("outputFileName = " + outputFileName);
-//
-//            verifyJobState(jobId);
-//
-//            SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
-//            int timeIndex = queryResult.getPaths().indexOf("transform.time");
-//            int sumIndex = queryResult.getPaths().indexOf("transform.sum");
-//            assertNotEquals(-1, timeIndex);
-//            assertNotEquals(-1, sumIndex);
-//
-//            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-//            writer.write("time,sum\n");
-//            for (List<Object> row : queryResult.getValues()) {
-//                writer.write(row.get(timeIndex) + "," + row.get(sumIndex) + "\n");
-//            }
-//            writer.close();
-//
-//            verifyMultiplePythonJobs(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultiplePythonJobs.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifyMultiplePythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
+        logger.info("commitMultiplePythonJobsByYamlWithExportToIginxTest");
+        try {
+            String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
+            for (String task : taskList) {
+                registerTask(task);
+            }
+
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultiplePythonJobsWithExportToIginx.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs_by_yaml_with_export_to_iginx.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            logger.info("yamlFileName = " + yamlFileName);
+            BufferedReader reader = new BufferedReader(new FileReader(yamlFileName));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                logger.info(line);
+            }
+            reader.close();
+
+            logger.info("outputFileName = " + outputFileName);
+
+            verifyJobState(jobId);
+
+            SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
+            int timeIndex = queryResult.getPaths().indexOf("transform.time");
+            int sumIndex = queryResult.getPaths().indexOf("transform.sum");
+            assertNotEquals(-1, timeIndex);
+            assertNotEquals(-1, sumIndex);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
+            writer.write("time,sum\n");
+            for (List<Object> row : queryResult.getValues()) {
+                writer.write(row.get(timeIndex) + "," + row.get(sumIndex) + "\n");
+            }
+            writer.close();
+
+            verifyMultiplePythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     private void verifyMultiplePythonJobs(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
@@ -517,49 +518,49 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitMixedPythonJobsByYamlTest() {
-//        logger.info("commitMixedPythonJobsByYamlTest");
-//        try {
-//            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
-//            for (String task : taskList) {
-//                registerTask(task);
-//            }
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobs.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitMixedPythonJobsByYamlTest() {
+        logger.info("commitMixedPythonJobsByYamlTest");
+        try {
+            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
+            for (String task : taskList) {
+                registerTask(task);
+            }
 
-//    @Test
-//    public void commitMixedPythonJobsByYamlWithRegisterTest() {
-//        logger.info("commitMixedPythonJobsByYamlWithRegisterTest");
-//        try {
-//            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
-//            for (String task : taskList) {
-//                dropTask(task);
-//            }
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobs.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void commitMixedPythonJobsByYamlWithRegisterTest() {
+        logger.info("commitMixedPythonJobsByYamlWithRegisterTest");
+        try {
+            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
+            for (String task : taskList) {
+                dropTask(task);
+            }
+
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     private void verifyMixedPythonJobs(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
