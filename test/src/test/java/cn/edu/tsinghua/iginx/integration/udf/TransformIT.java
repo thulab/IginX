@@ -412,7 +412,7 @@ public class TransformIT {
         }
     }
 
-    @Test
+//    @Test
     public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
         logger.info("commitMultiplePythonJobsByYamlWithExportToIginxTest");
         try {
