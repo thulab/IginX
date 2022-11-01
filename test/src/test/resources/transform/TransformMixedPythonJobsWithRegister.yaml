@@ -3,9 +3,9 @@ taskList:
     dataFlowType: stream
     timeout: 10000000
     sqlList:
-      - REGISTER TRANSFORM PYTHON TASK "RowSumTransformer" IN "../../../test/src/test/resources/transform/transformer_row_sum.py" AS "RowSumTransformer";
-      - REGISTER TRANSFORM PYTHON TASK "AddOneTransformer" IN "../../../test/src/test/resources/transform/transformer_add_one.py" AS "AddOneTransformer";
-      - REGISTER TRANSFORM PYTHON TASK "SumTransformer" IN "../../../test/src/test/resources/transform/transformer_sum.py" AS "SumTransformer";
+      - REGISTER TRANSFORM PYTHON TASK "RowSumTransformer" IN "/Users/runner/work/IginX/IginX/test/src/test/resources/transform/transformer_row_sum.py" AS "RowSumTransformer";
+      - REGISTER TRANSFORM PYTHON TASK "AddOneTransformer" IN "/Users/runner/work/IginX/IginX/test/src/test/resources/transform/transformer_add_one.py" AS "AddOneTransformer";
+      - REGISTER TRANSFORM PYTHON TASK "SumTransformer" IN "/Users/runner/work/IginX/IginX/test/src/test/resources/transform/transformer_sum.py" AS "SumTransformer";
       - SELECT s1, s2 FROM us.d1 WHERE time < 200;
   - taskType: python
     dataFlowType: stream
@@ -21,4 +21,4 @@ taskList:
     pyTaskName: RowSumTransformer
 
 exportType: file
-exportFile: ../../../test/src/test/resources/transform/export_file_mixed_python_jobs_with_register_by_yaml.txt
+exportFile: /Users/runner/work/IginX/IginX/test/src/test/resources/transform/export_file_mixed_python_jobs_with_register_by_yaml.txt
