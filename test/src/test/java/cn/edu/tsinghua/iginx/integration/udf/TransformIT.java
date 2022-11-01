@@ -403,7 +403,7 @@ public class TransformIT {
         }
     }
 
-    @Test
+//    @Test
     public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
