@@ -13,4 +13,4 @@ taskList:
     pyTaskName: RowSumTransformer
 
 exportType: file
-exportFile: /Users/runner/work/IginX/IginX/test/src/test/resources/transform/export_file_multiple_python_jobs_by_yaml.txt
+exportFile: test/src/test/resources/transform/export_file_multiple_python_jobs_by_yaml.txt

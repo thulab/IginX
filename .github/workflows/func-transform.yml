@@ -77,11 +77,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: |
-          pwd
-          mvn test -q -Dtest=TransformIT -DfailIfNoTests=false
-          locate export_file_multiple_sql_statements_by_yaml.txt
-          find / -name export_file_multiple_sql_statements_by_yaml.txt
+        run: mvn test -q -Dtest=TransformIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
