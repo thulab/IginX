@@ -569,7 +569,7 @@ public class TransformIT {
         assertTrue(Files.deleteIfExists(Paths.get(outputFileName)));
     }
 
-    @Test
+//    @Test
     public void cancelJobTest() {
         logger.info("cancelJobTest");
         List<TaskInfo> taskInfoList = new ArrayList<>();
