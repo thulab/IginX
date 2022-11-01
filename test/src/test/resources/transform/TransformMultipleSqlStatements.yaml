@@ -6,4 +6,4 @@ taskList:
       - SELECT s2 FROM us.d1 WHERE time >= 14800;
 
 exportType: file
-exportFile: /Users/runner/work/IginX/IginX/test/src/test/resources/transform/export_file_multiple_sql_statements_by_yaml.txt
+exportFile: ../../../test/src/test/resources/transform/export_file_multiple_sql_statements_by_yaml.txt
