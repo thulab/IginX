@@ -530,7 +530,7 @@ public class TransformIT {
         }
     }
 
-    @Test
+//    @Test
     public void commitMixedPythonJobsByYamlWithRegisterTest() {
         logger.info("commitMixedPythonJobsByYamlWithRegisterTest");
         try {
