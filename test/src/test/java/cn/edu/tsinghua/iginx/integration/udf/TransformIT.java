@@ -425,6 +425,9 @@ public class TransformIT {
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
 
+            logger.info("yamlFileName = " + yamlFileName);
+            logger.info("outputFileName = " + outputFileName);
+
             verifyJobState(jobId);
 
             SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
