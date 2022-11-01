@@ -47,6 +47,7 @@ public class RowDataView extends DataView {
     @Override
     public BitmapView getBitmapView(int index) {
         checkTimeIndexRange(index);
+        System.out.println("PathIndex DEBUG======================================================================\n");
         return new BitmapView(data.getBitmaps().get(startTimeIndex + index), startPathIndex, endPathIndex);
     }
 }

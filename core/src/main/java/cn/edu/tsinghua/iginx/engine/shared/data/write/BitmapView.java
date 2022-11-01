@@ -33,6 +33,10 @@ public class BitmapView {
     public BitmapView(Bitmap bitmap, int start, int end) {
         Objects.requireNonNull(bitmap);
         this.bitmap = bitmap;
+        System.out.println("DEBUG======================================================================\n");
+        System.out.println(end);
+        System.out.println(start);
+        System.out.println("DEBUG======================================================================\n");
         if (end <= start) {
             throw new IllegalArgumentException("end index should greater than start index");
         }

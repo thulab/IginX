@@ -64,7 +64,13 @@ public class DataPointsParser {
             throw e;
         }
         try {
+            System.out.println("DEBUG======================================================================\n");
+            System.out.println(inputStream.toString());
+            System.out.println("DEBUG======================================================================\n");
             JsonNode node = mapper.readTree(inputStream);
+            System.out.println("DEBUG======================================================================\n");
+            System.out.println(node.toString());
+            System.out.println("DEBUG======================================================================\n");
             if (node.isArray()) {
                 for (JsonNode objNode : node) {
                     metricList.add(getMetricObject(objNode, isAnnotation));
@@ -89,6 +95,9 @@ public class DataPointsParser {
     //如果有anno信息会直接放入到插入路径中
     private Metric getMetricObject(JsonNode node, boolean isAnnotation) {
         Metric ret = new Metric();
+        System.out.println("DEBUG======================================================================\n");
+        System.out.println(node.toString());
+        System.out.println("DEBUG======================================================================\n");
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
@@ -312,6 +321,12 @@ public class DataPointsParser {
                 values[i] = getType(metric.getValues().get(i), type.get(0));
             }
             valuesList[0] = values;
+            System.out.println("DEBUG======================================================================\n");
+            System.out.println(paths);
+            System.out.println(metric.getTimestamps());
+            System.out.println(valuesList.toString());
+            System.out.println(tagsList);
+            System.out.println("DEBUG======================================================================\n");
             try {
                 session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
                 if (!metric.getAnno().isEmpty()) {

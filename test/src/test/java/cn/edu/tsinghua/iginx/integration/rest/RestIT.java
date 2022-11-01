@@ -26,29 +26,6 @@ public class RestIT {
     protected String storageEngineType;
     protected boolean ifClearData = true;
 
-    private String insertJson = "[\n" +
-            "    {\n" +
-            "        \"name\": \"archive_file_tracked\",\n" +
-            "        \"datapoints\": [\n" +
-            "            [1359788400000, 123.3],\n" +
-            "            [1359788300000, 13.2 ],\n" +
-            "            [1359788410000, 23.1 ]\n" +
-            "        ],\n" +
-            "        \"tags\": {\n" +
-            "            \"host\": \"server1\",\n" +
-            "            \"data_center\": \"DC1\"\n" +
-            "        }\n" +
-            "    },\n" +
-            "    {\n" +
-            "          \"name\": \"archive_file_search\",\n" +
-            "          \"timestamp\": 1359786400000,\n" +
-            "          \"value\": 321.0,\n" +
-            "          \"tags\": {\n" +
-            "              \"host\": \"server2\"\n" +
-            "          }\n" +
-            "      }\n" +
-            "]";
-
     protected static Logger logger = LoggerFactory.getLogger(MetricsResource.class);
 
     protected static Session session;
@@ -75,10 +52,9 @@ public class RestIT {
     @Before
     public void insertData() {
         try{
-            String json = insertJson;
             execute("insert.json",TYPE.INSERT);
         } catch (Exception e) {
-            logger.error("Error occurred during execution ", e);
+            logger.error("insertData fail. Caused by: {}.", e.toString());
         }
     }
 
@@ -148,7 +124,7 @@ public class RestIT {
         try {
             result = execute(json,TYPE.QUERY);
         } catch (Exception e) {
-            logger.error("Error occurred during execution ", e);
+            logger.error("executeAndCompare fail. Caused by: {}.", e.toString());
         }
         assertEquals(output, result);
     }
@@ -172,7 +148,11 @@ public class RestIT {
     }
 
     @Test
-    public void testQueryWithoutTags(){
+    public void testQueryWithoutTags() throws Exception {
+        SessionExecuteSqlResult res = session.executeSql("show time series");
+        System.out.println(res.getResultInString(false, ""));
+        res = session.executeSql("select * from *");
+        System.out.println(res.getResultInString(false, ""));
         String json ="testQueryWithoutTags.json";
         String result = "{\"queries\":[{\"sample_size\": 3,\"results\": [{ \"name\": \"archive.file.tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]},{\"sample_size\": 1,\"results\": [{ \"name\": \"archive.file.search\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"host\": [\"server2\"]}, \"values\": [[1359786400000,321.0]]}]}]}";
         executeAndCompare(json,result);

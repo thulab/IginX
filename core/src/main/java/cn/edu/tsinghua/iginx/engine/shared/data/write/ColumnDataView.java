@@ -46,6 +46,7 @@ public final class ColumnDataView extends DataView {
     @Override
     public BitmapView getBitmapView(int index) { // 对于列数据来说，第一个维度为序列，所以要 checkPath
         checkPathIndexRange(index);
+        System.out.println("TimeIndex DEBUG======================================================================\n");
         return new BitmapView(data.getBitmaps().get(startPathIndex + index), startTimeIndex, endTimeIndex);
     }
 }

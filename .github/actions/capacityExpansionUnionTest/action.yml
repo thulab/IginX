@@ -1,7 +1,7 @@
 name: 'CapExp-Union-Test'
 description: 'steps to test the capacity expansion'
 inputs:
-  VERSION:
+  version:
     description: 'iginx runner version'
     required: false
     default: 0.6.0-SNAPSHOT
@@ -25,7 +25,7 @@ runs:
     - name: Stop Iginx
       uses: ./.github/actions/iginxRunner
       with:
-        version: ${{inputs.VERSION}}
+        version: ${{inputs.version}}
         if-stop: true
 
     - name: Stop and Clear ZooKeeper
@@ -53,4 +53,4 @@ runs:
     - name: Start IginX
       uses: ./.github/actions/iginxRunner
       with:
-        version: ${{inputs.VERSION}}
+        version: ${{inputs.version}}
