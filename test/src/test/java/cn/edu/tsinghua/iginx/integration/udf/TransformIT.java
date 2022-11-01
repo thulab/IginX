@@ -149,11 +149,6 @@ public class TransformIT {
     }
 
     private void dropTask(String task) throws SessionException, ExecutionException {
-        File file = new File(System.getProperty("user.dir") + File.separator + ".." + File.separator + "core" + File.separator + "target" + File.separator + "iginx-core-0.6.0-SNAPSHOT" + File.separator + "python_scripts");
-        for (File f : file.listFiles()) {
-            logger.info(f.getName());
-        }
-        logger.info(System.getProperty("user.dir"));
         SessionExecuteSqlResult result = session.executeSql(SHOW_REGISTER_TASK_SQL);
         for (RegisterTaskInfo info : result.getRegisterTaskInfos()) {
             logger.info(info.getClassName());
@@ -163,8 +158,9 @@ public class TransformIT {
         }
     }
 
-    private void registerTask(String task) throws SessionException, ExecutionException {
+    private void registerTask(String task) throws SessionException, ExecutionException, InterruptedException {
         dropTask(task);
+        Thread.sleep(10000);
         session.executeSql(String.format(
                 REGISTER_SQL_FORMATTER, task, TASK_MAP.get(task), task
         ));
