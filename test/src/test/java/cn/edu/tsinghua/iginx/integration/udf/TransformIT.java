@@ -403,7 +403,7 @@ public class TransformIT {
         }
     }
 
-//    @Test
+    @Test
     public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
@@ -518,26 +518,26 @@ public class TransformIT {
         }
     }
 
-    @Test
-    public void commitMixedPythonJobsByYamlWithRegisterTest() {
-        try {
-            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
-            for (String task : taskList) {
-                dropTask(task);
-            }
-
-            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
-            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
-            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-            long jobId = result.getJobId();
-
-            verifyJobState(jobId);
-            verifyMixedPythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-            logger.error("Transform:  execute fail. Caused by:", e);
-            fail();
-        }
-    }
+//    @Test
+//    public void commitMixedPythonJobsByYamlWithRegisterTest() {
+//        try {
+//            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
+//            for (String task : taskList) {
+//                dropTask(task);
+//            }
+//
+//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
+//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
+//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+//            long jobId = result.getJobId();
+//
+//            verifyJobState(jobId);
+//            verifyMixedPythonJobs(outputFileName);
+//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+//            logger.error("Transform:  execute fail. Caused by:", e);
+//            fail();
+//        }
+//    }
 
     private void verifyMixedPythonJobs(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
