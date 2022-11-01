@@ -6,10 +6,9 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class IginXWriter extends ExportWriter {
 
@@ -52,7 +51,7 @@ public class IginXWriter extends ExportWriter {
 
         // construct values
         builder.append(") VALUES");
-        long index = System.currentTimeMillis();
+        long index = getCurrentTimeInNS();
         for (Row row : batchData.getRowList()) {
             builder.append(" (");
             builder.append(index).append(",");
@@ -65,6 +64,11 @@ public class IginXWriter extends ExportWriter {
         }
         builder.deleteCharAt(builder.length() - 1).append(";");
         return builder.toString();
+    }
+
+    private long getCurrentTimeInNS() {
+        Instant now = Instant.now();
+        return now.getEpochSecond() * 1_000_000_000L + now.getNano();
     }
 
     private String reformatPath(String path) {
