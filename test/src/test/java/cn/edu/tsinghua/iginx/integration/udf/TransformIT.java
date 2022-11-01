@@ -426,6 +426,13 @@ public class TransformIT {
             long jobId = result.getJobId();
 
             logger.info("yamlFileName = " + yamlFileName);
+            BufferedReader reader = new BufferedReader(new FileReader(yamlFileName));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                logger.info(line);
+            }
+            reader.close();
+
             logger.info("outputFileName = " + outputFileName);
 
             verifyJobState(jobId);
