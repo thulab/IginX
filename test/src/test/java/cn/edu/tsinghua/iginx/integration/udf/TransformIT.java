@@ -180,6 +180,7 @@ public class TransformIT {
 
     @Test
     public void commitSingleSqlStatementTest() {
+        logger.info("commitSingleSqlStatementTest");
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
@@ -198,6 +199,7 @@ public class TransformIT {
 
     @Test
     public void commitSingleSqlStatementByYamlTest() {
+        logger.info("commitSingleSqlStatementByYamlTest");
         try {
             String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformSingleSqlStatement.yaml";
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
@@ -212,6 +214,7 @@ public class TransformIT {
 
     @Test
     public void commitMultipleSqlStatementsTest() {
+        logger.info("commitMultipleSqlStatementsTest");
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
@@ -245,6 +248,7 @@ public class TransformIT {
 
     @Test
     public void commitMultipleSqlStatementsByYamlTest() {
+        logger.info("commitMultipleSqlStatementsByYamlTest");
         try {
             String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMultipleSqlStatements.yaml";
             String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_sql_statements_by_yaml.txt";
@@ -282,6 +286,7 @@ public class TransformIT {
 
     @Test
     public void commitSinglePythonJobTest() {
+        logger.info("commitSinglePythonJobTest");
         try {
             String task = "RowSumTransformer";
             registerTask(task);
@@ -310,6 +315,7 @@ public class TransformIT {
 
     @Test
     public void commitSinglePythonJobByYamlTest() {
+        logger.info("commitSinglePythonJobByYamlTest");
         try {
             String task = "RowSumTransformer";
             registerTask(task);
@@ -350,6 +356,7 @@ public class TransformIT {
 
     @Test
     public void commitMultiplePythonJobsTest() {
+        logger.info("commitMultiplePythonJobsTest");
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
             for (String task : taskList) {
@@ -384,6 +391,7 @@ public class TransformIT {
 
     @Test
     public void commitMultiplePythonJobsByYamlTest() {
+        logger.info("commitMultiplePythonJobsByYamlTest");
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
             for (String task : taskList) {
@@ -405,6 +413,7 @@ public class TransformIT {
 
     @Test
     public void commitMultiplePythonJobsByYamlWithExportToIginxTest() {
+        logger.info("commitMultiplePythonJobsByYamlWithExportToIginxTest");
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer"};
             for (String task : taskList) {
@@ -461,6 +470,7 @@ public class TransformIT {
 
     @Test
     public void commitMixedPythonJobsTest() {
+        logger.info("commitMixedPythonJobsTest");
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
             for (String task : taskList) {
@@ -499,6 +509,7 @@ public class TransformIT {
 
     @Test
     public void commitMixedPythonJobsByYamlTest() {
+        logger.info("commitMixedPythonJobsByYamlTest");
         try {
             String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
             for (String task : taskList) {
@@ -518,26 +529,27 @@ public class TransformIT {
         }
     }
 
-//    @Test
-//    public void commitMixedPythonJobsByYamlWithRegisterTest() {
-//        try {
-//            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
-//            for (String task : taskList) {
-//                dropTask(task);
-//            }
-//
-//            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
-//            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
-//            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
-//            long jobId = result.getJobId();
-//
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-//        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
-//            logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
-//        }
-//    }
+    @Test
+    public void commitMixedPythonJobsByYamlWithRegisterTest() {
+        logger.info("commitMixedPythonJobsByYamlWithRegisterTest");
+        try {
+            String[] taskList = {"RowSumTransformer", "AddOneTransformer", "SumTransformer"};
+            for (String task : taskList) {
+                dropTask(task);
+            }
+
+            String yamlFileName = OUTPUT_DIR_PREFIX + File.separator + "TransformMixedPythonJobsWithRegister.yaml";
+            String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs_with_register_by_yaml.txt";
+            SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
+            long jobId = result.getJobId();
+
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+            logger.error("Transform:  execute fail. Caused by:", e);
+            fail();
+        }
+    }
 
     private void verifyMixedPythonJobs(String outputFileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(outputFileName));
@@ -558,6 +570,7 @@ public class TransformIT {
 
     @Test
     public void cancelJobTest() {
+        logger.info("cancelJobTest");
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
