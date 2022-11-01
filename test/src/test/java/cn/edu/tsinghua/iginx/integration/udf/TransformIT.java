@@ -151,6 +151,7 @@ public class TransformIT {
     private void dropTask(String task) throws SessionException, ExecutionException {
         SessionExecuteSqlResult result = session.executeSql(SHOW_REGISTER_TASK_SQL);
         for (RegisterTaskInfo info : result.getRegisterTaskInfos()) {
+            logger.info(info.getClassName());
             if (info.getClassName().equals(task)) {
                 session.executeSql(String.format(DROP_SQL_FORMATTER, task));
             }
@@ -170,7 +171,6 @@ public class TransformIT {
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             Thread.sleep(500);
             jobState = session.queryTransformJobStatus(jobId);
-            logger.info("job {} state is {}", jobId, jobState.toString());
         }
         logger.info("job {} state is {}", jobId, jobState.toString());
         assertEquals(JobState.JOB_FINISHED, jobState);
@@ -425,16 +425,6 @@ public class TransformIT {
             String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs_by_yaml_with_export_to_iginx.txt";
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
-
-            logger.info("yamlFileName = " + yamlFileName);
-            BufferedReader reader = new BufferedReader(new FileReader(yamlFileName));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                logger.info(line);
-            }
-            reader.close();
-
-            logger.info("outputFileName = " + outputFileName);
 
             verifyJobState(jobId);
 

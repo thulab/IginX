@@ -74,14 +74,6 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            sudo sed -i '' 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
-          else
-            echo "$RUNNER_OS is not supported"
-            exit 1
-          fi
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
