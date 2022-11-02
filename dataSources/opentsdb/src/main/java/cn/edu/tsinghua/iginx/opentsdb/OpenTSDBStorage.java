@@ -424,7 +424,11 @@ public class OpenTSDBStorage implements IStorage {
         try {
             List<QueryResult> resultList = client.query(query);
             for (QueryResult result : resultList) {
-                Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(result.getMetric());
+                String path = result.getMetric();
+                if (path.startsWith("unit")) {
+                    path = path.substring(path.indexOf('.') + 1);
+                }
+                Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(path);
                 timeseries.add(new Timeseries(pair.k, fromOpenTSDB(result.getTags().get(DATA_TYPE)), pair.v));
             }
         } catch (Exception e) {
