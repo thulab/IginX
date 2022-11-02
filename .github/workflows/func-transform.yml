@@ -75,7 +75,7 @@ jobs:
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" > iginx.log 2>&1
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" > iginx.log 2>&1 &
       - name: A Lame Integration Test with Maven for IoTDB
         run: |
           mvn test -q -Dtest=TransformIT -DfailIfNoTests=false
