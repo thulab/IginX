@@ -561,4 +561,12 @@ public class SessionExecuteSqlResult {
     public JobState getJobState() {
         return jobState;
     }
+
+    public List<RegisterTaskInfo> getRegisterTaskInfos() {
+        return registerTaskInfos;
+    }
+
+    public void setRegisterTaskInfos(List<RegisterTaskInfo> registerTaskInfos) {
+        this.registerTaskInfos = registerTaskInfos;
+    }
 }

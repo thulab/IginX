@@ -1,0 +1,20 @@
+taskList:
+  - taskType: iginx
+    timeout: 10000000
+    sqlList:
+      - SELECT s1, s2 FROM us.d1 WHERE time < 200;
+  - taskType: python
+    dataFlowType: stream
+    timeout: 10000000
+    pyTaskName: AddOneTransformer
+  - taskType: python
+    dataFlowType: batch
+    timeout: 10000000
+    pyTaskName: SumTransformer
+  - taskType: python
+    dataFlowType: stream
+    timeout: 10000000
+    pyTaskName: RowSumTransformer
+
+exportType: file
+exportFile: test/src/test/resources/transform/export_file_mixed_python_jobs_by_yaml.txt
