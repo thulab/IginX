@@ -33,7 +33,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TransformIT {
 
     private static final Logger logger = LoggerFactory.getLogger(TransformIT.class);
@@ -88,6 +91,7 @@ public class TransformIT {
         TASK_MAP.put("RowSumTransformer", OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py");
         TASK_MAP.put("AddOneTransformer", OUTPUT_DIR_PREFIX + File.separator + "transformer_add_one.py");
         TASK_MAP.put("SumTransformer", OUTPUT_DIR_PREFIX + File.separator + "transformer_sum.py");
+        TASK_MAP.put("SleepTransformer", OUTPUT_DIR_PREFIX + File.separator + "transformer_sleep.py");
     }
 
     @BeforeClass
@@ -572,25 +576,21 @@ public class TransformIT {
     @Test
     public void cancelJobTest() {
         logger.info("cancelJobTest");
-        List<TaskInfo> taskInfoList = new ArrayList<>();
-
-        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        List<String> sqlList = new ArrayList<>();
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s2) values ";
-        StringBuilder builder = new StringBuilder(insertStrPrefix);
-        for (int i = 0; i < 10000; i++) {
-            builder.append("(");
-            builder.append(END_TIMESTAMP + i).append(", ");
-            builder.append(END_TIMESTAMP + i + 1);
-            builder.append(")");
-        }
-        builder.append(";");
-        sqlList.add(builder.toString());
-        sqlList.add(QUERY_SQL_1);
-        iginxTask.setSqlList(sqlList);
-        taskInfoList.add(iginxTask);
-
         try {
+            String task = "SleepTransformer";
+            registerTask(task);
+
+            List<TaskInfo> taskInfoList = new ArrayList<>();
+
+            TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+            iginxTask.setSqlList(Collections.singletonList(QUERY_SQL_2));
+
+            TaskInfo sleepPyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
+            sleepPyTask.setPyTaskName("SleepTransformer");
+
+            taskInfoList.add(iginxTask);
+            taskInfoList.add(sleepPyTask);
+
             long jobId = session.commitTransformJob(taskInfoList, ExportType.Log, "");
             logger.info("job is {}", jobId);
             JobState jobState = session.queryTransformJobStatus(jobId);
@@ -601,7 +601,7 @@ public class TransformIT {
             List<Long> finishedJobIds = session.showEligibleJob(JobState.JOB_CLOSED);
 
             assertTrue(finishedJobIds.contains(jobId));
-        } catch (SessionException | ExecutionException e) {
+        } catch (SessionException | ExecutionException | InterruptedException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
             fail();
         }
