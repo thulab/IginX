@@ -137,10 +137,10 @@ public class UDFIT {
         long jobId = session.commitTransformJob(taskInfoList, ExportType.Log, "");
         // 轮询查看任务情况
         JobState jobState = JobState.JOB_CREATED;
-        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
-            Thread.sleep(50);
+//        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
+//            Thread.sleep(50);
             jobState = session.queryTransformJobStatus(jobId);
-        }
+//        }
 
         logger.info("job {} state is {}", jobId, jobState.toString());
 
