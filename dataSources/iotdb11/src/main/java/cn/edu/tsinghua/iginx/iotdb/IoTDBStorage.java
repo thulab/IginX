@@ -245,8 +245,10 @@ public class IoTDBStorage implements IStorage {
                     continue;
                 }
                 String path = record.getFields().get(0).getStringValue();
-                path = path.substring(5);
-                path = path.substring(path.indexOf('.') + 1);
+                path = path.substring(5); // remove root.
+                if (path.startsWith("unit")) {
+                    path = path.substring(path.indexOf('.') + 1);
+                }
                 Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(path);
                 String dataTypeName = record.getFields().get(3).getStringValue();
                 switch (dataTypeName) {
