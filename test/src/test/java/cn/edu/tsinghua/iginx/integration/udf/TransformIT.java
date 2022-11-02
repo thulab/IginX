@@ -33,11 +33,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,11 +56,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TransformIT {
-
-    @Rule
-    public Timeout timeout = Timeout.seconds(60);
 
     private static final Logger logger = LoggerFactory.getLogger(TransformIT.class);
 
@@ -121,10 +113,9 @@ public class TransformIT {
     @Before
     public void insertData() throws ExecutionException, SessionException {
         String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
-
         StringBuilder builder = new StringBuilder(insertStrPrefix);
-
         int size = (int) (END_TIMESTAMP - START_TIMESTAMP);
+
         for (int i = 0; i < size; i++) {
             builder.append(", ");
             builder.append("(");
@@ -138,7 +129,6 @@ public class TransformIT {
         builder.append(";");
 
         String insertStatement = builder.toString();
-
         SessionExecuteSqlResult res = session.executeSql(insertStatement);
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
             logger.error("Insert date execute fail. Caused by: {}.", res.getParseErrorMsg());
@@ -149,7 +139,6 @@ public class TransformIT {
     @After
     public void clearData() throws ExecutionException, SessionException {
         String clearData = "CLEAR DATA;";
-
         SessionExecuteSqlResult res = session.executeSql(clearData);
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
             logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
