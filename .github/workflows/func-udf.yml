@@ -83,9 +83,11 @@ jobs:
             exit 1
           fi
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" > iginx.log 2>&1 &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=UDFIT -DfailIfNoTests=false
+        run: |
+          mvn test -q -Dtest=UDFIT -DfailIfNoTests=false
+          cat iginx.log
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
