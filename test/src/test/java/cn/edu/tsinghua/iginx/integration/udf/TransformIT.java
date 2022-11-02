@@ -511,7 +511,7 @@ public class TransformIT {
 
 //            verifyJobState(jobId);
 //            verifyMixedPythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
+        } catch (SessionException | ExecutionException | InterruptedException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
             fail();
         }
