@@ -2,7 +2,7 @@ import pandas as pd
 import time
 
 
-class AddOneTransformer:
+class SleepTransformer:
     def __init__(self):
         pass
 
