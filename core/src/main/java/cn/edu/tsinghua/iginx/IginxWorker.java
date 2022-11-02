@@ -522,15 +522,9 @@ public class IginxWorker implements IService.Iface {
         String className = req.getClassName();
 
         TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(name);
-        if (transformTaskMeta != null) {
-            if (transformTaskMeta.getIpSet().contains(config.getIp())) {
-                logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
-                return RpcUtils.FAILURE;
-            } else {
-                transformTaskMeta.addIp(config.getIp());
-                metaManager.updateTransformTask(transformTaskMeta);
-                return RpcUtils.SUCCESS;
-            }
+        if (transformTaskMeta != null && transformTaskMeta.getIpSet().contains(config.getIp())) {
+            logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
+            return RpcUtils.FAILURE;
         }
 
         File sourceFile = new File(filePath);
@@ -563,8 +557,13 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.FAILURE;
         }
 
-        metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName,
-            new HashSet<>(Collections.singletonList(config.getIp())), req.getType()));
+        if (transformTaskMeta != null) {
+            transformTaskMeta.addIp(config.getIp());
+            metaManager.updateTransformTask(transformTaskMeta);
+        } else {
+            metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName,
+                new HashSet<>(Collections.singletonList(config.getIp())), req.getType()));
+        }
         return RpcUtils.SUCCESS;
     }
 
@@ -593,6 +592,7 @@ public class IginxWorker implements IService.Iface {
         File file = new File(filePath);
 
         if (!file.exists()) {
+            metaManager.dropTransformTask(name);
             logger.error(String.format("Register file not exist, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
