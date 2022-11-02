@@ -1,0 +1,7 @@
+taskList:
+  - taskType: iginx
+    timeout: 10000000
+    sqlList:
+      - SHOW TIME SERIES;
+
+exportType: none
