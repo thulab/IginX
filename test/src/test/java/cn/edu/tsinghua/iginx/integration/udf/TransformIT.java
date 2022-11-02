@@ -160,7 +160,6 @@ public class TransformIT {
     private void dropTask(String task) throws SessionException, ExecutionException {
         SessionExecuteSqlResult result = session.executeSql(SHOW_REGISTER_TASK_SQL);
         for (RegisterTaskInfo info : result.getRegisterTaskInfos()) {
-            logger.info(info.getClassName());
             if (info.getClassName().equals(task)) {
                 session.executeSql(String.format(DROP_SQL_FORMATTER, task));
             }
@@ -239,7 +238,6 @@ public class TransformIT {
         }
         builder.append(";");
         sqlList.add(builder.toString());
-        logger.info(builder.toString());
         sqlList.add(QUERY_SQL_1);
         iginxTask.setSqlList(sqlList);
         taskInfoList.add(iginxTask);
@@ -315,11 +313,11 @@ public class TransformIT {
             String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_single_python_job.txt";
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, outputFileName);
 
-//            verifyJobState(jobId);
-//            verifySinglePythonJob(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifySinglePythonJob(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -335,11 +333,11 @@ public class TransformIT {
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
 
-//            verifyJobState(jobId);
-//            verifySinglePythonJob(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifySinglePythonJob(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -391,11 +389,11 @@ public class TransformIT {
             String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_multiple_python_jobs.txt";
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, outputFileName);
 
-//            verifyJobState(jobId);
-//            verifyMultiplePythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifyMultiplePythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -413,11 +411,11 @@ public class TransformIT {
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
 
-//            verifyJobState(jobId);
-//            verifyMultiplePythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifyMultiplePythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -440,8 +438,8 @@ public class TransformIT {
             SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
             int timeIndex = queryResult.getPaths().indexOf("transform.time");
             int sumIndex = queryResult.getPaths().indexOf("transform.sum");
-//            assertNotEquals(-1, timeIndex);
-//            assertNotEquals(-1, sumIndex);
+            assertNotEquals(-1, timeIndex);
+            assertNotEquals(-1, sumIndex);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
             writer.write("time,sum\n");
@@ -450,10 +448,10 @@ public class TransformIT {
             }
             writer.close();
 
-//            verifyMultiplePythonJobs(outputFileName);
+            verifyMultiplePythonJobs(outputFileName);
         } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -509,11 +507,11 @@ public class TransformIT {
             String outputFileName = OUTPUT_DIR_PREFIX + File.separator + "export_file_mixed_python_jobs.txt";
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, outputFileName);
 
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -531,11 +529,11 @@ public class TransformIT {
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
 
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException | InterruptedException e) {
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
@@ -553,11 +551,11 @@ public class TransformIT {
             SessionExecuteSqlResult result = session.executeSql(String.format(COMMIT_SQL_FORMATTER, yamlFileName));
             long jobId = result.getJobId();
 
-//            verifyJobState(jobId);
-//            verifyMixedPythonJobs(outputFileName);
-        } catch (SessionException | ExecutionException e) {
+            verifyJobState(jobId);
+            verifyMixedPythonJobs(outputFileName);
+        } catch (SessionException | ExecutionException | InterruptedException | IOException e) {
             logger.error("Transform:  execute fail. Caused by:", e);
-//            fail();
+            fail();
         }
     }
 
