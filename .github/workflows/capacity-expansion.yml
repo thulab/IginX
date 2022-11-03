@@ -1,124 +1,124 @@
-#name: "Capacity-Expansions-On-IoTDB"
-#on:
-#  push:
-#    branches:
-#      - main
-#  pull_request:
-#    branches:
-#      - main
-#env:
-#  VERSION: 0.6.0-SNAPSHOT
-#concurrency:
-#  group: ${{ github.workflow }}-${{ github.ref }}
-#  cancel-in-progress: true
-#
-#jobs:
-#  IoTDB-Test:
-#    timeout-minutes: 20
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        java: [ 8 ]
-#        python-version: [ "3.7" ]
-#        os: [ ubuntu-latest, macos-latest ]
-#        DB-name: [ "iotdb11", "iotdb12" ]
-##        Test-Way: [ OriHasDataExpHasData, OriHasDataExpNoData, OriNoDataExpHasData, OriNoDataExpNoData]
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Environmet Dependence
-#        uses: ./.github/actions/dependence
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#          java: ${{ matrix.java }}
-#      - name: Run ZooKeeper
-#        uses: ./.github/actions/zookeeperRunner
-#      - name: Run IoTDB
-#        uses: ./.github/actions/iotdbRunner
-#        with:
-#          version: ${{matrix.DB-name}}
-#
-#      - name: Change pom
-#        run: |
-#          mv test/pom.xml test/pom.xml.backup
-#          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
-#      - name: Install IginX with Maven
-#        shell: bash
-#        run: |
-#          mvn clean package -DskipTests
-#
-#      #第 4 阶段测试开始==========================================
-#      - name: Prepare CapExp environment
-#        if: always()
-#        uses: ./.github/actions/capacityExpansionUnionTest
-#        with:
-#          version: ${VERSION}
-#          DB-name: ${{matrix.DB-name}}
-#          Test-Way: OriHasDataExpHasData
-#
-#      - name: OriHasDataExpHasData IT
-#        if: always()
-#        run: |
-#          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-#            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriHasDataExpHasData -DfailIfNoTests=false
-#          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-#            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpHasData -DfailIfNoTests=false
-#          fi
-#
-#      #第 1 阶段测试开始==========================================
-#      - name: Prepare CapExp environment
-#        if: always()
-#        uses: ./.github/actions/capacityExpansionUnionTest
-#        with:
-#          version: ${VERSION}
-#          DB-name: ${{matrix.DB-name}}
-#          Test-Way: OriNoDataExpNoData
-#
-#      - name: OriNoDataExpNoData IT
-#        if: always()
-#        run: |
-#          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-#            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriNoDataExpNoData -DfailIfNoTests=false
-#          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-#            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpNoData -DfailIfNoTests=false
-#          fi
-#      #第 2 阶段测试开始==========================================
-#      - name: Prepare CapExp environment
-#        if: always()
-#        uses: ./.github/actions/capacityExpansionUnionTest
-#        with:
-#          version: ${VERSION}
-#          DB-name: ${{matrix.DB-name}}
-#          Test-Way: OriHasDataExpNoData
-#
-#      - name: OriHasDataExpNoData IT
-#        if: always()
-#        run: |
-#          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-#            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriHasDataExpNoData -DfailIfNoTests=false
-#          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-#            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpNoData -DfailIfNoTests=false
-#          fi
-#      #第 3 阶段测试开始==========================================
-#      - name: Prepare CapExp environment
-#        if: always()
-#        uses: ./.github/actions/capacityExpansionUnionTest
-#        with:
-#          version: ${VERSION}
-#          DB-name: ${{matrix.DB-name}}
-#          Test-Way: OriNoDataExpHasData
-#
-#      - name: OriNoDataExpHasData IT
-#        if: always()
-#        run: |
-#          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-#            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriNoDataExpHasData -DfailIfNoTests=false
-#          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-#            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpHasData -DfailIfNoTests=false
-#          fi
-#
-#
-#      - uses: codecov/codecov-action@v1
-#        with:
-#          file: ./**/target/site/jacoco/jacoco.xml
-#          name: codecov
+name: "Capacity-Expansions-On-IoTDB"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+  VERSION: 0.6.0-SNAPSHOT
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  IoTDB-Test:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        DB-name: [ "iotdb11", "iotdb12" ]
+#        Test-Way: [ OriHasDataExpHasData, OriHasDataExpNoData, OriNoDataExpHasData, OriNoDataExpNoData]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          version: ${{matrix.DB-name}}
+
+      - name: Change pom
+        run: |
+          mv test/pom.xml test/pom.xml.backup
+          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
+
+      #第 4 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriHasDataExpHasData
+
+      - name: OriHasDataExpHasData IT
+        if: always()
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriHasDataExpHasData -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpHasData -DfailIfNoTests=false
+          fi
+
+      #第 1 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriNoDataExpNoData
+
+      - name: OriNoDataExpNoData IT
+        if: always()
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriNoDataExpNoData -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpNoData -DfailIfNoTests=false
+          fi
+      #第 2 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriHasDataExpNoData
+
+      - name: OriHasDataExpNoData IT
+        if: always()
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriHasDataExpNoData -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpNoData -DfailIfNoTests=false
+          fi
+      #第 3 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriNoDataExpHasData
+
+      - name: OriNoDataExpHasData IT
+        if: always()
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#OriNoDataExpHasData -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpHasData -DfailIfNoTests=false
+          fi
+
+
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov

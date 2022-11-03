@@ -27,4 +27,10 @@ runs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
             sed -i "" "s/has_data=false/has_data=true/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
           fi
+        elif [[ "${{inputs.Test-Way}}" == "OriNoDataExpHasData" || "${{inputs.Test-Way}}" == "OriNoDataExpNoData" ]]; then
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sed -i "s/has_data=true/has_data=false/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            sed -i "" "s/has_data=true/has_data=false/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          fi
         fi

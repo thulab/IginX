@@ -113,19 +113,12 @@ public class InsertGenerator extends AbstractGenerator {
         while (endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
             endTimeIndex++;
 
-        System.out.println("DEBUG======================================================================\n");
-        System.out.println("tsInterval beg " + tsInterval.getStartTimeSeries());
-        System.out.println("DEBUG======================================================================\n");
         int startPathIndex = 0;
         if (tsInterval.getStartTimeSeries() != null) {
             while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
                 startPathIndex++;
         }
 
-        System.out.println("DEBUG======================================================================\n");
-        System.out.println("tsInterval end " + tsInterval.getEndTimeSeries());
-        System.out.println("paths " + paths.toString());
-        System.out.println("DEBUG======================================================================\n");
         int endPathIndex = startPathIndex;
         if (tsInterval.getEndTimeSeries() != null) {
             while (endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
@@ -133,12 +126,6 @@ public class InsertGenerator extends AbstractGenerator {
         } else {
             endPathIndex = paths.size();
         }
-        System.out.println("DEBUG======================================================================\n");
-        System.out.println("startPathIndex " + startPathIndex);
-        System.out.println("endPathIndex " + endPathIndex);
-        System.out.println("startTimeIndex " + startTimeIndex);
-        System.out.println("endTimeIndex " + endTimeIndex);
-        System.out.println("DEBUG======================================================================\n");
 
         if (rawData.isRowData()) {
             return new RowDataView(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);

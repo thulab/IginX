@@ -49,7 +49,7 @@ public class NewSessionNotSupportedQueryExample {
                         .build()
         );
         List<POJO> pojoList = queryClient.query("select * from demo.pojo where time < now() and time > now() - 1000", POJO.class); // 查询最近一秒内的 pojo 对象
-        client.close();
+        client.close(); // orm
     }
 
 
