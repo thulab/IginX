@@ -93,7 +93,7 @@ public class InsertGenerator extends AbstractGenerator {
 
         // time overlap doesn't exist.
         if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size() - 1) ||
-            timeInterval.getEndTime() < insertTimes.get(0)) {
+            timeInterval.getEndTime() <= insertTimes.get(0)) {
             return null;
         }
 
@@ -102,7 +102,7 @@ public class InsertGenerator extends AbstractGenerator {
             tsInterval.getStartTimeSeries().compareTo(paths.get(paths.size() - 1)) > 0)
             return null;
         if (tsInterval.getEndTimeSeries() != null &&
-            tsInterval.getEndTimeSeries().compareTo(paths.get(0)) < 0) {
+            tsInterval.getEndTimeSeries().compareTo(paths.get(0)) <= 0) {
             return null;
         }
 

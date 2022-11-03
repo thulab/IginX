@@ -400,6 +400,13 @@ jobs:
           cat ./.github/actions/iotdbRunner/iotdb2Log.txt
 
       #第 1 阶段测试开始==========================================
+      - name: Clear the Logs
+        if: always()
+        run: |
+          echo "" > ./.github/actions/iginxRunner/iginxLog.txt
+          echo "" > ./.github/actions/iotdbRunner/iotdb1Log.txt
+          echo "" > ./.github/actions/iotdbRunner/iotdb2Log.txt
+
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -430,19 +437,19 @@ jobs:
           cat ./.github/actions/iotdbRunner/iotdb2Log.txt
 
       #第 3 阶段测试开始==========================================
-      - name: Prepare CapExp environment
-        if: always()
-        uses: ./.github/actions/capacityExpansionUnionTest
-        with:
-          DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpHasData
-
       - name: Clear the Logs
         if: always()
         run: |
           echo "" > ./.github/actions/iginxRunner/iginxLog.txt
           echo "" > ./.github/actions/iotdbRunner/iotdb1Log.txt
           echo "" > ./.github/actions/iotdbRunner/iotdb2Log.txt
+
+      - name: Prepare CapExp environment
+        if: always()
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: OriNoDataExpHasData
 
       - name: OriNoDataExpHasData IT
         if: always()
@@ -467,6 +474,13 @@ jobs:
           cat ./.github/actions/iotdbRunner/iotdb2Log.txt
 
       #第 4 阶段测试开始==========================================
+      - name: Clear the Logs
+        if: always()
+        run: |
+          echo "" > ./.github/actions/iginxRunner/iginxLog.txt
+          echo "" > ./.github/actions/iotdbRunner/iotdb1Log.txt
+          echo "" > ./.github/actions/iotdbRunner/iotdb2Log.txt
+
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -474,13 +488,6 @@ jobs:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
           Test-Way: OriHasDataExpHasData
-
-      - name: Clear the Logs
-        if: always()
-        run: |
-          echo "" > ./.github/actions/iginxRunner/iginxLog.txt
-          echo "" > ./.github/actions/iotdbRunner/iotdb1Log.txt
-          echo "" > ./.github/actions/iotdbRunner/iotdb2Log.txt
 
       - name: OriHasDataExpHasData IT
         if: always()
