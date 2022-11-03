@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.integration.udf;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
@@ -10,11 +28,9 @@ import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
-import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -22,9 +38,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class UDFIT {
-
-    @Rule
-    public Timeout timeout = Timeout.seconds(60);
 
     private static final double delta = 0.01d;
 
@@ -95,12 +108,6 @@ public class UDFIT {
         }
     }
 
-    private void executeAndCompare(String statement, String expectedOutput) {
-        SessionExecuteSqlResult ret = execute(statement);
-        String actualOutput = ret.getResultInString(false, "");
-        assertEquals(expectedOutput, actualOutput);
-    }
-
     private SessionExecuteSqlResult execute(String statement) {
         logger.info("Execute Statement: \"{}\"", statement);
 
@@ -109,63 +116,26 @@ public class UDFIT {
             res = session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
             logger.error("Statement: \"{}\" execute fail. Caused by:", statement, e);
-//            fail();
+            fail();
         }
 
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
             logger.error("Statement: \"{}\" execute fail. Caused by: {}.", statement, res.getParseErrorMsg());
-//            fail();
+            fail();
         }
 
         return res;
     }
 
-    private static void executeStdJob(String sql, String pyTaskName) throws ExecutionException, SessionException, InterruptedException {
-        logger.info("Execute Transfrom Job sql: \"{}\", pyTaskName:\"{}\"", sql, pyTaskName);
-
-        List<TaskInfo> taskInfoList = new ArrayList<>();
-
-        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSqlList(Collections.singletonList(sql));
-        taskInfoList.add(iginxTask);
-
-        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setPyTaskName(pyTaskName);
-        taskInfoList.add(pyTask);
-
-        // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.Log, "");
-        // 轮询查看任务情况
-        JobState jobState = JobState.JOB_CREATED;
-//        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
-//            Thread.sleep(50);
-            jobState = session.queryTransformJobStatus(jobId);
-//        }
-
-        logger.info("job {} state is {}", jobId, jobState.toString());
-
-//        if (jobState != JobState.JOB_FINISHED) {
-//            fail();
-//        }
-    }
-
     @Test
     public void baseTests() {
-        String transformSQL = "SELECT s1 FROM us.d1 WHERE time < 200;";
         String udtfSQLFormat = "SELECT %s(s1) FROM us.d1 WHERE time < 200;";
         String udafSQLFormat = "SELECT %s(s1) FROM us.d1 GROUP [0, 200) BY 50ms;";
 
         List<TransformTaskMeta> taskMetas = metaManager.getTransformTasks();
         for (TransformTaskMeta taskMeta : taskMetas) {
             // execute udf
-            if (taskMeta.getType().equals(UDFType.TRANSFORM)) {
-                try {
-                    executeStdJob(transformSQL, taskMeta.getName());
-                } catch (Exception e) {
-                    logger.error("Transform: \"{}\" execute fail. Caused by:", taskMeta.getName(), e);
-//                    fail();
-                }
-            } else if (taskMeta.getType().equals(UDFType.UDTF)) {
+            if (taskMeta.getType().equals(UDFType.UDTF)) {
                 execute(String.format(udtfSQLFormat, taskMeta.getName()));
             } else {
                 execute(String.format(udafSQLFormat, taskMeta.getName()));

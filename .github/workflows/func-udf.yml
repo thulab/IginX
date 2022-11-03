@@ -35,7 +35,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5 pandas
+          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -83,11 +83,9 @@ jobs:
             exit 1
           fi
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" > iginx.log 2>&1 &
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: |
-          mvn test -q -Dtest=UDFIT -DfailIfNoTests=false
-          cat iginx.log
+        run: mvn test -q -Dtest=UDFIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
