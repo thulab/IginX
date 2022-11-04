@@ -187,10 +187,10 @@ public class PostgreSQLStorage implements IStorage {
       ResultSet tableSet = databaseMetaData.getTables(null, "%", "%", new String[]{"TABLE"});
       while (tableSet.next()) {
         String tableName = tableSet.getString(3);//获取表名称
+        ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
         if (tableName.startsWith("unit")) {
           tableName = tableName.substring(tableName.indexOf(POSTGRESQL_SEPARATOR) + 1);
         }
-        ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
         while (columnSet.next()) {
           String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
           String typeName = columnSet.getString("TYPE_NAME");//列字段类型
