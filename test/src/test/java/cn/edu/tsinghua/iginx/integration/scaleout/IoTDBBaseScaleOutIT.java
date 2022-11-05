@@ -5,7 +5,6 @@ import org.junit.Test;
 
 public interface IoTDBBaseScaleOutIT {
 
-    @Test
     void DBConf() throws Exception ;
 
     @Test
