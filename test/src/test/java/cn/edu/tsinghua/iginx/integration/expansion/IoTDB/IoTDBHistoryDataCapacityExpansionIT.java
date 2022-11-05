@@ -1,7 +1,9 @@
-package cn.edu.tsinghua.iginx.integration.expansion;
+package cn.edu.tsinghua.iginx.integration.expansion.IoTDB;
 
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
+import cn.edu.tsinghua.iginx.integration.expansion.BaseCapacityExpansionIT;
+import cn.edu.tsinghua.iginx.integration.expansion.unit.SQLTestTools;
 import cn.edu.tsinghua.iginx.session.Session;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -9,7 +11,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class IoTDBHistoryDataCapacityExpansionIT {
+public abstract class IoTDBHistoryDataCapacityExpansionIT extends BaseCapacityExpansionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 

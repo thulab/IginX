@@ -1,5 +1,6 @@
-package cn.edu.tsinghua.iginx.integration.expansion;
+package cn.edu.tsinghua.iginx.integration.expansion.InfluxDB;
 
+import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.domain.Organization;
@@ -12,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InfluxDBHistoryDataGeneratorTest {
+public class InfluxDBHistoryDataGeneratorTest extends BaseHistoryDataGenerator {
 
     public static final String TOKEN = "testToken";
 

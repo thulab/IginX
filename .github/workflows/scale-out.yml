@@ -243,25 +243,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#$OriNoDataExpNoData_IT -DfailIfNoTests=false
-
-#      - name: Check the Iginx Logs
-#        if: always()
-#        run: |
-#          echo "IGINX============================================================================="
-#          cat ./.github/actions/iginxRunner/iginxLog.txt
-#
-#      - name: Check the iotdb1 Logs
-#        if: always()
-#        run: |
-#          echo "IOTDB1============================================================================="
-#          cat ./.github/actions/iotdbRunner/iotdb1Log.txt
-#
-#      - name: Check the iotdb2 Logs
-#        if: always()
-#        run: |
-#          echo "IOTDB2============================================================================="
-#          cat ./.github/actions/iotdbRunner/iotdb2Log.txt
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#OriNoDataExpNoData_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -315,6 +297,8 @@ jobs:
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
         DB-name: [ "iotdb11", "iotdb12" ]
+#        os: [ ubuntu-latest ]
+#        DB-name: [ "iotdb11"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -357,6 +341,14 @@ jobs:
         run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriHasDataExpNoData_IT -DfailIfNoTests=false
 
       #第 1 阶段测试开始==========================================
+
+#      - name: Clear Data
+#        if: always()
+#        run: |
+#          echo "" > ./.github/actions/iginxRunner/iginxLog.txt
+#          echo "" > ./.github/actions/iotdbRunner/iotdb2Log.txt
+#          echo "" > ./.github/actions/iotdbRunner/iotdb1Log.txt
+
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -367,6 +359,24 @@ jobs:
       - name: OriNoDataExpNoData IT
         if: always()
         run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriNoDataExpNoData_IT -DfailIfNoTests=false
+
+#      - name: Check the Iginx Logs
+#        if: always()
+#        run: |
+#          echo "IGINX============================================================================="
+#          cat ./.github/actions/iginxRunner/iginxLog.txt
+#
+#      - name: Check the iotdb1 Logs
+#        if: always()
+#        run: |
+#          echo "IOTDB1============================================================================="
+#          cat ./.github/actions/iotdbRunner/iotdb1Log.txt
+#
+#      - name: Check the iotdb2 Logs
+#        if: always()
+#        run: |
+#          echo "IOTDB2============================================================================="
+#          cat ./.github/actions/iotdbRunner/iotdb2Log.txt
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment

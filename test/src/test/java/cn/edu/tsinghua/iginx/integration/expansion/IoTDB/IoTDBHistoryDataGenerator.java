@@ -1,11 +1,12 @@
-package cn.edu.tsinghua.iginx.integration.expansion;
+package cn.edu.tsinghua.iginx.integration.expansion.IoTDB;
 
+import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import org.apache.iotdb.session.Session;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IoTDBHistoryDataGenerator {
+public class IoTDBHistoryDataGenerator extends BaseHistoryDataGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBHistoryDataGenerator.class);
 
