@@ -3,6 +3,8 @@ package cn.edu.tsinghua.iginx.integration.scaleout;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
+import cn.edu.tsinghua.iginx.integration.rest.RestIT;
+import cn.edu.tsinghua.iginx.utils.FileReader;
 import org.junit.Test;
 
 public class IoTDBSqlScaleOutIT extends SQLSessionIT implements IoTDBBaseScaleOutIT{
@@ -10,19 +12,37 @@ public class IoTDBSqlScaleOutIT extends SQLSessionIT implements IoTDBBaseScaleOu
         super();
     }
 
-    @Test
-    public void iotdb11_IT() throws Exception {
+    @Override
+    public void DBConf() throws Exception {
+        this.storageEngineType = FileReader.convertToString("./src/test/java/cn/edu/tsinghua/iginx/integration/conf/DBConf.txt");
         this.ifClearData = false;
-        this.storageEngineType = "iotdb11";
+    }
+
+    @Override
+    public void OriHasDataExpHasData_IT() throws Exception {
+        DBConf();
         SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
         capacityExpansion();
     }
 
-    @Test
-    public void iotdb12_IT() throws Exception {
-        this.ifClearData = false;
-        this.storageEngineType = "iotdb12";
+    @Override
+    public void OriHasDataExpNoData_IT() throws Exception {
+        DBConf();
+        SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:no, is_read_only:true\");");
+        capacityExpansion();
+    }
+
+    @Override
+    public void OriNoDataExpHasData_IT() throws Exception {
+        DBConf();
         SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        capacityExpansion();
+    }
+
+    @Override
+    public void OriNoDataExpNoData_IT() throws Exception {
+        DBConf();
+        SQLSessionIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:no, is_read_only:true\");");
         capacityExpansion();
     }
 

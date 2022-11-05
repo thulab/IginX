@@ -60,7 +60,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#OriNoDataExpNoData_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -73,7 +73,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#OriHasDataExpNoData_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -86,7 +86,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#OriNoDataExpHasData_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -99,7 +99,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBTagScaleOutIT#OriHasDataExpHasData_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -152,7 +152,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#OriNoDataExpNoData_IT -DfailIfNoTests=false
 
       #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -165,7 +165,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#OriHasDataExpNoData_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -178,7 +178,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#OriNoDataExpHasData_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -191,7 +191,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#${{matrix.DB-name}}_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSqlScaleOutIT#OriHasDataExpHasData_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -243,7 +243,7 @@ jobs:
           Test-Way: OriNoDataExpNoData
 
       - name: OriNoDataExpNoData IT
-        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_OriNoDataExpNoData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#$OriNoDataExpNoData_IT -DfailIfNoTests=false
 
 #      - name: Check the Iginx Logs
 #        if: always()
@@ -274,7 +274,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_OriHasDataExpNoData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#OriHasDataExpNoData_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -286,7 +286,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_OriNoDataExpHasData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#OriNoDataExpHasData_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -299,7 +299,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#${{matrix.DB-name}}_OriHasDataExpHasData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSessionScaleOutIT#OriHasDataExpHasData_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:
@@ -354,7 +354,7 @@ jobs:
 
       - name: OriHasDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_OriHasDataExpNoData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriHasDataExpNoData_IT -DfailIfNoTests=false
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -366,7 +366,7 @@ jobs:
 
       - name: OriNoDataExpNoData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_OriNoDataExpNoData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriNoDataExpNoData_IT -DfailIfNoTests=false
 
       #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -378,7 +378,7 @@ jobs:
 
       - name: OriNoDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_OriNoDataExpHasData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriNoDataExpHasData_IT -DfailIfNoTests=false
 
       #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
@@ -391,7 +391,7 @@ jobs:
 
       - name: OriHasDataExpHasData IT
         if: always()
-        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#${{matrix.DB-name}}_OriHasDataExpHasData_IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBRestfulScaleOutIT#OriHasDataExpHasData_IT -DfailIfNoTests=false
 
       - uses: codecov/codecov-action@v1
         with:

@@ -1,6 +1,10 @@
 name: 'conf-writer'
 description: 'conf-writer'
 inputs:
+  confFile:
+    description: 'the conf that you want to write'
+    required: false
+    default: "iginxConf"
   if-CapExp:
     description: 'if you need capacity expansion'
     required: false
@@ -9,7 +13,7 @@ inputs:
     description: 'the way to imp'
     required: false
     default: clearData
-  version:
+  DB-name:
     description: 'IoTDB version'
     required: false
     default: iotdb11
@@ -34,3 +38,9 @@ runs:
             sed -i "" "s/has_data=true/has_data=false/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
           fi
         fi
+
+    - if: inputs.confFile=='DBName'
+      name: Change conf/config.properties
+      shell: bash
+      run: |
+        echo "${{inputs.DB-name}}" > ${GITHUB_WORKSPACE}/test/src/test/java/cn/edu/tsinghua/iginx/integration/conf/DBConf.txt

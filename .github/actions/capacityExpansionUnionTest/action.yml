@@ -50,6 +50,12 @@ runs:
         Test-Way: ${{inputs.Test-Way}}
         if-CapExp: true
 
+    - name: Set The DB Name
+      uses: ./.github/actions/confWriter
+      with:
+        confFile: DBName
+        DB-name: ${{inputs.DB-name}}
+
     - name: Start IginX
       uses: ./.github/actions/iginxRunner
       with:
