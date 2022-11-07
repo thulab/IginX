@@ -70,23 +70,19 @@ public class DefaultMetaManager implements IMetaManager {
                 storage = ZooKeeperMetaStorage.getInstance();
                 break;
             case Constants.FILE_META:
-                logger.info("use file as meta storage");
-                storage = FileMetaStorage.getInstance();
+                logger.error("file as meta storage has depreciated.");
+                storage = null;
+                System.exit(-1);
                 break;
             case Constants.ETCD_META:
                 logger.info("use etcd as meta storage");
                 storage = ETCDMetaStorage.getInstance();
                 break;
-            case "":
-                //without configuration, file storage should be the safe choice
-                logger.info("doesn't specify meta storage, use file as meta storage.");
-                storage = FileMetaStorage.getInstance();
-                break;
             default:
                 //without configuration, file storage should be the safe choice
-                logger.info("unknown meta storage, use file as meta storage.");
-                storage = FileMetaStorage.getInstance();
-                break;
+                logger.info("unknown meta storage " + ConfigDescriptor.getInstance().getConfig().getMetaStorage());
+                storage = null;
+                System.exit(-1);
         }
 
         storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
