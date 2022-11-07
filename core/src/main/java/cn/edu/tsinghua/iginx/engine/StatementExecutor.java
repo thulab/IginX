@@ -232,6 +232,10 @@ public class StatementExecutor {
         } catch (ExecutionException | PhysicalException e) {
             StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
             ctx.setResult(new Result(RpcUtils.status(statusCode, e.getMessage())));
+        } catch (Exception e) {
+            logger.error("unexpected exception during dispatcher memory task, please contact developer to check: ", e);
+            StatusCode statusCode = StatusCode.SYSTEM_ERROR;
+            ctx.setResult(new Result(RpcUtils.status(statusCode, e.getMessage())));
         }
     }
 

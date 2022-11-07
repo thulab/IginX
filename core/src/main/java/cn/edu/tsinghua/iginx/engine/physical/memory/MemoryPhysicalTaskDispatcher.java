@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -58,32 +59,36 @@ public class MemoryPhysicalTaskDispatcher {
 
     public void startDispatcher() {
         taskDispatcher.submit(() -> {
-            while (true) {
-                final MemoryPhysicalTask task = taskQueue.getTask();
-                taskExecuteThreadPool.submit(() -> {
+            try {
+                while (true) {
+                    final MemoryPhysicalTask task = taskQueue.getTask();
+                    taskExecuteThreadPool.submit(() -> {
 
-                    MemoryPhysicalTask currentTask = task;
-                    while (currentTask != null) {
-                        TaskExecuteResult result;
-                        try {
-                            result = currentTask.execute();
-                        } catch (Exception e) {
-                            logger.error("execute memory task failure: ", e);
-                            result = new TaskExecuteResult(new PhysicalException(e));
-                        }
-                        currentTask.setResult(result);
-                        if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
-                            MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();
-                            if (followerTask.notifyParentReady()) {
-                                currentTask = followerTask;
+                        MemoryPhysicalTask currentTask = task;
+                        while (currentTask != null) {
+                            TaskExecuteResult result;
+                            try {
+                                result = currentTask.execute();
+                            } catch (Exception e) {
+                                logger.error("execute memory task failure: ", e);
+                                result = new TaskExecuteResult(new PhysicalException(e));
+                            }
+                            currentTask.setResult(result);
+                            if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
+                                MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();
+                                if (followerTask.notifyParentReady()) {
+                                    currentTask = followerTask;
+                                } else {
+                                    currentTask = null;
+                                }
                             } else {
                                 currentTask = null;
                             }
-                        } else {
-                            currentTask = null;
                         }
-                    }
-                });
+                    });
+                }
+            } catch (Exception e){
+                logger.error("unexpected exception during dispatcher memory task, please contact developer to check: ", e);
             }
         });
     }
