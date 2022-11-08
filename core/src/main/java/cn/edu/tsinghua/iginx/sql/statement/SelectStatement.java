@@ -7,7 +7,8 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.SQLConstant;
+import cn.edu.tsinghua.iginx.sql.expression.BaseExpression;
+import cn.edu.tsinghua.iginx.sql.expression.Expression;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.*;
@@ -21,11 +22,11 @@ public class SelectStatement extends DataStatement {
     private boolean hasGroupByTime;
     private boolean ascending;
 
-    private List<Expression> expressions;
-    private Map<String, List<Expression>> selectedFuncsAndExpressions;
-    private Set<FuncType> funcTypeSet;
-    private Set<String> pathSet;
-    private List<String> fromPaths;
+    private final List<Expression> expressions;
+    private final Map<String, List<BaseExpression>> baseExpressionMap;
+    private final Set<FuncType> funcTypeSet;
+    private final Set<String> pathSet;
+    private final List<String> fromPaths;
     private String orderByPath;
     private Filter filter;
     private TagFilter tagFilter;
@@ -44,7 +45,7 @@ public class SelectStatement extends DataStatement {
         this.queryType = QueryType.Unknown;
         this.ascending = true;
         this.expressions = new ArrayList<>();
-        this.selectedFuncsAndExpressions = new HashMap<>();
+        this.baseExpressionMap = new HashMap<>();
         this.funcTypeSet = new HashSet<>();
         this.pathSet = new HashSet<>();
         this.fromPaths = new ArrayList<>();
@@ -59,15 +60,20 @@ public class SelectStatement extends DataStatement {
     public SelectStatement(List<String> paths, long startTime, long endTime) {
         this.queryType = QueryType.SimpleQuery;
 
+        this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
-        paths.forEach(path -> expressions.add(new Expression(path)));
-
-        this.selectedFuncsAndExpressions = new HashMap<>();
-        this.selectedFuncsAndExpressions.put("", expressions);
-
+        this.baseExpressionMap = new HashMap<>();
+        this.fromPaths = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
 
-        this.setFromSession(paths, startTime, endTime);
+        paths.forEach(path -> {
+            BaseExpression baseExpression = new BaseExpression(path);
+            expressions.add(baseExpression);
+            setSelectedFuncsAndPaths("", baseExpression);
+        });
+        this.hasFunc = false;
+
+        this.setFromSession(startTime, endTime);
     }
 
     // aggregate query
@@ -78,33 +84,39 @@ public class SelectStatement extends DataStatement {
             this.queryType = QueryType.AggregateQuery;
         }
 
-        String func = aggregateType.toString().toLowerCase();
+        this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
-        paths.forEach(path -> expressions.add(new Expression(path, func)));
-
-        this.selectedFuncsAndExpressions = new HashMap<>();
-        selectedFuncsAndExpressions.put(func, expressions);
-
+        this.baseExpressionMap = new HashMap<>();
+        this.fromPaths = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
-        this.funcTypeSet.add(str2FuncType(func));
+
+        String func = aggregateType.toString().toLowerCase();
+        paths.forEach(path -> {
+            BaseExpression baseExpression = new BaseExpression(path, func);
+            expressions.add(baseExpression);
+            setSelectedFuncsAndPaths(func, baseExpression);
+        });
         this.hasFunc = true;
 
-        this.setFromSession(paths, startTime, endTime);
+        this.setFromSession(startTime, endTime);
     }
 
     // downSample query
     public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
         this.queryType = QueryType.DownSampleQuery;
 
-        String func = aggregateType.toString().toLowerCase();
+        this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
-        paths.forEach(path -> expressions.add(new Expression(path, func)));
-
-        this.selectedFuncsAndExpressions = new HashMap<>();
-        this.selectedFuncsAndExpressions.put(func, expressions);
-
+        this.baseExpressionMap = new HashMap<>();
+        this.fromPaths = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
-        this.funcTypeSet.add(str2FuncType(func));
+
+        String func = aggregateType.toString().toLowerCase();
+        paths.forEach(path -> {
+            BaseExpression baseExpression = new BaseExpression(path, func);
+            expressions.add(baseExpression);
+            setSelectedFuncsAndPaths(func, baseExpression);
+        });
         this.hasFunc = true;
 
         this.precision = precision;
@@ -112,19 +124,16 @@ public class SelectStatement extends DataStatement {
         this.endTime = endTime;
         this.hasGroupByTime = true;
 
-        this.setFromSession(paths, startTime, endTime);
+        this.setFromSession(startTime, endTime);
     }
 
-    private void setFromSession(List<String> paths, long startTime, long endTime) {
+    private void setFromSession(long startTime, long endTime) {
         this.statementType = StatementType.SELECT;
 
         this.ascending = true;
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
         this.orderByPath = "";
-
-        this.pathSet = new HashSet<>();
-        this.pathSet.addAll(paths);
 
         this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
             new TimeFilter(Op.GE, startTime),
@@ -205,25 +214,24 @@ public class SelectStatement extends DataStatement {
 
     public List<String> getSelectedPaths() {
         List<String> paths = new ArrayList<>();
-        selectedFuncsAndExpressions.forEach((k, v) -> {
+        baseExpressionMap.forEach((k, v) -> {
             v.forEach(expression -> paths.add(expression.getPathName()));
         });
         return paths;
     }
 
-    public Map<String, List<Expression>> getSelectedFuncsAndExpressions() {
-        return selectedFuncsAndExpressions;
+    public Map<String, List<BaseExpression>> getBaseExpressionMap() {
+        return baseExpressionMap;
     }
 
-    public void setSelectedFuncsAndPaths(String func, Expression expression) {
+    public void setSelectedFuncsAndPaths(String func, BaseExpression expression) {
         func = func.trim().toLowerCase();
 
-        expressions.add(expression);
-        List<Expression> expressions = this.selectedFuncsAndExpressions.get(func);
+        List<BaseExpression> expressions = this.baseExpressionMap.get(func);
         if (expressions == null) {
             expressions = new ArrayList<>();
             expressions.add(expression);
-            this.selectedFuncsAndExpressions.put(func, expressions);
+            this.baseExpressionMap.put(func, expressions);
         } else {
             expressions.add(expression);
         }
@@ -238,10 +246,6 @@ public class SelectStatement extends DataStatement {
 
     public Set<FuncType> getFuncTypeSet() {
         return funcTypeSet;
-    }
-
-    public void setFuncTypeSet(Set<FuncType> funcTypeSet) {
-        this.funcTypeSet = funcTypeSet;
     }
 
     public Set<String> getPathSet() {
@@ -312,7 +316,7 @@ public class SelectStatement extends DataStatement {
         return queryType;
     }
 
-    public void setQueryType(QueryType queryType) {
+    public void checkQueryType(QueryType queryType) {
         this.queryType = queryType;
     }
 
@@ -352,9 +356,13 @@ public class SelectStatement extends DataStatement {
         return expressions;
     }
 
+    public void setExpression(Expression expression) {
+        expressions.add(expression);
+    }
+
     public Map<String, String> getAliasMap() {
         Map<String, String> aliasMap = new HashMap<>();
-        this.selectedFuncsAndExpressions.forEach((k, v) -> {
+        this.baseExpressionMap.forEach((k, v) -> {
             v.forEach(expression -> {
                 if (expression.hasAlias()) {
                     String oldName = expression.hasFunc()
@@ -367,7 +375,7 @@ public class SelectStatement extends DataStatement {
         return aliasMap;
     }
 
-    public void setQueryType() {
+    public void checkQueryType() {
         if (hasFunc) {
             if (hasGroupByTime) {
                 this.queryType = QueryType.DownSampleQuery;
@@ -381,30 +389,35 @@ public class SelectStatement extends DataStatement {
                 this.queryType = QueryType.SimpleQuery;
             }
         }
-
         if (queryType == QueryType.AggregateQuery) {
             if (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last)) {
                 this.queryType = QueryType.LastFirstQuery;
             }
+        }
 
-            // setToSet setToRow rowToRow functions can not be mixed.
-            int typeCnt = 0;
-            if (funcTypeSet.contains(FuncType.Udtf)) {
-                typeCnt++;
-            }
-            if (funcTypeSet.contains(FuncType.Udaf) || funcTypeSet.contains(FuncType.Min)
-                || funcTypeSet.contains(FuncType.Max) || funcTypeSet.contains(FuncType.Sum)
-                || funcTypeSet.contains(FuncType.Avg) || funcTypeSet.contains(FuncType.Count)
-                || funcTypeSet.contains(FuncType.FirstValue) || funcTypeSet.contains(FuncType.LastValue)) {
-                typeCnt++;
-            }
-            if (funcTypeSet.contains(FuncType.Udsf) || funcTypeSet.contains(FuncType.First)
-                || funcTypeSet.contains(FuncType.Last)) {
-                typeCnt++;
-            }
-            if (typeCnt > 1) {
-                throw new SQLParserException("SetToSet/SetToRow/RowToRow functions can not be mixed in aggregate query.");
-            }
+        // calculate func type count
+        int typeCnt = 0;
+        if (funcTypeSet.contains(FuncType.Udtf)) {
+            typeCnt++;
+        }
+        if (funcTypeSet.contains(FuncType.Udaf) || funcTypeSet.contains(FuncType.Min)
+            || funcTypeSet.contains(FuncType.Max) || funcTypeSet.contains(FuncType.Sum)
+            || funcTypeSet.contains(FuncType.Avg) || funcTypeSet.contains(FuncType.Count)
+            || funcTypeSet.contains(FuncType.FirstValue) || funcTypeSet.contains(FuncType.LastValue)) {
+            typeCnt++;
+        }
+        if (funcTypeSet.contains(FuncType.Udsf) || funcTypeSet.contains(FuncType.First)
+            || funcTypeSet.contains(FuncType.Last)) {
+            typeCnt++;
+        }
+
+        // SetToSet SetToRow RowToRow functions can not be mixed.
+        if (typeCnt > 1) {
+            throw new SQLParserException("SetToSet/SetToRow/RowToRow functions can not be mixed in aggregate query.");
+        }
+        // SetToSet SetToRow functions and non-function modified path can not be mixed.
+        if (typeCnt == 1 && !funcTypeSet.contains(FuncType.Udtf) && baseExpressionMap.containsKey("")) {
+            throw new SQLParserException("SetToSet/SetToRow functions and non-function modified path can not be mixed.");
         }
     }
 

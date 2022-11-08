@@ -8,6 +8,14 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.*;
+import cn.edu.tsinghua.iginx.sql.expression.BinaryExpression;
+import cn.edu.tsinghua.iginx.sql.expression.BaseExpression;
+import cn.edu.tsinghua.iginx.sql.expression.BracketExpression;
+import cn.edu.tsinghua.iginx.sql.expression.ConstantExpression;
+import cn.edu.tsinghua.iginx.sql.expression.Expression;
+import cn.edu.tsinghua.iginx.sql.expression.Expression.ExpressionType;
+import cn.edu.tsinghua.iginx.sql.expression.Operator;
+import cn.edu.tsinghua.iginx.sql.expression.UnaryExpression;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.JobState;
@@ -145,7 +153,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
 
         // Step 2. decide the query type according to the information.
-        selectStatement.setQueryType();
+        selectStatement.checkQueryType();
     }
 
     @Override
@@ -306,41 +314,125 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
         List<ExpressionContext> expressions = ctx.expression();
 
-        boolean hasPrefixPath = !selectStatement.getFromPaths().isEmpty();
         for (ExpressionContext expr : expressions) {
-            String funcName = "";
-            if (expr.functionName() != null) {
-                funcName = expr.functionName().getText();
-            }
-
-            String alias = "";
-            if (expr.asClause() != null) {
-                alias = expr.asClause().ID().getText();
-            }
-
-            String selectPath = expr.path().getText();
-            if (hasPrefixPath) {
-                // need to contact from path
-                List<String> fromPaths = selectStatement.getFromPaths();
-                for (String fromPath : fromPaths) {
-                    String fullPath = fromPath + SQLConstant.DOT + selectPath;
-                    Expression expression = new Expression(fullPath, funcName, alias);
-                    selectStatement.setSelectedFuncsAndPaths(funcName, expression);
+            List<Expression> ret = parseExpression(expr, selectStatement);
+            ret.forEach(expression -> {
+                if (expression.getType().equals(ExpressionType.Constant)) {
+                    // 当select一个不包含在表达式的常量时，这个常量会被看成selectedPath
+                    String selectedPath = ((ConstantExpression) expression).getValue().toString();
+                    List<Expression> newRet = parseBaseExpression(selectedPath, selectStatement);
+                    newRet.forEach(selectStatement::setExpression);
+                } else {
+                    selectStatement.setExpression(expression);
                 }
-            } else {
-                Expression expression = new Expression(selectPath, funcName, alias);
-                selectStatement.setSelectedFuncsAndPaths(funcName, expression);
-            }
+            });
         }
 
         if (!selectStatement.getFuncTypeSet().isEmpty()) {
             selectStatement.setHasFunc(true);
-            Set<String> funcSet = selectStatement.getSelectedFuncsAndExpressions().keySet();
-            if (funcSet.contains("") && funcSet.size() > 1)
-                throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
         }
     }
 
+    private List<Expression> parseExpression(ExpressionContext ctx, SelectStatement selectStatement) {
+        if (ctx.path() != null) {
+            return parseBaseExpression(ctx, selectStatement);
+        }
+        if (ctx.constant() != null) {
+            return Collections.singletonList(new ConstantExpression(parseValue(ctx.constant())));
+        }
+
+        List<Expression> ret = new ArrayList<>();
+        if (ctx.inBracketExpr != null) {
+            List<Expression> expressions = parseExpression(ctx.inBracketExpr, selectStatement);
+            for (Expression expression : expressions) {
+                ret.add(new BracketExpression(expression));
+            }
+        } else if (ctx.expr != null) {
+            List<Expression> expressions = parseExpression(ctx.expr, selectStatement);
+            Operator operator = parseOperator(ctx);
+            for (Expression expression : expressions) {
+                ret.add(new UnaryExpression(operator, expression));
+            }
+        } else if (ctx.leftExpr != null && ctx.rightExpr != null) {
+            List<Expression> leftExpressions = parseExpression(ctx.leftExpr, selectStatement);
+            List<Expression> rightExpressions = parseExpression(ctx.rightExpr, selectStatement);
+            Operator operator = parseOperator(ctx);
+            for (Expression leftExpression : leftExpressions) {
+                for (Expression rightExpression : rightExpressions) {
+                    ret.add(new BinaryExpression(leftExpression, rightExpression, operator));
+                }
+            }
+        } else {
+            throw new SQLParserException("Illegal selected expression");
+        }
+        return ret;
+    }
+
+    private List<Expression> parseBaseExpression(ExpressionContext ctx, SelectStatement selectStatement) {
+        List<Expression> ret = new ArrayList<>();
+
+        String funcName = "";
+        if (ctx.functionName() != null) {
+            funcName = ctx.functionName().getText();
+        }
+
+        String alias = "";
+        if (ctx.asClause() != null) {
+            alias = ctx.asClause().ID().getText();
+        }
+
+        String selectedPath = ctx.path().getText();
+        List<String> fromPaths = selectStatement.getFromPaths();
+        if (fromPaths.isEmpty()) {
+            BaseExpression expression = new BaseExpression(selectedPath, funcName, alias);
+            selectStatement.setSelectedFuncsAndPaths(funcName, expression);
+            ret.add(expression);
+        } else {
+            // need to contact from path
+            for (String fromPath : fromPaths) {
+                String fullPath = fromPath + SQLConstant.DOT + selectedPath;
+                BaseExpression expression = new BaseExpression(fullPath, funcName, alias);
+                selectStatement.setSelectedFuncsAndPaths(funcName, expression);
+                ret.add(expression);
+            }
+        }
+        return ret;
+    }
+
+    private List<Expression> parseBaseExpression(String selectedPath, SelectStatement selectStatement) {
+        List<Expression> ret = new ArrayList<>();
+        List<String> fromPaths = selectStatement.getFromPaths();
+        if (fromPaths.isEmpty()) {
+            BaseExpression expression = new BaseExpression(selectedPath);
+            selectStatement.setSelectedFuncsAndPaths("", expression);
+            ret.add(expression);
+        } else {
+            // need to contact from path
+            for (String fromPath : fromPaths) {
+                String fullPath = fromPath + SQLConstant.DOT + selectedPath;
+                BaseExpression expression = new BaseExpression(fullPath);
+                selectStatement.setSelectedFuncsAndPaths("", expression);
+                ret.add(expression);
+            }
+        }
+        return ret;
+    }
+
+    private Operator parseOperator(ExpressionContext ctx) {
+        if (ctx.STAR() != null) {
+            return Operator.STAR;
+        } else if (ctx.DIV() != null) {
+            return Operator.DIV;
+        } else if (ctx.MOD() != null) {
+            return Operator.MOD;
+        } else if (ctx.PLUS() != null) {
+            return Operator.PLUS;
+        } else if (ctx.MINUS() != null) {
+            return Operator.MINUS;
+        } else {
+            throw new SQLParserException("Unknown operator in expression");
+        }
+    }
 
     private void parseSpecialClause(SpecialClauseContext ctx, SelectStatement selectStatement) {
         if (ctx.groupByClause() != null) {
@@ -435,7 +527,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private void parseAsClause(AsClauseContext ctx, SelectStatement selectStatement) {
         String aliasPrefix = ctx.ID().getText();
-        selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+        selectStatement.getBaseExpressionMap().forEach((k, v) -> v.forEach(expression -> {
             String alias = expression.getAlias();
             if (alias.equals("")) {
                 alias = aliasPrefix + SQLConstant.DOT + expression.getColumnName();

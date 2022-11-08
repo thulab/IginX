@@ -171,9 +171,6 @@ public class SessionExecuteSqlResult {
 
     public String getResultInString(boolean needFormatTime, String timePrecision) {
         if (isQuery()) {
-            if (aggregateType == AggregateType.LAST) {
-                return buildLastQueryResult(needFormatTime, timePrecision);
-            }
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
@@ -307,27 +304,6 @@ public class SessionExecuteSqlResult {
         } else {
             return "Total line number = " + count + "\n";
         }
-    }
-
-    private String buildLastQueryResult(boolean needFormatTime, String timePrecision) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("ResultSets:").append("\n");
-        int num = paths == null ? 0 : paths.size();
-        if (values != null && !values.isEmpty()) {
-            List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
-            for (int i = 0; i < paths.size(); i++) {
-                cache.add(new ArrayList<>(Arrays.asList(
-                    needFormatTime ? formatTime(timestamps[i], DEFAULT_TIME_FORMAT, timePrecision) : String.valueOf(timestamps[i]),
-                    paths.get(i),
-                    valueToString(values.get(0).get(i))
-                )));
-            }
-
-            buildFromStringList(builder, cache);
-        }
-        builder.append(buildCount(num));
-        return builder.toString();
     }
 
     private String buildShowTimeSeriesResult() {
