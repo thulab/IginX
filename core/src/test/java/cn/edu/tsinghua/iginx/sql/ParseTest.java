@@ -1,8 +1,8 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
+import cn.edu.tsinghua.iginx.sql.expression.BaseExpression;
 import cn.edu.tsinghua.iginx.sql.statement.*;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import org.junit.Test;
 
@@ -42,7 +42,6 @@ public class ParseTest {
             "(2021.08.26T16:15:32.001, 1);";
 
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
-        statement.getTimes();
         List<Long> expectedTimes = Arrays.asList(
             1629965727000000000L,
             1629965727001000000L,
@@ -109,15 +108,15 @@ public class ParseTest {
         assertTrue(statement.hasGroupByTime());
         assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
-        assertEquals(2, statement.getSelectedFuncsAndExpressions().size());
-        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("sum"));
-        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("count"));
+        assertEquals(2, statement.getBaseExpressionMap().size());
+        assertTrue(statement.getBaseExpressionMap().containsKey("sum"));
+        assertTrue(statement.getBaseExpressionMap().containsKey("count"));
 
-        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
-        assertEquals("a.b.d", statement.getSelectedFuncsAndExpressions().get("sum").get(1).getPathName());
-        assertEquals("a.b.e", statement.getSelectedFuncsAndExpressions().get("sum").get(2).getPathName());
-        assertEquals("a.b.f", statement.getSelectedFuncsAndExpressions().get("count").get(0).getPathName());
-        assertEquals("a.b.g", statement.getSelectedFuncsAndExpressions().get("count").get(1).getPathName());
+        assertEquals("a.b.c", statement.getBaseExpressionMap().get("sum").get(0).getPathName());
+        assertEquals("a.b.d", statement.getBaseExpressionMap().get("sum").get(1).getPathName());
+        assertEquals("a.b.e", statement.getBaseExpressionMap().get("sum").get(2).getPathName());
+        assertEquals("a.b.f", statement.getBaseExpressionMap().get("count").get(0).getPathName());
+        assertEquals("a.b.g", statement.getBaseExpressionMap().get("count").get(1).getPathName());
 
         assertEquals(Collections.singletonList("a.b"), statement.getFromPaths());
 
@@ -173,7 +172,7 @@ public class ParseTest {
 
         selectStr = "SELECT SUM(c) FROM a.b GROUP BY LEVEL = 1, 2;";
         statement = (SelectStatement) TestUtils.buildStatement(selectStr);
-        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
+        assertEquals("a.b.c", statement.getBaseExpressionMap().get("sum").get(0).getPathName());
         assertEquals(Arrays.asList(1, 2), statement.getLayers());
     }
 
@@ -266,7 +265,7 @@ public class ParseTest {
 
         SelectStatement subStatement = statement.getSubStatement();
 
-        Expression expression = subStatement.getSelectedFuncsAndExpressions().get("max").get(0);
+        BaseExpression expression = subStatement.getBaseExpressionMap().get("max").get(0);
         assertEquals("root.a", expression.getPathName());
         assertEquals("max", expression.getFuncName());
         assertEquals("res.max_a", expression.getAlias());

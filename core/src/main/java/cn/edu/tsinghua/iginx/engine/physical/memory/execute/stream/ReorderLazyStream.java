@@ -6,9 +6,11 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Reorder;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,20 +39,28 @@ public class ReorderLazyStream extends UnaryLazyStream {
             this.reorderMap = new HashMap<>();
 
             for (String pattern : reorder.getPatterns()) {
-                for (int i = 0; i < header.getFields().size(); i++) {
-                    Field field  = header.getField(i);
-                    if (!StringUtils.isPattern(pattern)) {
-                        if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
-                            reorderMap.put(targetFields.size(), i);
-                            targetFields.add(field);
-
-                        }
-                    } else {
+                List<Pair<Field, Integer>> matchedFields = new ArrayList<>();
+                if (StringUtils.isPattern(pattern)) {
+                    for (int i = 0; i < header.getFields().size(); i++) {
+                        Field field  = header.getField(i);
                         if (Pattern.matches(StringUtils.reformatColumnName(pattern), field.getName())) {
-                            reorderMap.put(targetFields.size(), i);
-                            targetFields.add(field);
+                            matchedFields.add(new Pair<>(field, i));
                         }
                     }
+                } else {
+                    for (int i = 0; i < header.getFields().size(); i++) {
+                        Field field  = header.getField(i);
+                        if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
+                            matchedFields.add(new Pair<>(field, i));
+                        }
+                    }
+                }
+                if (!matchedFields.isEmpty()) {
+                    matchedFields.sort(Comparator.comparing(pair -> pair.getK().getFullName()));
+                    matchedFields.forEach(pair -> {
+                        reorderMap.put(targetFields.size(), pair.getV());
+                        targetFields.add(pair.getK());
+                    });
                 }
             }
             this.header = new Header(header.getTime(), targetFields);

@@ -22,10 +22,14 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
+import cn.edu.tsinghua.iginx.sql.expression.Expression;
+import cn.edu.tsinghua.iginx.sql.expression.Expression.ExpressionType;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
+import java.util.Arrays;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +40,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.*;
+import static cn.edu.tsinghua.iginx.engine.shared.function.system.ArithmeticExpr.ARITHMETIC_EXPR;
 import static cn.edu.tsinghua.iginx.metadata.utils.FragmentUtils.keyFromTSIntervalToTimeInterval;
 
 public class QueryGenerator extends AbstractGenerator {
@@ -82,7 +87,7 @@ public class QueryGenerator extends AbstractGenerator {
         if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
             // DownSample Query
             Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+            selectStatement.getBaseExpressionMap().forEach((k, v) -> v.forEach(expression -> {
                 Map<String, Value> params = new HashMap<>();
                 params.put(PARAM_PATHS, new Value(expression.getPathName()));
                 if (!selectStatement.getLayers().isEmpty()) {
@@ -102,40 +107,45 @@ public class QueryGenerator extends AbstractGenerator {
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
             // Aggregate Query
             Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+            selectStatement.getBaseExpressionMap().forEach((k, v) -> v.forEach(expression -> {
                 Map<String, Value> params = new HashMap<>();
                 params.put(PARAM_PATHS, new Value(expression.getPathName()));
                 if (!selectStatement.getLayers().isEmpty()) {
                     params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
-                logger.info("function: " + k + ", wrapped path: " + v);
-                if (FunctionUtils.isRowToRowFunction(k)) {
-                    queryList.add(
-                        new RowTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
-                } else if (FunctionUtils.isSetToSetFunction(k)) {
-                    queryList.add(
-                        new MappingTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
+                if (k.equals("")) {
+                    queryList.add(new Project(new OperatorSource(copySelect),
+                        Collections.singletonList(expression.getPathName()), tagFilter));
                 } else {
-                    queryList.add(
-                        new SetTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
+                    logger.info("function: " + k + ", wrapped path: " + expression.getPathName());
+                    if (FunctionUtils.isRowToRowFunction(k)) {
+                        queryList.add(
+                            new RowTransform(
+                                new OperatorSource(copySelect),
+                                new FunctionCall(functionManager.getFunction(k), params)
+                            )
+                        );
+                    } else if (FunctionUtils.isSetToSetFunction(k)) {
+                        queryList.add(
+                            new MappingTransform(
+                                new OperatorSource(copySelect),
+                                new FunctionCall(functionManager.getFunction(k), params)
+                            )
+                        );
+                    } else {
+                        queryList.add(
+                            new SetTransform(
+                                new OperatorSource(copySelect),
+                                new FunctionCall(functionManager.getFunction(k), params)
+                            )
+                        );
+                    }
                 }
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
             Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+            selectStatement.getBaseExpressionMap().forEach((k, v) -> v.forEach(expression -> {
                 Map<String, Value> params = new HashMap<>();
                 params.put(PARAM_PATHS, new Value(expression.getPathName()));
                 Operator copySelect = finalRoot.copy();
@@ -149,7 +159,7 @@ public class QueryGenerator extends AbstractGenerator {
             }));
         } else {
             List<String> selectedPath = new ArrayList<>();
-            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) ->
+            selectStatement.getBaseExpressionMap().forEach((k, v) ->
                 v.forEach(expression -> selectedPath.add(expression.getPathName())));
             queryList.add(new Project(new OperatorSource(root), selectedPath, tagFilter));
         }
@@ -165,6 +175,24 @@ public class QueryGenerator extends AbstractGenerator {
                 root = OperatorUtils.joinOperators(queryList, ORDINAL);
             }
         }
+
+        List<Operator> exprList = new ArrayList<>();
+        exprList.add(root);
+        for (Expression expression : selectStatement.getExpressions()) {
+            if (!expression.getType().equals(ExpressionType.Base)) {
+                Operator copySelect = root.copy();
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_EXPR, new Value(expression));
+
+                exprList.add(
+                    new RowTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(ARITHMETIC_EXPR), params)
+                    )
+                );
+            }
+        }
+        root = OperatorUtils.joinOperatorsByTime(exprList);
 
         if (!selectStatement.getOrderByPath().equals("")) {
             root = new Sort(
@@ -182,12 +210,12 @@ public class QueryGenerator extends AbstractGenerator {
             );
         }
 
-        if (!selectStatement.getQueryType().equals(SelectStatement.QueryType.LastFirstQuery)) {
+        if (selectStatement.getQueryType().equals(SelectStatement.QueryType.LastFirstQuery)) {
+            root = new Reorder(new OperatorSource(root), Arrays.asList("path", "value"));
+        } else {
             List<String> order = new ArrayList<>();
             selectStatement.getExpressions().forEach(expression -> {
-                String colName = expression.hasFunc()
-                    ? expression.getFuncName().toLowerCase() + "(" + expression.getPathName() + ")"
-                    : expression.getPathName();
+                String colName = expression.getColumnName();
                 order.add(colName);
             });
             root = new Reorder(new OperatorSource(root), order);
@@ -236,6 +264,5 @@ public class QueryGenerator extends AbstractGenerator {
             operator = OperatorUtils.joinOperatorsByTime(joinList);
         }
         return operator;
-
     }
 }

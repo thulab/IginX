@@ -73,6 +73,7 @@ public class FunctionManager {
         registerFunction(Max.getInstance());
         registerFunction(Min.getInstance());
         registerFunction(Sum.getInstance());
+        registerFunction(ArithmeticExpr.getInstance());
     }
 
     private void initBasicUDFFunctions() {

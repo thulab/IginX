@@ -38,6 +38,8 @@ public class Value {
 
     private byte[] binaryV;
 
+    private Object objectV;
+
     public Value(DataType dataType, Object value) {
         this.dataType = dataType;
         switch (dataType) {
@@ -80,9 +82,12 @@ public class Value {
         } else if (v instanceof Double) {
             this.dataType = DataType.DOUBLE;
             this.doubleV = (Double) v;
-        } else {
+        } else if (v instanceof byte[]) {
             this.dataType = DataType.BINARY;
             this.binaryV = (byte[]) v;
+        } else {
+            this.dataType = null;
+            this.objectV = v;
         }
     }
 
@@ -122,6 +127,9 @@ public class Value {
     }
 
     public Object getValue() {
+        if (dataType == null) {
+            return objectV;
+        }
         switch (dataType) {
             case BINARY:
                 return binaryV;
