@@ -1,0 +1,13 @@
+pipeline {
+
+    agent any
+
+    stages {
+        stage('IoTDB Test') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+    }
+
+}
