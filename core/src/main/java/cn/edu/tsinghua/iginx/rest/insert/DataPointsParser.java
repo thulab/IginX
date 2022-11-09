@@ -24,7 +24,7 @@ import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.RestUtils;
+import cn.edu.tsinghua.iginx.rest.RestUtils;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Reader;
 import java.util.*;
 
-import static cn.edu.tsinghua.iginx.utils.RestUtils.*;
+import static cn.edu.tsinghua.iginx.rest.RestUtils.*;
 
 public class DataPointsParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);

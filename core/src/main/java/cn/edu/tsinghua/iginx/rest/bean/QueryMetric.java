@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static cn.edu.tsinghua.iginx.utils.RestUtils.TOPTIEM;
+import static cn.edu.tsinghua.iginx.rest.RestUtils.TOPTIEM;
 
 @Data
 public class QueryMetric {

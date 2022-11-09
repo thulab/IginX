@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static cn.edu.tsinghua.iginx.utils.RestUtils.*;
+import static cn.edu.tsinghua.iginx.rest.RestUtils.*;
 
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
