@@ -8,14 +8,14 @@ public interface IoTDBBaseScaleOutIT {
     void DBConf() throws Exception ;
 
     @Test
-    public void OriHasDataExpHasData_IT() throws Exception;
+    public void OriHasDataExpHasDataIT() throws Exception;
 
     @Test
-    public void OriHasDataExpNoData_IT() throws Exception;
+    public void OriHasDataExpNoDataIT() throws Exception;
 
     @Test
-    public void OriNoDataExpHasData_IT() throws Exception;
+    public void OriNoDataExpHasDataIT() throws Exception;
 
     @Test
-    public void OriNoDataExpNoData_IT() throws Exception;
+    public void OriNoDataExpNoDataIT() throws Exception;
 }

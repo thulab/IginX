@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class IoTDBHistoryDataCapacityExpansionIT extends BaseCapacityExpansionIT {
+public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
