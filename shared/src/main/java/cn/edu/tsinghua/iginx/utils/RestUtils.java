@@ -1,6 +1,7 @@
-package cn.edu.tsinghua.iginx.rest.bean;
+package cn.edu.tsinghua.iginx.utils;
 
-public class SpecialTime {
+public class RestUtils {
+    public static final String CATEGORY = ""+'\u2E84';//"category";
     public static final Long TOPTIEM = 9223372036854775804L;
     public static final Long DESCRIPTIONTIEM = 9223372036854775805L;
     public static final Long TITLETIEM = 9223372036854775806L;

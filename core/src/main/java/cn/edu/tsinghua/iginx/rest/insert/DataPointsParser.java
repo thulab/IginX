@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.RestUtils;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Reader;
 import java.util.*;
 
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
+import static cn.edu.tsinghua.iginx.utils.RestUtils.*;
 
 public class DataPointsParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
@@ -126,7 +127,7 @@ public class DataPointsParser {
 
             //将cat的key与val颠倒后作为tag进行插入
             for(String cat : category){
-                ret.addTag(cat,KeyWords.CATEGORY);
+                ret.addTag(cat, RestUtils.CATEGORY);
             }
             if(title!=null)
                 ret.addAnno("title",title);
@@ -344,7 +345,7 @@ public class DataPointsParser {
         StringBuilder name = new StringBuilder();
         Map<String, String> tags = getTagsFromPaths(path, name);
         for(String tag : annotationLimit.getTag()){
-            tags.putIfAbsent(tag, KeyWords.CATEGORY);
+            tags.putIfAbsent(tag, RestUtils.CATEGORY);
         }
         metric.setTags(tags);
         return name.toString();
@@ -425,12 +426,12 @@ public class DataPointsParser {
         Map<String,String> tags = getTagsFromPaths(path, name);
         Map<String,String> newTags = new TreeMap<>();
         for(Map.Entry<String,String> entry : tags.entrySet()) {
-            if(!entry.getValue().equals(KeyWords.CATEGORY))
+            if(!entry.getValue().equals(RestUtils.CATEGORY))
                 newTags.put(entry.getKey(),entry.getValue());
         }
         if(!annoLimit.getTag().isEmpty())
             for(String tag : annoLimit.getTag()) {
-                newTags.putIfAbsent(tag, KeyWords.CATEGORY);
+                newTags.putIfAbsent(tag, RestUtils.CATEGORY);
             }
 
         metric.setTags(newTags);
@@ -443,7 +444,7 @@ public class DataPointsParser {
 
         //数量相同就ok
         for(Map.Entry<String,String> entry : tags.entrySet()) {
-            if(entry.getValue().equals(KeyWords.CATEGORY)) num++;
+            if(entry.getValue().equals(RestUtils.CATEGORY)) num++;
         }
         if(num==annoLimit.getTag().size()) return true;
         return false;

@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
+import static cn.edu.tsinghua.iginx.utils.RestUtils.*;
 
 @Path("/")
 public class MetricsResource {
