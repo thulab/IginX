@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
+import java.util.Arrays;
 import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +210,9 @@ public class QueryGenerator extends AbstractGenerator {
             );
         }
 
-        if (!selectStatement.getQueryType().equals(SelectStatement.QueryType.LastFirstQuery)) {
+        if (selectStatement.getQueryType().equals(SelectStatement.QueryType.LastFirstQuery)) {
+            root = new Reorder(new OperatorSource(root), Arrays.asList("path", "value"));
+        } else {
             List<String> order = new ArrayList<>();
             selectStatement.getExpressions().forEach(expression -> {
                 String colName = expression.getColumnName();

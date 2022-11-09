@@ -42,7 +42,6 @@ public class ParseTest {
             "(2021.08.26T16:15:32.001, 1);";
 
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
-        statement.getTimes();
         List<Long> expectedTimes = Arrays.asList(
             1629965727000000000L,
             1629965727001000000L,
