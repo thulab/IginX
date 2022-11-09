@@ -18,14 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.rest.query;
 
-import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryShowTimeSeries;

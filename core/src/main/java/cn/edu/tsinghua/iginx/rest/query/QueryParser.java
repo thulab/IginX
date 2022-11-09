@@ -715,7 +715,7 @@ public class QueryParser {
 
         //数量相同就欧克克
         for(Map.Entry<String,String> entry : tags.entrySet()) {
-            if(entry.getValue().equals("category")) num++;
+            if(entry.getValue().equals(KeyWords.CATEGORY)) num++;
         }
         if(num==annoLimit.getTag().size()) return true;
         return false;
@@ -770,7 +770,7 @@ public class QueryParser {
             List<String> tags = ret.getQueryMetrics().get(i).getAnnotationLimit().getTag();
             int annoCatLen = tags.size();
             for(int j=0;j<annoCatLen;j++){
-                ret.getQueryMetrics().get(i).addTag(tags.get(j),"category");
+                ret.getQueryMetrics().get(i).addTag(tags.get(j),KeyWords.CATEGORY);
             }
         }
         return ret;
@@ -783,7 +783,7 @@ public class QueryParser {
                 Map<String,String> tags = getTagsFromPaths(path.getQueryResultDatasets().get(i).getPaths().get(j),name);
                 List<String> categorys = new ArrayList<>();
                 for (Map.Entry<String, String> entry : tags.entrySet()) {
-                    if(entry.getValue().equals("category"))
+                    if(entry.getValue().equals(KeyWords.CATEGORY))
                         categorys.add(entry.getKey());
                 }
                 path.getQueryResultDatasets().get(i).addCategory(categorys);

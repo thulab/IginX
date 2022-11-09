@@ -148,7 +148,7 @@ public class QueryResult {
         QueryParser parser = new QueryParser();
         Map<String,String> tags = parser.getTagsFromPaths(path, new StringBuilder());
         for (Map.Entry<String, String> entry : tags.entrySet()) {
-            if(!entry.getValue().equals("category")) {
+            if(!entry.getValue().equals(KeyWords.CATEGORY)) {
                 ret.append("\"" + entry.getKey() + "\" : [\"" + entry.getValue() + "\"],");
             }
         }

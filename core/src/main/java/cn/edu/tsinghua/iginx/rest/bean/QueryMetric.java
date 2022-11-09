@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.rest.bean;
 
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFirst;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorLast;
 import lombok.Data;
 
 import java.util.ArrayList;
