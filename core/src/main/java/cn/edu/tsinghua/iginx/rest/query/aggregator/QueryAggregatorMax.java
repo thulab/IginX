@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
-import cn.edu.tsinghua.iginx.rest.RestUtils;
+import cn.edu.tsinghua.iginx.utils.RestUtils;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -29,7 +29,6 @@ import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import static java.lang.Math.max;
 
