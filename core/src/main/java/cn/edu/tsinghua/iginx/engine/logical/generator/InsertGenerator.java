@@ -113,12 +113,12 @@ public class InsertGenerator extends AbstractGenerator {
         while (endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
             endTimeIndex++;
 
+
         int startPathIndex = 0;
         if (tsInterval.getStartTimeSeries() != null) {
             while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
                 startPathIndex++;
         }
-
         int endPathIndex = startPathIndex;
         if (tsInterval.getEndTimeSeries() != null) {
             while (endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)

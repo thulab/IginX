@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion.IoTDB;
+package cn.edu.tsinghua.iginx.integration.expansion.iotdb;
 
 import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import org.apache.iotdb.session.Session;

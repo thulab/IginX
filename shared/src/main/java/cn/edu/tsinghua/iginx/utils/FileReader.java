@@ -27,16 +27,13 @@ public class FileReader {
         String conf = null;
         InputStream in = null;
         try {
-            System.out.println("filePath "+ filePath);
             in = new BufferedInputStream(Files.newInputStream(Paths.get(filePath)));
             conf = IOUtils.toString(in, String.valueOf(StandardCharsets.UTF_8)).replaceAll("\n","");
-            System.out.println("ANS "+conf+" no endl");
         } catch (IOException e) {
-            System.out.println("WRONG!!!!! ");
             logger.error(String.format("Fail to find file, path=%s", filePath));
         } finally {
             try {
-                if(in!=null) in.close();
+                if (in != null) in.close();
             } catch (IOException e) {
                 logger.error("Fail to close the file, path={}", filePath);
             }

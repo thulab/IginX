@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.rest.insert;
 
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
-import org.apache.commons.io.IOUtils;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.HttpHeaders;

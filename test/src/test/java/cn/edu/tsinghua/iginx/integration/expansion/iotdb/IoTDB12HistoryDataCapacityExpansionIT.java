@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion.IoTDB;
+package cn.edu.tsinghua.iginx.integration.expansion.iotdb;
 
 public class IoTDB12HistoryDataCapacityExpansionIT extends IoTDBHistoryDataCapacityExpansionIT {
 

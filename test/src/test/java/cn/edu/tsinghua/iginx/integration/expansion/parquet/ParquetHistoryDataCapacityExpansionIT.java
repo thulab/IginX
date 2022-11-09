@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion.Parquet;
+package cn.edu.tsinghua.iginx.integration.expansion.parquet;
 
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.expansion.BaseCapacityExpansionIT;

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion.IoTDB;
+package cn.edu.tsinghua.iginx.integration.expansion.iotdb;
 
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
@@ -77,7 +77,6 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT extends BaseCapacityEx
     //@Test
     public void testQueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from *";
-//        String statement = "show time series";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+\n" +
                 "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|\n" +
@@ -105,7 +104,6 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT extends BaseCapacityEx
 
     public void testQueryHistoryDataFromNoInitialNode() throws Exception {
         String statement = "select * from ln";
-//        String statement = "show time seires";
         String expect = "ResultSets:\n" +
                 "+----+\n" +
                 "|Time|\n" +

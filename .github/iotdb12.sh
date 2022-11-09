@@ -22,8 +22,8 @@ sh -c "sudo sed -i 's/# wal_buffer_size=16777216/wal_buffer_size=167772160/g' ap
 
 sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.12.6-server-bin/conf/iotdb-engine.properties"
 
-sudo sh -c "cd apache-iotdb-0.12.6-server-bin/; nohup sbin/start-server.sh &"  > /home/runner/work/IginX/IginX/.github/actions/iotdbRunner/iotdb1Log.txt
+sudo sh -c "cd apache-iotdb-0.12.6-server-bin/; nohup sbin/start-server.sh &"
 
-sudo sh -c "cd apache-iotdb2-0.12.6-server-bin/; nohup sbin/start-server.sh &"  > /home/runner/work/IginX/IginX/.github/actions/iotdbRunner/iotdb2Log.txt
+sudo sh -c "cd apache-iotdb2-0.12.6-server-bin/; nohup sbin/start-server.sh &"
 
 sed -i "s/iotdb11/iotdb12/g" conf/config.properties

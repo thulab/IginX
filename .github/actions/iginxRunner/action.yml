@@ -23,8 +23,6 @@ runs:
           chmod +x "${GITHUB_WORKSPACE}/.github/iginxRunnerMacOS.sh"
           "${GITHUB_WORKSPACE}/.github/iginxRunnerMacOS.sh"
         fi
-#        chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh"
-#        nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${{inputs.version}}/sbin/start_iginx.sh" & > ${GITHUB_WORKSPACE}/.github/actions/iginxRunner/iginxLog.txt
 
     - if: inputs.if-stop=='true'
       name: Stop Iginx

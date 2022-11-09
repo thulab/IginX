@@ -10,10 +10,6 @@ sh -c "mv apache-zookeeper-3.6.3-bin zookeeper"
 
 sh -c "cp ./.github/actions/zookeeperRunner/zoo.cfg zookeeper/conf/zoo.cfg"
 
-#sh -c "head -50 zookeeper/conf/zoo.cfg"
-
 sh -c "zookeeper/bin/zkServer.sh start"
-
-#sh -c "ls /tmp/zookeeper"
 
 sh -c "zookeeper/bin/zkCli.sh ls /"

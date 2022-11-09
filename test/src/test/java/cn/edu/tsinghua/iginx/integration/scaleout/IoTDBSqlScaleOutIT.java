@@ -13,7 +13,7 @@ public class IoTDBSqlScaleOutIT extends SQLSessionIT implements IoTDBBaseScaleOu
     }
 
     public void DBConf() throws Exception {
-        this.storageEngineType = FileReader.convertToString("./src/test/java/cn/edu/tsinghua/iginx/integration/conf/DBConf.txt");
+        this.storageEngineType = FileReader.convertToString("./src/test/java/cn/edu/tsinghua/iginx/integration/DBConf.txt");
         this.ifClearData = false;
     }
 

@@ -981,7 +981,7 @@ public abstract class BaseSessionIT extends BaseSessionConcurrencyIT {
             currPath += dataTypeLen;
         }
 
-        if(ifNeedCapExp) {
+        if (ifNeedCapExp) {
             //addSameTypeOfStorageEngineTest
             session.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
 

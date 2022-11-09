@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion.Parquet;
+package cn.edu.tsinghua.iginx.integration.expansion.parquet;
 
 import static org.junit.Assert.fail;
 

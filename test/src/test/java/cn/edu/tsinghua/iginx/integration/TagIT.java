@@ -87,20 +87,18 @@ public class TagIT {
         try {
             res = session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
-            System.out.println("LHZ-DEBUG " + e.toString());
             logger.error("Statement: \"{}\" execute fail. Caused by:", statement, e);
-            if(e.toString().equals(CLEARDATAEXCP)){
+            if (e.toString().equals(CLEARDATAEXCP)) {
                 logger.error("clear data fail and go on....");
             }
             else fail();
         }
 
-        if(res==null) {
+        if (res==null) {
             return "";
         }
 
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
-            System.out.println("LHZ-DEBUG " + res.getParseErrorMsg());
             logger.error("Statement: \"{}\" execute fail. Caused by: {}.", statement, res.getParseErrorMsg());
             fail();
             return "";
@@ -140,8 +138,6 @@ public class TagIT {
 //        testDeleteWithTag();
 
         testDeleteWithMultiTags();
-
-//        testDeleteTSWithTag();
 
         testDeleteTSWithMultiTags();
     }
@@ -1293,7 +1289,7 @@ public class TagIT {
                         + "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO copy.ah.hr02(TIME, v[t2=v2], s ) VALUES (SELECT v AS ts2, s AS ts1 FROM ah.hr03 with t1=v1);";
+        insert = "INSERT INTO copy.ah.hr02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr02;";

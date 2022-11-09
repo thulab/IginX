@@ -22,7 +22,6 @@ jobs:
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
         DB-name: [ "iotdb11", "iotdb12" ]
-#        Test-Way: [ OriHasDataExpHasData, OriHasDataExpNoData, OriNoDataExpHasData, OriNoDataExpNoData]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -47,7 +46,7 @@ jobs:
         run: |
           mvn clean package -DskipTests
 
-      #第 4 阶段测试开始==========================================
+      #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -65,7 +64,7 @@ jobs:
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpHasData -DfailIfNoTests=false
           fi
 
-      #第 1 阶段测试开始==========================================
+      #第 2 阶段测试开始==========================================
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -82,7 +81,8 @@ jobs:
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpNoData -DfailIfNoTests=false
           fi
-      #第 2 阶段测试开始==========================================
+
+      #第 3 阶段测试开始==========================================
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -99,7 +99,8 @@ jobs:
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriHasDataExpNoData -DfailIfNoTests=false
           fi
-      #第 3 阶段测试开始==========================================
+
+      #第 4 阶段测试开始==========================================
       - name: Prepare CapExp environment
         if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
@@ -116,7 +117,6 @@ jobs:
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#OriNoDataExpHasData -DfailIfNoTests=false
           fi
-
 
       - uses: codecov/codecov-action@v1
         with:
