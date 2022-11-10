@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InfluxDBHistoryDataGeneratorTest extends BaseHistoryDataGenerator {
+public class InfluxDBHistoryDataGeneratorTest {
 
     public static final String TOKEN = "testToken";
 

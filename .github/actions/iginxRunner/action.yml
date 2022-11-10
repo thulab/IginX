@@ -17,16 +17,16 @@ runs:
       shell: bash
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
-          chmod +x "${GITHUB_WORKSPACE}/.github/iginxRunnerLinux.sh"
-          "${GITHUB_WORKSPACE}/.github/iginxRunnerLinux.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iginx_runner_linux.sh"
+          "${GITHUB_WORKSPACE}/.github/iginx_runner_linux.sh"
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          chmod +x "${GITHUB_WORKSPACE}/.github/iginxRunnerMacOS.sh"
-          "${GITHUB_WORKSPACE}/.github/iginxRunnerMacOS.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iginx_runner_macOS.sh"
+          "${GITHUB_WORKSPACE}/.github/iginx_runner_macOS.sh"
         fi
 
     - if: inputs.if-stop=='true'
       name: Stop Iginx
       shell: bash
       run: |
-        chmod +x "${GITHUB_WORKSPACE}/.github/iginxKill.sh"
-        "${GITHUB_WORKSPACE}/.github/iginxKill.sh"
+        chmod +x "${GITHUB_WORKSPACE}/.github/iginx_kill.sh"
+        "${GITHUB_WORKSPACE}/.github/iginx_kill.sh"

@@ -4,14 +4,14 @@ import org.junit.Test;
 
 public interface BaseCapacityExpansionIT {
     @Test
-    public void OriHasDataExpHasData() throws Exception;
+    public void oriHasDataExpHasData() throws Exception;
 
     @Test
-    public void OriHasDataExpNoData() throws Exception;
+    public void oriHasDataExpNoData() throws Exception;
 
     @Test
-    public void OriNoDataExpHasData() throws Exception;
+    public void oriNoDataExpHasData() throws Exception;
 
     @Test
-    public void OriNoDataExpNoData() throws Exception;
+    public void oriNoDataExpNoData() throws Exception;
 }

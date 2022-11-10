@@ -14,7 +14,7 @@ import java.sql.Statement;
 import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import org.junit.Test;
 
-public class ParquetHistoryDataGeneratorTest extends BaseHistoryDataGenerator {
+public class ParquetHistoryDataGeneratorTest {
 
     private static final String DATA_DIR = "../parquetData2";
 

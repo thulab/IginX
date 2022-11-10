@@ -25,13 +25,13 @@ runs:
       name: Change conf/config.properties
       shell: bash
       run: |
-        if [[ "${{inputs.Test-Way}}" == "OriHasDataExpHasData" || "${{inputs.Test-Way}}" == "OriHasDataExpNoData" ]]; then
+        if [[ "${{inputs.Test-Way}}" == "oriHasDataExpHasData" || "${{inputs.Test-Way}}" == "oriHasDataExpNoData" ]]; then
           if [ "$RUNNER_OS" == "Linux" ]; then
             sed -i "s/has_data=false/has_data=true/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
           elif [ "$RUNNER_OS" == "macOS" ]; then
             sed -i "" "s/has_data=false/has_data=true/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
           fi
-        elif [[ "${{inputs.Test-Way}}" == "OriNoDataExpHasData" || "${{inputs.Test-Way}}" == "OriNoDataExpNoData" ]]; then
+        elif [[ "${{inputs.Test-Way}}" == "oriNoDataExpHasData" || "${{inputs.Test-Way}}" == "oriNoDataExpNoData" ]]; then
           if [ "$RUNNER_OS" == "Linux" ]; then
             sed -i "s/has_data=true/has_data=false/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
           elif [ "$RUNNER_OS" == "macOS" ]; then

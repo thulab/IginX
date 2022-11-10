@@ -43,7 +43,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     @Test
-    public void OriHasDataExpHasData() throws Exception {
+    public void oriHasDataExpHasData() throws Exception {
         testQueryHistoryDataFromInitialNode();
         testQueryAfterInsertNewData();
         testCapacityExpansion_oriHasDataExpHasData();
@@ -51,7 +51,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     @Test
-    public void OriHasDataExpNoData() throws Exception {
+    public void oriHasDataExpNoData() throws Exception {
         testQueryHistoryDataFromInitialNode();
         testQueryAfterInsertNewData();
         testCapacityExpansion_oriHasDataExpNoData();
@@ -59,7 +59,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     @Test
-    public void OriNoDataExpHasData() throws Exception {
+    public void oriNoDataExpHasData() throws Exception {
         testQueryHistoryDataFromNoInitialNode();
         testQueryAfterInsertNewDataFromNoInitialNode();
         testCapacityExpansion_oriNoDataExpHasData();
@@ -67,7 +67,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     @Test
-    public void OriNoDataExpNoData() throws Exception {
+    public void oriNoDataExpNoData() throws Exception {
         testQueryHistoryDataFromNoInitialNode();
         testQueryAfterInsertNewDataFromNoInitialNode();
         testCapacityExpansion_oriNoDataExpNoData();

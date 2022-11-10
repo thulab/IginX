@@ -41,5 +41,5 @@ runs:
       name : Stop Zookeeper
       shell: bash
       run: |
-        chmod +x "${GITHUB_WORKSPACE}/.github/zkClear.sh"
-        "${GITHUB_WORKSPACE}/.github/zkClear.sh"
+        chmod +x "${GITHUB_WORKSPACE}/.github/zk_clear.sh"
+        "${GITHUB_WORKSPACE}/.github/zk_clear.sh"
