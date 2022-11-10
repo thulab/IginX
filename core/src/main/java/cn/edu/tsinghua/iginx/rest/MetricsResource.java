@@ -20,10 +20,7 @@ package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.bean.*;
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
@@ -47,7 +44,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
+import static cn.edu.tsinghua.iginx.rest.RestUtils.*;
 
 @Path("/")
 public class MetricsResource {

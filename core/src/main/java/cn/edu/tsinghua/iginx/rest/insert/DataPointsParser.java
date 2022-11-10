@@ -20,26 +20,21 @@ package cn.edu.tsinghua.iginx.rest.insert;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
-import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.rest.RestUtils;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.html.parser.Entity;
-import javax.ws.rs.core.Response;
 import java.io.Reader;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
+import static cn.edu.tsinghua.iginx.rest.RestUtils.*;
 
 public class DataPointsParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
@@ -132,7 +127,7 @@ public class DataPointsParser {
 
             //将cat的key与val颠倒后作为tag进行插入
             for(String cat : category){
-                ret.addTag(cat,"category");
+                ret.addTag(cat, RestUtils.CATEGORY);
             }
             if(title!=null)
                 ret.addAnno("title",title);
@@ -350,7 +345,7 @@ public class DataPointsParser {
         StringBuilder name = new StringBuilder();
         Map<String, String> tags = getTagsFromPaths(path, name);
         for(String tag : annotationLimit.getTag()){
-            tags.putIfAbsent(tag, "category");
+            tags.putIfAbsent(tag, RestUtils.CATEGORY);
         }
         metric.setTags(tags);
         return name.toString();
@@ -431,12 +426,12 @@ public class DataPointsParser {
         Map<String,String> tags = getTagsFromPaths(path, name);
         Map<String,String> newTags = new TreeMap<>();
         for(Map.Entry<String,String> entry : tags.entrySet()) {
-            if(!entry.getValue().equals("category"))
+            if(!entry.getValue().equals(RestUtils.CATEGORY))
                 newTags.put(entry.getKey(),entry.getValue());
         }
         if(!annoLimit.getTag().isEmpty())
             for(String tag : annoLimit.getTag()) {
-                newTags.putIfAbsent(tag, "category");
+                newTags.putIfAbsent(tag, RestUtils.CATEGORY);
             }
 
         metric.setTags(newTags);
@@ -449,7 +444,7 @@ public class DataPointsParser {
 
         //数量相同就ok
         for(Map.Entry<String,String> entry : tags.entrySet()) {
-            if(entry.getValue().equals("category")) num++;
+            if(entry.getValue().equals(RestUtils.CATEGORY)) num++;
         }
         if(num==annoLimit.getTag().size()) return true;
         return false;
