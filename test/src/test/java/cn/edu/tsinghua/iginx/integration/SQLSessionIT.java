@@ -197,8 +197,6 @@ public abstract class SQLSessionIT {
         testMultiRangeDelete();
 
         testCrossRangeDelete();
-
-        testClearData();
     }
 
     @Test

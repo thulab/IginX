@@ -8,7 +8,7 @@ sh -c "tar -xzf apache-zookeeper-3.6.3-bin.tar.gz"
 
 sh -c "mv apache-zookeeper-3.6.3-bin zookeeper"
 
-sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
+sh -c "cp ./.github/actions/zookeeperRunner/zoo.cfg zookeeper/conf/zoo.cfg"
 
 sh -c "zookeeper/bin/zkServer.sh start"
 

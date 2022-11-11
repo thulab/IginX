@@ -20,6 +20,8 @@ public class TagIT {
     protected String storageEngineType;
     protected static boolean ifClearData;
 
+    private String CLEARDATAEXCP = "cn.edu.tsinghua.iginx.exceptions.ExecutionException: Caution: can not clear the data of read-only node.";
+
     @BeforeClass
     public static void setUp() {
         ifClearData = true;
@@ -86,7 +88,14 @@ public class TagIT {
             res = session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
             logger.error("Statement: \"{}\" execute fail. Caused by:", statement, e);
-            fail();
+            if (e.toString().equals(CLEARDATAEXCP)) {
+                logger.error("clear data fail and go on....");
+            }
+            else fail();
+        }
+
+        if (res==null) {
+            return "";
         }
 
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
@@ -130,11 +139,7 @@ public class TagIT {
 
         testDeleteWithMultiTags();
 
-//        testDeleteTSWithTag();
-
         testDeleteTSWithMultiTags();
-
-        testClearData();
     }
 
     @Test
@@ -637,6 +642,7 @@ public class TagIT {
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "Total line number = 5\n";
         executeAndCompare(statement, expected);
+
     }
 
     @Test

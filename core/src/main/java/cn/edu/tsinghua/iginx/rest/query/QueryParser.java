@@ -608,7 +608,9 @@ public class QueryParser {
             for (int j = 0; j < n; j++) {
                 ret.append("[");
                 if (result.getQueryResultDatasets().get(i).getValues().get(j) instanceof byte[]) {
+                    ret.append("\"");
                     ret.append(result.getQueryResultDatasets().get(i).getValues().get(j));
+                    ret.append("\"");
                 } else {
                     ret.append(result.getQueryResultDatasets().get(i).getValues().get(j).toString());
                 }

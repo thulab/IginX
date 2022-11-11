@@ -8,14 +8,13 @@ on:
       - main
 env:
   VERSION: 0.6.0-SNAPSHOT
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   IoTDB-Test:
-    timeout-minutes: 1
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -31,36 +30,38 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           java: ${{ matrix.java }}
-
       - name: Run ZooKeeper
         uses: ./.github/actions/zookeeperRunner
-
       - name: Run IoTDB
         uses: ./.github/actions/iotdbRunner
         with:
-        # this is not right
-          if-CapExp: "true"
           version: ${{matrix.DB-name}}
 
       - name: Change pom
         run: |
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
 
       #第 1 阶段测试开始==========================================
       - name: Prepare CapExp environment
+        if: always()
         uses: ./.github/actions/capacityExpansionUnionTest
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpNoData
+          Test-Way: oriHasDataExpHasData
 
-      - name: OriNoDataExpNoData IT
+      - name: oriHasDataExpHasData IT
+        if: always()
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#oriHasDataExpHasData -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#oriHasDataExpHasData -DfailIfNoTests=false
           fi
 
       #第 2 阶段测试开始==========================================
@@ -70,15 +71,15 @@ jobs:
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriHasDataExpNoData
+          Test-Way: oriNoDataExpNoData
 
-      - name: OriHasDataExpNoData IT
+      - name: oriNoDataExpNoData IT
         if: always()
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#oriNoDataExpNoData -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#oriNoDataExpNoData -DfailIfNoTests=false
           fi
 
       #第 3 阶段测试开始==========================================
@@ -88,15 +89,15 @@ jobs:
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriNoDataExpHasData
+          Test-Way: oriHasDataExpNoData
 
-      - name: OriNoDataExpHasData IT
+      - name: oriHasDataExpNoData IT
         if: always()
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#oriHasDataExpNoData -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#oriHasDataExpNoData -DfailIfNoTests=false
           fi
 
       #第 4 阶段测试开始==========================================
@@ -106,15 +107,15 @@ jobs:
         with:
           version: ${VERSION}
           DB-name: ${{matrix.DB-name}}
-          Test-Way: OriHasDataExpHasData
+          Test-Way: oriNoDataExpHasData
 
-      - name: OriHasDataExpHasData IT
+      - name: oriNoDataExpHasData IT
         if: always()
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#oriNoDataExpHasData -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#${{matrix.Test-Way}} -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#oriNoDataExpHasData -DfailIfNoTests=false
           fi
 
       - uses: codecov/codecov-action@v1

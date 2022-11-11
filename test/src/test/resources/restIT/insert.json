@@ -13,8 +13,9 @@
   },
   {
     "name": "archive.file.search",
-    "timestamp": 1359786400000,
-    "value": 321.0,
+    "datapoints": [
+      [1359786400000, 321.0]
+    ],
     "tags": {
       "host": "server2"
     }

@@ -1,32 +1,33 @@
-package cn.edu.tsinghua.iginx.integration.expansion;
+package cn.edu.tsinghua.iginx.integration.expansion.iotdb;
 
+import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import org.apache.iotdb.session.Session;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IoTDBHistoryDataGenerator {
+public class IoTDBHistoryDataGenerator implements BaseHistoryDataGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBHistoryDataGenerator.class);
 
     @Test
-    public void OriHasDataExpHasData() throws Exception {
+    public void oriHasDataExpHasData() throws Exception {
         writeHistoryDataToA();
         writeHistoryDataToB();
     }
 
     @Test
-    public void OriHasDataExpNoData() throws Exception {
+    public void oriHasDataExpNoData() throws Exception {
         writeHistoryDataToA();
     }
 
     @Test
-    public void OriNoDataExpHasData() throws Exception {
+    public void oriNoDataExpHasData() throws Exception {
         writeHistoryDataToB();
     }
 
     @Test
-    public void OriNoDataExpNoData() throws Exception {
+    public void oriNoDataExpNoData() throws Exception {
     }
 
     @Test
