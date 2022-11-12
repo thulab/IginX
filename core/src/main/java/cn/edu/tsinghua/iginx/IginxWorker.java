@@ -257,11 +257,6 @@ public class IginxWorker implements IService.Iface {
         if (!engine1.getStorageEngine().equals(engine2.getStorageEngine())) {
             return false;
         }
-        if (engine1.getStorageEngine().equals("parquet")) {  // parquet storage does not have ip and port.
-            String dir1 = engine1.getExtraParams().get("dir");
-            String dir2 = engine2.getExtraParams().get("dir");
-            return dir1.equals(dir2);
-        }
         return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort();
     }
 
