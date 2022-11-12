@@ -46,6 +46,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 import com.influxdb.client.InfluxDBClient;
@@ -54,6 +55,7 @@ import com.influxdb.client.domain.Bucket;
 import com.influxdb.client.domain.Organization;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
+import com.influxdb.query.FluxColumn;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import org.slf4j.Logger;
@@ -81,6 +83,8 @@ public class InfluxDBStorage implements IStorage {
     private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: time(v: %s), stop: time(v: %s))";
 
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\"";
+
+    private static final String SHOW_TIME_SERIES = "from(bucket:\"%s\") |> range(start: time(v: 100), stop: time(v: 9223372036854775807)) |> filter(fn: (r) => (r._measurement =~ /.*/ and r._field =~ /.+/)) |> first()";
 
     private final StorageEngineMeta meta;
 
@@ -253,7 +257,58 @@ public class InfluxDBStorage implements IStorage {
 
     @Override
     public List<Timeseries> getTimeSeries() {
-        return null;
+        List<Timeseries> timeseries = new ArrayList<>();
+
+        reloadHistoryData();//get all the bucket in historyBucketMap
+        List<FluxTable> tables = new ArrayList<>();
+        for (Bucket bucket: client.getBucketsApi().findBucketsByOrgName(organization.getName())) {
+            // query all the series by querying all the data with first()
+            if(!bucket.getName().contains("unit")) continue;
+            String statement = String.format(
+                    SHOW_TIME_SERIES,
+                    bucket.getName()
+            );
+            tables.addAll(client.getQueryApi().query(statement, organization.getId())) ;
+        }
+
+        for (FluxTable table : tables) {
+            List<FluxColumn> column = table.getColumns();
+            // get the path
+            String path = table.getRecords().get(0).getMeasurement() + "." + table.getRecords().get(0).getField();
+            Map<String, String> tag = new HashMap<>();
+            int len = column.size();
+            // get the tag cause the 8 is the begin index of the tag information
+            for (int i = 8; i < len; i++) {
+                String key = column.get(i).getLabel();
+                String val = (String)table.getRecords().get(0).getValues().get(key);
+                tag.put(key, val);
+            }
+
+            DataType dataType = null;
+            switch (column.get(5).getDataType()) {//the index 1 is the type of the data
+                case "boolean":
+                    dataType = DataType.BOOLEAN;
+                    break;
+                case "float":
+                    dataType = DataType.FLOAT;
+                    break;
+                case "string":
+                    dataType = DataType.BINARY;
+                    break;
+                case "double":
+                    dataType = DataType.DOUBLE;
+                    break;
+                case "int":
+                    dataType = DataType.INTEGER;
+                    break;
+                case "long":
+                    dataType = DataType.LONG;
+                    break;
+            }
+            timeseries.add(new Timeseries(path, dataType, tag));
+        }
+
+        return timeseries;
     }
 
     @Override
