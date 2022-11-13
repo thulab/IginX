@@ -259,11 +259,11 @@ public class InfluxDBStorage implements IStorage {
     public List<Timeseries> getTimeSeries() {
         List<Timeseries> timeseries = new ArrayList<>();
 
-        reloadHistoryData();//get all the bucket in historyBucketMap
         List<FluxTable> tables = new ArrayList<>();
-        for (Bucket bucket: client.getBucketsApi().findBucketsByOrgName(organization.getName())) {
+        for (Bucket bucket: client.getBucketsApi().findBucketsByOrgName(organization.getName())) {//get all the bucket
             // query all the series by querying all the data with first()
-            if(!bucket.getName().contains("unit")) continue;
+            if (!bucket.getName().contains("unit"))
+                continue;
             String statement = String.format(
                     SHOW_TIME_SERIES,
                     bucket.getName()
