@@ -41,6 +41,7 @@ import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.thrift.TException;
@@ -136,7 +137,7 @@ public class RemoteExecutor implements Executor {
         for (int i = 0; i < dataView.getPathNum(); i++) {
             paths.add(dataView.getPath(i));
             types.add(dataView.getDataType(i).toString());
-            tagsList.add(dataView.getTags(i));
+            tagsList.add(dataView.getTags(i) == null ? new HashMap<>() : dataView.getTags(i));
         }
 
         long[] times = new long[dataView.getTimeSize()];

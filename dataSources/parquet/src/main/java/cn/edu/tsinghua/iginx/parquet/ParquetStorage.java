@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.parquet;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
@@ -47,6 +49,8 @@ public class ParquetStorage implements IStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(ParquetStorage.class);
 
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
     private static final String DRIVER_NAME = "org.duckdb.DuckDBDriver";
 
     private static final String CONN_URL = "jdbc:duckdb:";
@@ -54,7 +58,7 @@ public class ParquetStorage implements IStorage {
     private Executor executor;
 
     public ParquetStorage(StorageEngineMeta meta) throws StorageInitializationException {
-        boolean isLocal = Boolean.parseBoolean(meta.getExtraParams().getOrDefault("isLocal", "true"));
+        boolean isLocal = config.isLocalParquetStorage();
         if (isLocal) {
             initLocalStorage(meta);
         } else {

@@ -43,6 +43,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -100,7 +101,8 @@ public class ParquetWorker implements ParquetService.Iface {
                 names.add(field.getName());
                 types.add(field.getType().toString());
                 dataTypes.add(field.getType());
-                tagsList.add(field.getTags());
+                Map<String, String> tags = field.getTags() == null ? new HashMap<>() : field.getTags();
+                tagsList.add(tags);
             });
         } catch (PhysicalException e) {
             logger.error("encounter error when get header from RowStream ", e);
@@ -272,9 +274,13 @@ public class ParquetWorker implements ParquetService.Iface {
         List<TS> ret = new ArrayList<>();
         try {
             List<Timeseries> tsList = executor.getTimeSeriesOfStorageUnit(storageUnit);
-            tsList.forEach(ts ->
-                ret.add(new TS(ts.getPath(), ts.getTags(), ts.getDataType().toString()))
-            );
+            tsList.forEach(timeseries -> {
+                TS ts = new TS(timeseries.getPath(), timeseries.getDataType().toString());
+                if (timeseries.getTags() != null) {
+                    ts.setTags(timeseries.getTags());
+                }
+                ret.add(ts);
+            });
             GetTimeSeriesOfStorageUnitResp resp = new GetTimeSeriesOfStorageUnitResp(SUCCESS);
             resp.setTsList(ret);
             return resp;

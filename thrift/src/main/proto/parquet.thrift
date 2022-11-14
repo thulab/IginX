@@ -88,8 +88,8 @@ struct GetStorageBoundryResp {
 
 struct TS {
     1: required string path
-    2: required map<string, string> tags
-    3: required string dataType
+    2: required string dataType
+    3: optional map<string, string> tags
 }
 
 struct GetTimeSeriesOfStorageUnitResp {
