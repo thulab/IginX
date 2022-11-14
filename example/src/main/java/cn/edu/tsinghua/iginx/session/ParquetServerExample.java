@@ -83,5 +83,8 @@ public class ParquetServerExample {
 
         result1 = session1.executeSql("SHOW TIME SERIES");
         result1.print(false, "");
+
+        session1.closeSession();
+        session2.closeSession();
     }
 }
