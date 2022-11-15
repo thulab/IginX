@@ -172,6 +172,8 @@ public class Config {
 
     /////////////
 
+    private boolean isLocalParquetStorage = true;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -710,5 +712,13 @@ public class Config {
 
     public void setExpectedStorageUnitNum(int expectedStorageUnitNum) {
         this.expectedStorageUnitNum = expectedStorageUnitNum;
+    }
+
+    public boolean isLocalParquetStorage() {
+        return isLocalParquetStorage;
+    }
+
+    public void setLocalParquetStorage(boolean localParquetStorage) {
+        isLocalParquetStorage = localParquetStorage;
     }
 }

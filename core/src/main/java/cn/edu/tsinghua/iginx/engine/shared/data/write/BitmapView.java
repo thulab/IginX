@@ -54,4 +54,7 @@ public class BitmapView {
         return end - start;
     }
 
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
 }
