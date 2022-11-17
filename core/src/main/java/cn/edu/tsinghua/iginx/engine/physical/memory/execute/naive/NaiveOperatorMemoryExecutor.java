@@ -187,14 +187,41 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             throw new InvalidOperatorParameterException("downsample operator is not support for row stream without timestamps.");
         }
         List<Row> rows = table.getRows();
-        long bias = downsample.getTimeRange().getBeginTime();
+        long bias = rows.get(0).getTimestamp();
+        long endTime = rows.get(rows.size() - 1).getTimestamp();
+        for (Row row : rows) {
+            if (bias > row.getTimestamp()) {
+                bias = row.getTimestamp();
+            }
+            if (endTime < row.getTimestamp()) {
+                endTime = row.getTimestamp();
+            }
+        }
         long precision = downsample.getPrecision();
+        long slideDistance = downsample.getSlideDistance();
+        // startTime + (n - 1) * slideDistance + precision - 1 >= endTime
+        int n = (int) (Math.ceil((double)(endTime - bias - precision + 1) / slideDistance) + 1);
         TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
         Map<String, Value> params = downsample.getFunctionCall().getParams();
-        for (Row row : rows) {
-            long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
-            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+        if (precision == slideDistance) {
+            for (Row row : rows) {
+                long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
+                groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+            }
+        } else {
+            long[] timestamps = new long[n];
+            for (int i = 0; i < n; i++) {
+                timestamps[i] = bias + i * slideDistance;
+            }
+            for (Row row : rows) {
+                long rowTimestamp = row.getTimestamp();
+                for (int i = 0; i < n; i++) {
+                    if (rowTimestamp - timestamps[i] >= 0 && rowTimestamp - timestamps[i] < precision) {
+                        groups.compute(timestamps[i], (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+                    }
+                }
+            }
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
         try {

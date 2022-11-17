@@ -20,6 +20,7 @@ public class SelectStatement extends DataStatement {
     private boolean hasFunc;
     private boolean hasValueFilter;
     private boolean hasGroupByTime;
+    private boolean hasSlideWindow;
     private boolean ascending;
 
     private final List<Expression> expressions;
@@ -35,6 +36,7 @@ public class SelectStatement extends DataStatement {
     private long endTime;
     private int limit;
     private int offset;
+    private long slideDistance;
 
     private List<Integer> layers;
 
@@ -123,7 +125,35 @@ public class SelectStatement extends DataStatement {
         this.startTime = startTime;
         this.endTime = endTime;
         this.hasGroupByTime = true;
+        this.hasSlideWindow = false;
 
+        this.setFromSession(startTime, endTime);
+    }
+    
+    public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, long slideDistance) {
+        this.queryType = QueryType.DownSampleQuery;
+        
+        this.pathSet = new HashSet<>();
+        this.expressions = new ArrayList<>();
+        this.baseExpressionMap = new HashMap<>();
+        this.fromPaths = new ArrayList<>();
+        this.funcTypeSet = new HashSet<>();
+        
+        String func = aggregateType.toString().toLowerCase();
+        paths.forEach(path -> {
+            BaseExpression baseExpression = new BaseExpression(path, func);
+            expressions.add(baseExpression);
+            setSelectedFuncsAndPaths(func, baseExpression);
+        });
+        this.hasFunc = true;
+        
+        this.precision = precision;
+        this.slideDistance = slideDistance;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.hasGroupByTime = true;
+        this.hasSlideWindow = true;
+        
         this.setFromSession(startTime, endTime);
     }
 
@@ -202,6 +232,14 @@ public class SelectStatement extends DataStatement {
 
     public void setHasGroupByTime(boolean hasGroupByTime) {
         this.hasGroupByTime = hasGroupByTime;
+    }
+    
+    public boolean hasSlideWindow() {
+        return hasSlideWindow;
+    }
+    
+    public void setHasSlideWindow(boolean hasSlideWindow) {
+        this.hasSlideWindow = hasSlideWindow;
     }
 
     public boolean isAscending() {
@@ -310,6 +348,14 @@ public class SelectStatement extends DataStatement {
 
     public void setPrecision(long precision) {
         this.precision = precision;
+    }
+    
+    public long getSlideDistance() {
+        return slideDistance;
+    }
+    
+    public void setSlideDistance(long slideDistance) {
+        this.slideDistance = slideDistance;
     }
 
     public QueryType getQueryType() {
