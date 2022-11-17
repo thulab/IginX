@@ -302,7 +302,7 @@ public class IoTDBStorage implements IStorage {
     }
 
     private String getRealPathWithoutPrefix(String oriPath, String prefix) {
-        if (!prefix.isEmpty() && oriPath.contains(prefix)) {
+        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
             return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
         }
         return oriPath;
