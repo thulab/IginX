@@ -110,7 +110,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     private String realTimeSeries(String timeSeries) {
-        if (timeSeries != null && !timeSeriesPrefix.isEmpty()) return timeSeriesPrefix + "." + timeSeries;
+        if (timeSeries != null && timeSeriesPrefix != null) return timeSeriesPrefix + "." + timeSeries;
         return timeSeries;
     }
 

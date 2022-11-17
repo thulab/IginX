@@ -248,6 +248,7 @@ public class IginxWorker implements IService.Iface {
                 meta.setDummyStorageUnit(dummyStorageUnit);
                 meta.setDummyFragment(dummyFragment);
             }
+            index++;
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
