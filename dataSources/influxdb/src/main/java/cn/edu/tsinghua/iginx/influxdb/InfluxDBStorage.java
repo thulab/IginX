@@ -84,7 +84,7 @@ public class InfluxDBStorage implements IStorage {
 
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\"";
 
-    private static final String SHOW_TIME_SERIES = "from(bucket:\"%s\") |> range(start: time(v: 100), stop: time(v: 9223372036854775807)) |> filter(fn: (r) => (r._measurement =~ /.*/ and r._field =~ /.+/)) |> first()";
+    private static final String SHOW_TIME_SERIES = "from(bucket:\"%s\") |> range(start: time(v: 0), stop: time(v: 9223372036854775807)) |> filter(fn: (r) => (r._measurement =~ /.*/ and r._field =~ /.+/)) |> first()";
 
     private final StorageEngineMeta meta;
 
@@ -303,6 +303,10 @@ public class InfluxDBStorage implements IStorage {
                     break;
                 case "long":
                     dataType = DataType.LONG;
+                    break;
+                default:
+                    dataType = DataType.BINARY;
+                    logger.warn("DataType don't match and default is String");
                     break;
             }
             timeseries.add(new Timeseries(path, dataType, tag));
