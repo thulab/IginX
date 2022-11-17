@@ -28,6 +28,8 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     private String endTimeSeries;
 
+    private String timeSeriesPrefix = null;
+
     // 右边界是否为闭
     private boolean isClosed;
 
@@ -69,8 +71,16 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return endTimeSeries;
     }
 
+    public String getTimeSeriesPrefix() {
+        return timeSeriesPrefix;
+    }
+
     public void setEndTimeSeries(String endTimeSeries) {
         this.endTimeSeries = endTimeSeries;
+    }
+
+    public void setTimeSeriesPrefix(String timeSeriesPrefix) {
+        this.timeSeriesPrefix = timeSeriesPrefix;
     }
 
     public boolean isClosed() {
@@ -99,16 +109,32 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return Objects.hash(startTimeSeries, endTimeSeries);
     }
 
+    private String realTimeSeries(String timeSeries) {
+        if (timeSeries != null && !timeSeriesPrefix.isEmpty()) return timeSeriesPrefix + "." + timeSeries;
+        return timeSeries;
+    }
+
     public boolean isContain(String tsName) {
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+        String endTimeSeries = realTimeSeries(this.endTimeSeries);
+
         return (startTimeSeries == null || (tsName != null && StringUtils.compare(tsName, startTimeSeries, true) >= 0))
             && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
     }
 
     public boolean isCompletelyBefore(String tsName) {
+        //judge if is the dummy node && it will have specific prefix
+        String endTimeSeries = realTimeSeries(this.endTimeSeries);
+
         return endTimeSeries != null && tsName != null && endTimeSeries.compareTo(tsName) <= 0;
     }
 
     public boolean isIntersect(TimeSeriesInterval tsInterval) {
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+        String endTimeSeries = realTimeSeries(this.endTimeSeries);
+
         return (tsInterval.startTimeSeries == null || endTimeSeries == null || StringUtils.compare(tsInterval.startTimeSeries, endTimeSeries, false) < 0)
             && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
     }
@@ -117,6 +143,11 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         if (!isIntersect(tsInterval)) {
             return null;
         }
+
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+        String endTimeSeries = realTimeSeries(this.endTimeSeries);
+
         String start = startTimeSeries == null ? tsInterval.startTimeSeries :
             tsInterval.startTimeSeries == null ? startTimeSeries :
                 StringUtils.compare(tsInterval.startTimeSeries, startTimeSeries, true) < 0 ? startTimeSeries :
@@ -129,15 +160,25 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+
         return tsInterval.endTimeSeries != null && startTimeSeries != null && StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) < 0;
     }
 
     public boolean isAfter(String tsName) {
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+
         return startTimeSeries != null && StringUtils.compare(tsName, startTimeSeries, true) < 0;
     }
 
     @Override
     public int compareTo(TimeSeriesInterval o) {
+        //judge if is the dummy node && it will have specific prefix
+        String startTimeSeries = realTimeSeries(this.startTimeSeries);
+        String endTimeSeries = realTimeSeries(this.endTimeSeries);
+
         int value = compareTo(startTimeSeries, o.startTimeSeries);
         if (value != 0)
             return value;
