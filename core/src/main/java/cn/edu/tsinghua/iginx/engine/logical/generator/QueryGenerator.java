@@ -95,14 +95,27 @@ public class QueryGenerator extends AbstractGenerator {
                 }
                 Operator copySelect = finalRoot.copy();
 
-                queryList.add(
-                    new Downsample(
-                        new OperatorSource(copySelect),
-                        selectStatement.getPrecision(),
-                        new FunctionCall(functionManager.getFunction(k), params),
-                        new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
-                    )
-                );
+                if (selectStatement.hasSlideWindow()) {
+                    queryList.add(
+                        new Downsample(
+                            new OperatorSource(copySelect),
+                                selectStatement.getPrecision(),
+                                selectStatement.getSlideDistance(),
+                                new FunctionCall(functionManager.getFunction(k), params),
+                                new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
+                        )
+                    );
+                } else {
+                    queryList.add(
+                        new Downsample(
+                            new OperatorSource(copySelect),
+                                selectStatement.getPrecision(),
+                                new FunctionCall(functionManager.getFunction(k), params),
+                                new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
+                        )
+                    );
+                }
+
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
             // Aggregate Query
