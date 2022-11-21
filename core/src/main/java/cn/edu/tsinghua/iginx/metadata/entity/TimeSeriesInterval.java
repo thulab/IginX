@@ -28,7 +28,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     private String endTimeSeries;
 
-    private String timeSeriesPrefix = null;
+    private String schemaPrefix = null;
 
     // 右边界是否为闭
     private boolean isClosed;
@@ -71,16 +71,16 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return endTimeSeries;
     }
 
-    public String getTimeSeriesPrefix() {
-        return timeSeriesPrefix;
+    public String getSchemaPrefix() {
+        return schemaPrefix;
     }
 
     public void setEndTimeSeries(String endTimeSeries) {
         this.endTimeSeries = endTimeSeries;
     }
 
-    public void setTimeSeriesPrefix(String timeSeriesPrefix) {
-        this.timeSeriesPrefix = timeSeriesPrefix;
+    public void setSchemaPrefix(String schemaPrefix) {
+        this.schemaPrefix = schemaPrefix;
     }
 
     public boolean isClosed() {
@@ -110,7 +110,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     private String realTimeSeries(String timeSeries) {
-        if (timeSeries != null && timeSeriesPrefix != null) return timeSeriesPrefix + "." + timeSeries;
+        if (timeSeries != null && schemaPrefix != null) return schemaPrefix + "." + timeSeries;
         return timeSeries;
     }
 

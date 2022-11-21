@@ -238,7 +238,7 @@ public class IginxWorker implements IService.Iface {
                 Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
                 FragmentMeta dummyFragment;
                 if (index < schemaPrefix.size() && schemaPrefix.get(index) != null) //set the virtual schema prefix
-                    boundary.k.setTimeSeriesPrefix(schemaPrefix.get(index));
+                    boundary.k.setSchemaPrefix(schemaPrefix.get(index));
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
