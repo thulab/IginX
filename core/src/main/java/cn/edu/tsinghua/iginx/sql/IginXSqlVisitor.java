@@ -751,6 +751,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         for (String kv : kvStr) {
             String[] kvArray = kv.split(SQLConstant.COLON);
             if (kvArray.length != 2) {
+                if (kv.contains("url")) {
+                    map.put("url", kv.substring(kv.indexOf(":")+1));
+                }
                 continue;
             }
             map.put(kvArray[0].trim(), kvArray[1].trim());
