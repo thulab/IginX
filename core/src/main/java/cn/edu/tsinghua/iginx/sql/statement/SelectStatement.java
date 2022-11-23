@@ -122,6 +122,7 @@ public class SelectStatement extends DataStatement {
         this.hasFunc = true;
 
         this.precision = precision;
+        this.slideDistance = precision;
         this.startTime = startTime;
         this.endTime = endTime;
         this.hasGroupByTime = true;
