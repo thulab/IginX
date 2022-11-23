@@ -34,6 +34,7 @@
     <module>test</module>
     <module>zeppelin-interpreter</module>
     <module>tools-exportCsv</module>
+      <module>sync</module>
   </modules>
 
   <distributionManagement>
