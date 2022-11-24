@@ -28,6 +28,9 @@ public enum OperatorType {
     Project,
     Select,
     Join,
+    InnerJoin,
+    OuterJoin,
+    CrossJoin,
     Union,
     Sort,
     Limit,
@@ -48,7 +51,7 @@ public enum OperatorType {
     Migration;
 
     public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
+        return op == Join || op == Union || op == InnerJoin || op == OuterJoin || op == CrossJoin;
     }
 
     public static boolean isUnaryOperator(OperatorType op) {

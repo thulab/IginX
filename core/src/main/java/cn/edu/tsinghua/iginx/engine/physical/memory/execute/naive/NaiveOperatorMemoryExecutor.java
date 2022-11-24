@@ -85,6 +85,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         switch (operator.getType()) {
             case Join:
                 return executeJoin((Join) operator, transformToTable(streamA), transformToTable(streamB));
+            case CrossJoin:
+                return executeCrossJoin((CrossJoin) operator, transformToTable(streamA), transformToTable(streamB));
+            case InnerJoin:
+                return executeInnerJoin((InnerJoin) operator, transformToTable(streamA), transformToTable(streamB));
+            case OuterJoin:
+                return executeOuterJoin((OuterJoin) operator, transformToTable(streamA), transformToTable(streamB));
             case Union:
                 return executeUnion((Union) operator, transformToTable(streamA), transformToTable(streamB));
             default:
@@ -469,6 +475,21 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         } else {
             throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
         }
+    }
+
+    private RowStream executeCrossJoin(CrossJoin crossJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
     }
 
     private static void writeToNewRow(Object[] values, Row row, Map<Field, Integer> fieldIndices) {

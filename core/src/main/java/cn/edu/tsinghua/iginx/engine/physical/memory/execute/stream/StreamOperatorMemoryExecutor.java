@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
@@ -69,6 +70,12 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
         switch (operator.getType()) {
             case Join:
                 return executeJoin((Join) operator, streamA, streamB);
+            case CrossJoin:
+                return executeCrossJoin((CrossJoin) operator, streamA, streamB);
+            case InnerJoin:
+                return executeInnerJoin((InnerJoin) operator, streamA, streamB);
+            case OuterJoin:
+                return executeOuterJoin((OuterJoin) operator, streamA, streamB);
             case Union:
                 return executeUnion((Union) operator, streamA, streamB);
             default:
@@ -127,6 +134,21 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
             throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
         }
         return new JoinLazyStream(join, streamA, streamB);
+    }
+
+    private RowStream executeCrossJoin(CrossJoin crossJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream tableA, RowStream tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream tableA, RowStream tableB) throws PhysicalException {
+        // todo implement
+        return null;
     }
 
     private RowStream executeUnion(Union union, RowStream streamA, RowStream streamB) {
