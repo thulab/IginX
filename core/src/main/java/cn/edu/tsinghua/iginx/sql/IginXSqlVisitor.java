@@ -454,6 +454,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.orderByClause() != null) {
             parseOrderByClause(ctx.orderByClause(), selectStatement);
         }
+        if (ctx.slideWindowByTimeClause() != null) {
+            parseSlideWindowByTimeClause(ctx.slideWindowByTimeClause().timeInterval(), ctx.slideWindowByTimeClause().TIME_WITH_UNIT(0), ctx.slideWindowByTimeClause().TIME_WITH_UNIT(1), selectStatement);
+        }
     }
 
     private void parseGroupByTimeClause(TimeIntervalContext timeIntervalContext, TerminalNode duration, SelectStatement selectStatement) {
@@ -463,7 +466,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         selectStatement.setStartTime(timeInterval.k);
         selectStatement.setEndTime(timeInterval.v);
         selectStatement.setPrecision(precision);
+        selectStatement.setSlideDistance(precision);
         selectStatement.setHasGroupByTime(true);
+        selectStatement.setHasSlideWindow(false);
 
         // merge value filter and group time range filter
         TimeFilter startTime = new TimeFilter(Op.GE, timeInterval.k);
@@ -476,6 +481,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             selectStatement.setHasValueFilter(true);
         }
         selectStatement.setFilter(mergedFilter);
+    }
+    
+    private void parseSlideWindowByTimeClause(TimeIntervalContext timeIntervalContext, TerminalNode duration, TerminalNode slideDistance, SelectStatement selectStatement) {
+        parseGroupByTimeClause(timeIntervalContext, duration, selectStatement);
+        String slideDistanceStr = slideDistance.getText();
+        long distance = TimeUtils.convertTimeWithUnitStrToLong(0, slideDistanceStr);
+        selectStatement.setSlideDistance(distance);
+        selectStatement.setHasSlideWindow(true);
     }
 
     private void parseGroupByLevelClause(List<TerminalNode> layers, SelectStatement selectStatement) {

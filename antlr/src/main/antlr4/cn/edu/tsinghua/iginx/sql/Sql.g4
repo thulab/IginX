@@ -138,6 +138,7 @@ specialClause
     | groupByClause limitClause?
     | groupByTimeClause limitClause?
     | orderByClause limitClause?
+    | slideWindowByTimeClause limitClause?
     ;
 
 orderByClause
@@ -154,6 +155,10 @@ groupByTimeClause
 
 groupByLevelClause
     : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
+    ;
+
+slideWindowByTimeClause
+    : WINDOW timeInterval BY TIME_WITH_UNIT SLIDE TIME_WITH_UNIT
     ;
 
 asClause
@@ -313,6 +318,8 @@ keyWords
     | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
+    | WINDOW
+    | SLIDE
     ;
 
 dateFormat
@@ -631,6 +638,14 @@ CLOSING
 
 CLOSED
     : C L O S E D
+    ;
+
+WINDOW
+    : W I N D O W
+    ;
+
+SLIDE
+    : S L I D E
     ;
 //============================
 // End of the keywords list
