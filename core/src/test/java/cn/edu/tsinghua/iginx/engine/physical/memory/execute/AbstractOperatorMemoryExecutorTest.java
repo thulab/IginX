@@ -392,7 +392,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Map<String, Value> params = new HashMap<>();
         params.put(PARAM_PATHS, new Value("a.a.b"));
 
-        Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3,
+        Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3, 3,
                 new FunctionCall(FunctionManager.getInstance().getFunction("avg"), params),
                 new TimeRange(0, 11));
         RowStream stream = getExecutor().executeUnaryOperator(downsample, table);
@@ -425,7 +425,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Map<String, Value> params = new HashMap<>();
         params.put(PARAM_PATHS, new Value("a.a.b"));
 
-        Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3,
+        Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3, 3,
                 new FunctionCall(FunctionManager.getInstance().getFunction("max"), params),
                 new TimeRange(0, 11));
         getExecutor().executeUnaryOperator(downsample, table);
