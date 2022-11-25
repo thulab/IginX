@@ -31,7 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
