@@ -42,10 +42,7 @@ import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBSchema;
 import cn.edu.tsinghua.iginx.influxdb.tools.SchemaTransformer;
 import cn.edu.tsinghua.iginx.influxdb.tools.TagFilterUtils;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -148,13 +145,13 @@ public class InfluxDBStorage implements IStorage {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage(String dataPrefix) throws PhysicalException {
         List<String> bucketNames = new ArrayList<>(historyBucketMap.keySet());
         bucketNames.sort(String::compareTo);
         if (bucketNames.size() == 0) {
             throw new PhysicalTaskExecuteFailureException("no data!");
         }
-        TimeSeriesInterval tsInterval = new TimeSeriesInterval(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
+        TimeSeriesInterval tsInterval = new TimeSeriesIntervalNormal(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
         long minTime = Long.MAX_VALUE, maxTime = 0;
         for (Bucket bucket: historyBucketMap.values()) {
             String statement = String.format(

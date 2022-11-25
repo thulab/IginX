@@ -20,11 +20,7 @@ package cn.edu.tsinghua.iginx.policy.historical;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
@@ -121,9 +117,9 @@ public class HistoricalPolicy implements IPolicy {
         Collections.sort(prefixList);
         int prefixNum = prefixList.size();
         prefixList.add(null);
-        timeSeriesIntervalList.add(new TimeSeriesInterval(null, prefixList.get(0)));
+        timeSeriesIntervalList.add(new TimeSeriesIntervalNormal(null, prefixList.get(0)));
         for (int i = 0; i < expectedStorageUnitNum; i++) {
-            timeSeriesIntervalList.add(new TimeSeriesInterval(
+            timeSeriesIntervalList.add(new TimeSeriesIntervalNormal(
                 prefixList.get(i * prefixNum / expectedStorageUnitNum),
                 prefixList.get((i + 1) * prefixNum / expectedStorageUnitNum)));
         }

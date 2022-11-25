@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.engine.logical.utils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalNormal;
 import cn.edu.tsinghua.iginx.sql.TestUtils;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
@@ -223,7 +224,7 @@ public class ExprUtilsTest {
         );
         assertEquals(
             "((time > 10 && time <= 100))",
-            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.c")).toString()
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesIntervalNormal("root.a", "root.c")).toString()
         );
 
         // sub2
@@ -236,7 +237,7 @@ public class ExprUtilsTest {
         );
         assertEquals(
             "(((root.e >= 27) && time > 10 && time <= 100))",
-            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.c", "root.z")).toString()
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesIntervalNormal("root.c", "root.z")).toString()
         );
 
         // whole
@@ -249,7 +250,7 @@ public class ExprUtilsTest {
         );
         assertEquals(
             "(((root.a > 5 || root.d < 15) && (root.e >= 27) && (root.c < 10 || root.b > 2)))",
-            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.z")).toString()
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesIntervalNormal("root.a", "root.z")).toString()
         );
 
         // empty
@@ -262,7 +263,7 @@ public class ExprUtilsTest {
         );
         assertEquals(
             "True",
-            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.h", "root.z")).toString()
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesIntervalNormal("root.h", "root.z")).toString()
         );
     }
 }

@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.utils;
 
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalNormal;
 
 public class PathUtils {
 
@@ -28,7 +29,7 @@ public class PathUtils {
             }
         }
 
-        return new TimeSeriesInterval(startPath, endPath);
+        return new TimeSeriesIntervalNormal(startPath, endPath);
     }
 
 }

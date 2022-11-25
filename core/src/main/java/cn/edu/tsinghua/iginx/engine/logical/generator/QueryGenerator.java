@@ -16,10 +16,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.expression.Expression;
@@ -235,7 +232,7 @@ public class QueryGenerator extends AbstractGenerator {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
         TagFilter tagFilter = selectStatement.getTagFilter();
 
-        TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+        TimeSeriesInterval interval = new TimeSeriesIntervalNormal(pathList.get(0), pathList.get(pathList.size() - 1));
 
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
         if (!metaManager.hasFragment()) {
@@ -259,10 +256,36 @@ public class QueryGenerator extends AbstractGenerator {
         Operator operator = OperatorUtils.unionOperators(unionList);
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
-            dummyFragments.forEach(meta -> joinList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
+            dummyFragments.forEach(meta -> joinList.add(new Project(new FragmentSource(meta),
+                    pathMatchPrefix(pathList,meta.getTsInterval().getTimeSeries()), tagFilter)));
             joinList.add(operator);
             operator = OperatorUtils.joinOperatorsByTime(joinList);
         }
         return operator;
+    }
+
+    private List<String> pathMatchPrefix(List<String> pathList, String prefix) {
+        List<String> ans = new ArrayList<>();
+        for(String path : pathList) {
+            if (path.charAt(path.length()-1) == '*' && path.length() != 1) { // 通配符匹配，例如 a.b.*
+                String queryPrefix = path.substring(0,path.length()-2) + ".(.*)";
+                if (prefix.matches(queryPrefix)) {
+                    ans.add(path);
+                    continue;
+                }
+                queryPrefix = prefix + ".(.*)";
+                if (path.matches(queryPrefix)) {
+                    ans.add(path);
+                }
+            } else if (!path.contains("*")) { // 例如 a.b.f 这样确切的路径信息
+                String queryPrefix = prefix + ".(.*)";
+                if (path.matches(queryPrefix)) {
+                    ans.add(path);
+                }
+            } else if (path.equals("*")) {
+                ans.add(path);
+            }
+        }
+        return ans;
     }
 }

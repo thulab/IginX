@@ -20,6 +20,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.tag.PreciseTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalNormal;
 import cn.edu.tsinghua.iginx.parquet.thrift.DeleteReq;
 import cn.edu.tsinghua.iginx.parquet.thrift.GetStorageBoundryResp;
 import cn.edu.tsinghua.iginx.parquet.thrift.GetTimeSeriesOfStorageUnitResp;
@@ -328,7 +329,7 @@ public class RemoteExecutor implements Executor {
         try {
             GetStorageBoundryResp resp = client.getBoundaryOfStorage();
             return new Pair<>(
-                new TimeSeriesInterval(resp.getStartTimeSeries(), resp.getEndTimeSeries()),
+                new TimeSeriesIntervalNormal(resp.getStartTimeSeries(), resp.getEndTimeSeries()),
                 new TimeInterval(resp.getStartTime(), resp.getEndTime())
             );
         } catch (TException e) {

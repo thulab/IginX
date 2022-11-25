@@ -15,10 +15,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteTask;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteType;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationLogger;
@@ -179,7 +176,7 @@ public abstract class MigrationPolicy {
 
       // 开始实际切分片
       double currAverageLoad = totalLoad * 1.0 / fakedFragmentMetaLoads.size();
-      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesIntervalNormal(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
       for (int i = 0; i < fakedFragmentMetas.size(); i++) {
@@ -253,7 +250,7 @@ public abstract class MigrationPolicy {
       logger.info("start to add new fragment");
       String middleTimeseries = new ArrayList<>(pathSet).get(pathSet.size() / 2);
       logger.info("timeseries split middleTimeseries=" + middleTimeseries);
-      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesIntervalNormal(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
       FragmentMeta newFragment = new FragmentMeta(middleTimeseries,
@@ -293,7 +290,7 @@ public abstract class MigrationPolicy {
         }
       }
 
-      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesIntervalNormal(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
       FragmentMeta newFragment = new FragmentMeta(middleTimeseries,

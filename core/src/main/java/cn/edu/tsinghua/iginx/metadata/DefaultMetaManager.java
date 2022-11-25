@@ -412,7 +412,7 @@ public class DefaultMetaManager implements IMetaManager {
                 }
             }
         }
-        return new Pair<>(new TimeSeriesInterval(startPath, endPath), new TimeInterval(startTime, endTime));
+        return new Pair<>(new TimeSeriesIntervalNormal(startPath, endPath), new TimeInterval(startTime, endTime));
     }
 
     @Override
@@ -694,7 +694,7 @@ public class DefaultMetaManager implements IMetaManager {
     public void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries) {
         try {
             storage.lockFragment();
-            TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+            TimeSeriesInterval sourceTsInterval = new TimeSeriesIntervalNormal(
                 fragmentMeta.getTsInterval().getStartTimeSeries(),
                 fragmentMeta.getTsInterval().getEndTimeSeries());
             cache.deleteFragmentByTsInterval(fragmentMeta.getTsInterval(), fragmentMeta);
@@ -1051,7 +1051,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
-                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                    dummyFragment = new FragmentMeta(new TimeSeriesIntervalNormal(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
                 }
                 dummyFragment.setDummyFragment(true);
                 storage.setDummyStorageUnit(dummyStorageUnit);

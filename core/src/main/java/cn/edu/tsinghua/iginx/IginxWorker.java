@@ -232,12 +232,12 @@ public class IginxWorker implements IService.Iface {
             if (meta.isHasData()) {
                 String dataPrefix = meta.getDataPrefix();
                 StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
-                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
+                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta, dataPrefix);
                 FragmentMeta dummyFragment;
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
-                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                    dummyFragment = new FragmentMeta(new TimeSeriesIntervalInPrefix(dataPrefix), boundary.v, dummyStorageUnit);
                 }
                 dummyFragment.setDummyFragment(true);
                 meta.setDummyStorageUnit(dummyStorageUnit);
@@ -257,7 +257,7 @@ public class IginxWorker implements IService.Iface {
         if (!engine1.getStorageEngine().equals(engine2.getStorageEngine())) {
             return false;
         }
-        return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort();
+        return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort() && engine1.getDataPrefix().equals(engine2.getDataPrefix());
     }
 
     @Override

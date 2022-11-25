@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalNormal;
 import cn.edu.tsinghua.iginx.parquet.entity.ParquetQueryRowStream;
 import cn.edu.tsinghua.iginx.parquet.entity.WritePlan;
 import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy;
@@ -683,10 +684,10 @@ public class LocalExecutor implements Executor {
 
         if (!pathTreeSet.isEmpty()) {
             return new Pair<>(
-                new TimeSeriesInterval(pathTreeSet.first(), pathTreeSet.last()),
+                new TimeSeriesIntervalNormal(pathTreeSet.first(), pathTreeSet.last()),
                 new TimeInterval(startTime, endTime));
         } else {
-            return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(startTime, endTime));
+            return new Pair<>(new TimeSeriesIntervalNormal(null, null), new TimeInterval(startTime, endTime));
         }
     }
 

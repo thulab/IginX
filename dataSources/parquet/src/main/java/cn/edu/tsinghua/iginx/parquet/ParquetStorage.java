@@ -164,7 +164,7 @@ public class ParquetStorage implements IStorage {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage(String dataPrefix) throws PhysicalException {
         return executor.getBoundaryOfStorage();
     }
 

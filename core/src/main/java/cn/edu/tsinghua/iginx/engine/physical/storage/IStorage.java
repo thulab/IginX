@@ -34,7 +34,11 @@ public interface IStorage {
 
     List<Timeseries> getTimeSeries() throws PhysicalException;
 
-    Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException;
+    Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage(String prefix) throws PhysicalException;
+
+    default Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        return getBoundaryOfStorage(null);
+    }
 
     void release() throws PhysicalException;
 
