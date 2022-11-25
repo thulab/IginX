@@ -180,8 +180,6 @@ public abstract class SQLSessionIT {
     
         testRangeSlideWindowByTimeQuery();
 
-//        testFromMultiPath();
-
         testAlias();
 
         testAggregateSubQuery();
@@ -1478,59 +1476,6 @@ public abstract class SQLSessionIT {
             "+----+--------+--------+\n" +
             "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
-    }
-
-    @Test
-    public void testFromMultiPath() {
-        String insert = "INSERT INTO us.d2 (timestamp, s1, s2) values " +
-            "(1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4), (5, 5, 5), (6, 6, 6);";
-        execute(insert);
-
-        insert = "INSERT INTO us.d3 (timestamp, s1, s2) values " +
-            "(1, 2, 2), (2, 3, 3), (3, 4, 4), (4, 5, 5), (5, 6, 6), (6, 7, 7);";
-        execute(insert);
-
-        String queryFromMultiPath = "SELECT s1, s2 FROM us.d2, us.d3;";
-        String expected =
-            "ResultSets:\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|Time|us.d2.s1|us.d3.s1|us.d2.s2|us.d3.s2|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|   1|       1|       2|       1|       2|\n"
-                + "|   2|       2|       3|       2|       3|\n"
-                + "|   3|       3|       4|       3|       4|\n"
-                + "|   4|       4|       5|       4|       5|\n"
-                + "|   5|       5|       6|       5|       6|\n"
-                + "|   6|       6|       7|       6|       7|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "Total line number = 6\n";
-        executeAndCompare(queryFromMultiPath, expected);
-
-        String queryFromMultiPathWithCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE s1 > 2;";
-        expected =
-            "ResultSets:\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|Time|us.d2.s1|us.d3.s1|us.d2.s2|us.d3.s2|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|   3|       3|       4|       3|       4|\n"
-                + "|   4|       4|       5|       4|       5|\n"
-                + "|   5|       5|       6|       5|       6|\n"
-                + "|   6|       6|       7|       6|       7|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "Total line number = 4\n";
-        executeAndCompare(queryFromMultiPathWithCondition, expected);
-
-        String queryFromMultiPathWithIntactCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE INTACT(us.d2.s1) > 2 AND INTACT(us.d3.s2) < 6;";
-        expected =
-            "ResultSets:\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|Time|us.d2.s1|us.d3.s1|us.d2.s2|us.d3.s2|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "|   3|       3|       4|       3|       4|\n"
-                + "|   4|       4|       5|       4|       5|\n"
-                + "+----+--------+--------+--------+--------+\n"
-                + "Total line number = 2\n";
-        executeAndCompare(queryFromMultiPathWithIntactCondition, expected);
     }
 
     @Test
