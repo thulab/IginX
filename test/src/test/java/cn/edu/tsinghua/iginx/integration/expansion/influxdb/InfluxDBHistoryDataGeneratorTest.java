@@ -40,9 +40,9 @@ public class InfluxDBHistoryDataGeneratorTest {
         long timestamp = 1000 * 1000;
 
         Map<String, String> tags = new HashMap<>();
-//        tags.put("host", "1");
-//        tags.put("rack", "A");
-//        tags.put("room", "ROOMA");
+        tags.put("host", "1");
+        tags.put("rack", "A");
+        tags.put("room", "ROOMA");
         points.add(Point.measurement("cpu").addTags(tags)
                 .addField("usage", 66.3).addField("temperature", 56.4)
                 .time(timestamp, WRITE_PRECISION));
@@ -51,17 +51,17 @@ public class InfluxDBHistoryDataGeneratorTest {
                 .time(timestamp + 1000 * 300, WRITE_PRECISION));
 
         tags = new HashMap<>();
-//        tags.put("host", "2");
-//        tags.put("rack", "B");
-//        tags.put("room", "ROOMA");
+        tags.put("host", "2");
+        tags.put("rack", "B");
+        tags.put("room", "ROOMA");
         points.add(Point.measurement("cpu").addTags(tags)
                 .addField("usage", 72.1).addField("temperature", 55.1)
                 .time(timestamp, WRITE_PRECISION));
 
         tags = new HashMap<>();
-//        tags.put("host", "4");
-//        tags.put("rack", "B");
-//        tags.put("room", "ROOMB");
+        tags.put("host", "4");
+        tags.put("rack", "B");
+        tags.put("room", "ROOMB");
         points.add(Point.measurement("cpu").addTags(tags)
                 .addField("usage", 22.1).addField("temperature", 99.8)
                 .time(timestamp + 1000 * 300, WRITE_PRECISION));
