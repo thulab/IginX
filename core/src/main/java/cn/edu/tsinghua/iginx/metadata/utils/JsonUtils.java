@@ -18,15 +18,23 @@
  */
 package cn.edu.tsinghua.iginx.metadata.utils;
 
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.storage.zk.InterfaceAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
 public class JsonUtils {
 
-    private static final Gson gson = new GsonBuilder()
-        .create();
+    private static Gson gson = new GsonBuilder().create();
+
+    public static Gson specificGson(Type type) {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(type, new InterfaceAdapter());
+        return builder.create();
+    }
 
     public static byte[] toJson(Object o) {
         return gson.toJson(o).getBytes(StandardCharsets.UTF_8);

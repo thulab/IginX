@@ -701,8 +701,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     List<FragmentMeta> fragmentMetaList = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
                     for (String timeIntervalName : timeIntervalNames) {
-                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                            .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        String tmp = new String(this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName));
+                        FragmentMeta fragmentMeta = JsonUtils.specificGson(TimeSeriesInterval.class).fromJson(tmp, FragmentMeta.class);
                         fragmentMetaList.add(fragmentMeta);
                     }
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
