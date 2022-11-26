@@ -986,7 +986,7 @@ public abstract class SQLSessionIT {
     
     @Test
     public void testSlideWindowByTimeQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WINDOW (0, 1000) BY 100ns SLIDE 50ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -1176,7 +1176,7 @@ public abstract class SQLSessionIT {
     
     @Test
     public void testRangeSlideWindowByTimeQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 300 AND s1 <= 600 WINDOW (0, 1000) BY 100ns SLIDE 50ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 300 AND s1 <= 600 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
