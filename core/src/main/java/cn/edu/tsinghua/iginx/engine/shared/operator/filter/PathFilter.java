@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
+import java.util.Objects;
+
 public class PathFilter implements Filter {
 
     private final FilterType type = FilterType.Path;
@@ -48,5 +50,23 @@ public class PathFilter implements Filter {
     @Override
     public String toString() {
         return pathA + " " + Op.op2Str(op) + " " + pathB;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PathFilter that = (PathFilter) o;
+        return type == that.type && Objects.equals(pathA, that.pathA) && Objects
+            .equals(pathB, that.pathB) && op == that.op;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, pathA, pathB, op);
     }
 }
