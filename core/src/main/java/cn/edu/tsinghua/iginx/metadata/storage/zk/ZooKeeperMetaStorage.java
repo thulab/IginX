@@ -419,7 +419,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             for (String childName : children) {
                 byte[] data = this.client.getData()
                     .forPath(STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
-                StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+//                StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                StorageEngineMeta storageEngineMeta = JsonUtils.specificGson(TimeSeriesInterval.class).fromJson(new String(data), StorageEngineMeta.class);
                 if (storageEngineMeta == null) {
                     logger.error("resolve data from " + STORAGE_ENGINE_NODE_PREFIX + "/" + childName + " error");
                     continue;
@@ -480,7 +481,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     logger.info("storage engine meta updated " + event.getData().getPath());
                     logger.info("storage engine: " + new String(data));
-                    storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                    storageEngineMeta = JsonUtils.specificGson(TimeSeriesInterval.class).fromJson(new String(data), StorageEngineMeta.class);
+//                    storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
                     if (storageEngineMeta != null) {
                         logger.info("new storage engine comes to cluster: id = " + storageEngineMeta.getId() + " ,ip = " + storageEngineMeta.getIp() + " , port = " + storageEngineMeta.getPort());
                         storageChangeHook.onChange(storageEngineMeta.getId(), storageEngineMeta);
@@ -738,7 +740,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     String path = event.getData().getPath();
                     String[] pathParts = path.split("/");
                     if (pathParts.length == 4) {
-                        fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
+//                        fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
+                        fragmentMeta = JsonUtils.specificGson(TimeSeriesInterval.class).fromJson(new String(event.getData().getData()), FragmentMeta.class);
                         if (fragmentMeta != null) {
                             fragmentChangeHook.onChange(true, fragmentMeta);
                         } else {

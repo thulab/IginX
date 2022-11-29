@@ -19,6 +19,11 @@ public class TimeSeriesIntervalInPrefix implements TimeSeriesInterval {
         this.timeSeries = timeSeries;
     }
 
+    public TimeSeriesIntervalInPrefix(String timeSeries, boolean isClosed) {
+        this.timeSeries = timeSeries;
+        this.isClosed = isClosed;
+    }
+
     @Override
     public boolean isContain(String tsName) {
         return (timeSeries == null || (tsName != null && StringUtils.compare(tsName, timeSeries) == 0));

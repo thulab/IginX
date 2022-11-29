@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata.utils;
 
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.storage.zk.InterfaceAdapter;
+import cn.edu.tsinghua.iginx.metadata.utils.InterfaceAdapter.TimeSeriesIntervalAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -32,7 +32,13 @@ public class JsonUtils {
 
     public static Gson specificGson(Type type) {
         GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(type, new InterfaceAdapter());
+        switch (type.toString().substring(10)) {
+            case "cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval":
+                builder.registerTypeAdapter(type, new TimeSeriesIntervalAdapter());
+                break;
+            default:
+                break;
+        }
         return builder.create();
     }
 
