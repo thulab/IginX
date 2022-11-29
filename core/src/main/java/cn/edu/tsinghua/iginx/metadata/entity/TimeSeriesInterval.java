@@ -18,11 +18,16 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public interface TimeSeriesInterval extends Comparable<TimeSeriesInterval> {
+
+    public static Logger logger = LoggerFactory.getLogger(ZooKeeperMetaStorage.class);
 
     public static enum TYPE {
         PREFIX,
@@ -41,19 +46,19 @@ public interface TimeSeriesInterval extends Comparable<TimeSeriesInterval> {
 
     default public void setTimeSeries(String timeSeries) {
         if (getType() == TYPE.NORMAL) {
+            logger.error("TimeSeriesInterval Normal can't not use the setTimeSeries func");
             System.exit(0);
         }
     }
 
     default public String getTimeSeries() {
-        if (getType() == TYPE.NORMAL) {
-            System.exit(0);
-        }
+        logger.warn("TimeSeriesInterval Normal can't not use the getTimeSeries func");
         return null;
     }
 
     default public String getStartTimeSeries() {
         if (getType() == TYPE.PREFIX) {
+            logger.error("TimeSeriesInterval PREFIX can't not use the getStartTimeSeries func");
             System.exit(0);
         }
         return null;
@@ -61,12 +66,14 @@ public interface TimeSeriesInterval extends Comparable<TimeSeriesInterval> {
 
     default public void setStartTimeSeries(String startTimeSeries) {
         if (getType() == TYPE.PREFIX) {
+            logger.error("TimeSeriesInterval PREFIX can't not use the setStartTimeSeries func");
             System.exit(0);
         }
     }
 
     default public String getEndTimeSeries() {
         if (getType() == TYPE.PREFIX) {
+            logger.error("TimeSeriesInterval PREFIX can't not use the getEndTimeSeries func");
             System.exit(0);
         }
         return null;
@@ -74,6 +81,7 @@ public interface TimeSeriesInterval extends Comparable<TimeSeriesInterval> {
 
     default public void setEndTimeSeries(String endTimeSeries) {
         if (getType() == TYPE.PREFIX) {
+            logger.error("TimeSeriesInterval PREFIX can't not use the setEndTimeSeries func");
             System.exit(0);
         }
     }

@@ -265,6 +265,7 @@ public class QueryGenerator extends AbstractGenerator {
     }
 
     private List<String> pathMatchPrefix(List<String> pathList, String prefix) {
+        if (prefix == null) return pathList;
         List<String> ans = new ArrayList<>();
         for(String path : pathList) {
             if (path.charAt(path.length()-1) == '*' && path.length() != 1) { // 通配符匹配，例如 a.b.*

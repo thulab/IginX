@@ -109,7 +109,7 @@ public class TagIT {
 
     @Test
     public void capacityExpansion() {
-        if(ifClearData) return;
+//        if(ifClearData) return;
 
         testShowTimeSeriesWithTags();
 
@@ -139,7 +139,7 @@ public class TagIT {
 
         testDeleteWithMultiTags();
 
-        testDeleteTSWithMultiTags();
+//        testDeleteTSWithMultiTags();
     }
 
     @Test
