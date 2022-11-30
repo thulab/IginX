@@ -91,11 +91,11 @@ public class QueryGenerator extends AbstractGenerator {
                     params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
-
                 queryList.add(
                     new Downsample(
                         new OperatorSource(copySelect),
                         selectStatement.getPrecision(),
+                        selectStatement.getSlideDistance(),
                         new FunctionCall(functionManager.getFunction(k), params),
                         new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
                     )

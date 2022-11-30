@@ -149,7 +149,7 @@ groupByClause
     ;
 
 groupByTimeClause
-    : GROUP timeInterval BY TIME_WITH_UNIT
+    : GROUP timeInterval BY TIME_WITH_UNIT (SLIDE TIME_WITH_UNIT)?
     ;
 
 groupByLevelClause
@@ -313,6 +313,7 @@ keyWords
     | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
+    | SLIDE
     ;
 
 dateFormat
@@ -631,6 +632,10 @@ CLOSING
 
 CLOSED
     : C L O S E D
+    ;
+
+SLIDE
+    : S L I D E
     ;
 //============================
 // End of the keywords list

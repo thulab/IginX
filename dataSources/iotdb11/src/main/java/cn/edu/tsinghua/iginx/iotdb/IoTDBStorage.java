@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.BitmapView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
@@ -175,7 +177,7 @@ public class IoTDBStorage implements IStorage {
                 FragmentMeta fragment = task.getTargetFragment();
                 filter = new AndFilter(Arrays.asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()), new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
             }
-            return isDummyStorageUnit ? executeQueryHistoryTask(project, filter) : executeQueryTask(storageUnit, project, filter);
+            return isDummyStorageUnit ? executeQueryHistoryTask(task.getTargetFragment().getTsInterval(), project, filter) : executeQueryTask(storageUnit, project, filter);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -310,16 +312,23 @@ public class IoTDBStorage implements IStorage {
         }
     }
 
-    private TaskExecuteResult executeQueryHistoryTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+    private String getRealPathWithoutPrefix(String oriPath, String prefix) {
+        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
+            return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
+        }
+        return oriPath;
+    }
+
+    private TaskExecuteResult executeQueryHistoryTask(TimeSeriesInterval timeSeriesInterval, Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
         try {
             StringBuilder builder = new StringBuilder();
             for (String path : project.getPatterns()) {
-                builder.append(path);
+                builder.append(getRealPathWithoutPrefix(path, timeSeriesInterval.getSchemaPrefix()));
                 builder.append(',');
             }
             String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project));
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project, timeSeriesInterval.getSchemaPrefix()));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
