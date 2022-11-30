@@ -122,3 +122,114 @@ jobs:
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
+
+  SchemaPrefix-Test-IotDB:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        DB-name: [ "iotdb11", "iotdb12" ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          version: ${{matrix.DB-name}}
+
+      - name: Change pom
+        run: |
+          mv test/pom.xml test/pom.xml.backup
+          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
+
+      #第 1 阶段测试开始==========================================
+      - name: Prepare CapExp environment
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: oriNoDataExpHasData
+
+      - name: schema prefix IT
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#schemaPrefix -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#schemaPrefix -DfailIfNoTests=false
+          fi
+
+  SchemaPrefix-Test-InfluxDB:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      #max-parallel: 20
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Run ZooKeeper
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run InfluxDB and change default config
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+      - name: Write history Data
+        run: |
+          mvn test -q -Dtest=InfluxDBHistoryDataGeneratorTest -DfailIfNoTests=false
+          sleep 5
+      - name: Start IginX
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
+
+      - name: schema prefix IT
+        run: |
+          mvn test -q -Dtest=InfluxDBHistoryDataCapacityExpansionIT#schemaPrefix -DfailIfNoTests=false

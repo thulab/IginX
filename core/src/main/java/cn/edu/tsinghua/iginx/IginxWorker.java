@@ -189,6 +189,7 @@ public class IginxWorker implements IService.Iface {
         }
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+        List<String> schemaPrefix = new ArrayList<>();
 
         for (StorageEngine storageEngine : storageEngines) {
             String type = storageEngine.getType();
@@ -202,6 +203,7 @@ public class IginxWorker implements IService.Iface {
             StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
+            schemaPrefix.add(extraParams.get(Constants.SCHEMA_PREFIX)); // get the user defined schema prefix
 
         }
         Status status = RpcUtils.SUCCESS;
@@ -229,11 +231,14 @@ public class IginxWorker implements IService.Iface {
             storageEngineMetas.get(storageEngineMetas.size() - 1).setNeedReAllocate(true); // 如果这批节点不是只读的话，每一批最后一个是 true，表示需要进行扩容
         }
         for (StorageEngineMeta meta: storageEngineMetas) {
+            int index = 0;
             if (meta.isHasData()) {
                 String dataPrefix = meta.getDataPrefix();
                 StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
                 Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
                 FragmentMeta dummyFragment;
+                if (index < schemaPrefix.size() && schemaPrefix.get(index) != null) //set the virtual schema prefix
+                    boundary.k.setSchemaPrefix(schemaPrefix.get(index));
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
@@ -243,6 +248,7 @@ public class IginxWorker implements IService.Iface {
                 meta.setDummyStorageUnit(dummyStorageUnit);
                 meta.setDummyFragment(dummyFragment);
             }
+            index++;
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;

@@ -9,9 +9,7 @@ import com.influxdb.query.FluxColumn;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInfluxDB;
@@ -19,6 +17,10 @@ import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInflu
 public class SchemaTransformer {
 
     public static Field toField(String bucket, FluxTable table) {
+        return toField(bucket, table, null);
+    }
+
+    public static Field toField(String bucket, FluxTable table, String prefix) {
         FluxRecord record = table.getRecords().get(0);
         String measurement = record.getMeasurement();
         String field = record.getField();
@@ -34,18 +36,20 @@ public class SchemaTransformer {
         DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
 
         StringBuilder pathBuilder = new StringBuilder();
+        if (prefix != null) {
+            pathBuilder.append(prefix);
+            pathBuilder.append('.');
+        }
         pathBuilder.append(bucket);
         pathBuilder.append('.');
         pathBuilder.append(measurement);
         pathBuilder.append('.');
         pathBuilder.append(field);
+        Map<String, String> tags = new HashMap<>();
         for (Pair<String, String> tagKV: tagKVs) {
-            pathBuilder.append('.');
-            pathBuilder.append(tagKV.k);
-            pathBuilder.append('.');
-            pathBuilder.append(tagKV.v);
+            tags.put(tagKV.k, tagKV.v);
         }
-        return new Field(pathBuilder.toString(), dataType);
+        return new Field(pathBuilder.toString(), dataType, tags);
     }
 
     public static Pair<String, String> processPatternForQuery(String pattern, TagFilter tagFilter) { // 返回的是 bucket_name, query 的信息
