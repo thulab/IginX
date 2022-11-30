@@ -10,7 +10,6 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.parquet.tools.TagKVUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -23,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +39,9 @@ public class ParquetQueryRowStream implements RowStream {
 
     private boolean hasNextCache = false;
 
-    private Map<Field, String> physicalNameCache = new HashMap<>();
+    private final Map<Field, String> physicalNameCache = new HashMap<>();
 
-    public ParquetQueryRowStream(ResultSet rs, Project project) {
+    public ParquetQueryRowStream(ResultSet rs, TagFilter tagFilter) {
         this.rs = rs;
 
         if (rs == null) {
@@ -51,8 +49,7 @@ public class ParquetQueryRowStream implements RowStream {
             return;
         }
 
-        boolean filterByTags = project != null && project.getTagFilter() != null;
-        TagFilter tagFilter = project == null ? null : project.getTagFilter();
+        boolean filterByTags = tagFilter != null;
 
         Field time = null;
         List<Field> fields = new ArrayList<>();
