@@ -1,33 +1,34 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.JoinAlgType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OuterJoin extends AbstractBinaryOperator {
 
     private final OuterJoinType outerJoinType;
 
-    private final String joinColumnA;
+    private final Filter filter;
 
-    private final String joinColumnB;
-
-    private final Filter extraFilter;
+    private final List<String> joinColumns;
 
     private final JoinAlgType joinAlgType;
 
-    public OuterJoin(Source sourceA, Source sourceB, String joinColumnA, String joinColumnB,
-        OuterJoinType outerJoinType) {
-        this(sourceA, sourceB, joinColumnA, joinColumnB, outerJoinType,
-            null, JoinAlgType.HashJoin);
+    public OuterJoin(Source sourceA, Source sourceB, OuterJoinType outerJoinType, Filter filter,
+        List<String> joinColumns) {
+        this(sourceA, sourceB, outerJoinType, filter, joinColumns, JoinAlgType.HashJoin);
     }
 
-    public OuterJoin(Source sourceA, Source sourceB, String joinColumnA, String joinColumnB,
-        OuterJoinType outerJoinType, Filter extraFilter, JoinAlgType joinAlgType) {
+    public OuterJoin(Source sourceA, Source sourceB, OuterJoinType outerJoinType, Filter filter,
+        List<String> joinColumns, JoinAlgType joinAlgType) {
         super(OperatorType.OuterJoin, sourceA, sourceB);
         this.outerJoinType = outerJoinType;
-        this.joinColumnA = joinColumnA;
-        this.joinColumnB = joinColumnB;
-        this.extraFilter = extraFilter;
+        this.filter = filter;
+        this.joinColumns = joinColumns;
         this.joinAlgType = joinAlgType;
     }
 
@@ -35,27 +36,21 @@ public class OuterJoin extends AbstractBinaryOperator {
         return outerJoinType;
     }
 
-    public String getJoinColumnA() {
-        return joinColumnA;
+    public Filter getFilter() {
+        return filter;
     }
 
-    public String getJoinColumnB() {
-        return joinColumnB;
+    public List<String> getJoinColumns() {
+        return joinColumns;
     }
 
-    public Filter getExtraFilter() {
-        return extraFilter;
+    public JoinAlgType getJoinAlgType() {
+        return joinAlgType;
     }
 
     @Override
     public Operator copy() {
-        return new OuterJoin(getSourceA().copy(), getSourceB().copy(), joinColumnA, joinColumnB,
-            outerJoinType, extraFilter.copy(), joinAlgType);
-    }
-
-    enum OuterJoinType {
-        LEFT,
-        RIGHT,
-        FULL
+        return new OuterJoin(getSourceA().copy(), getSourceB().copy(), outerJoinType, filter.copy(),
+            new ArrayList<>(joinColumns), joinAlgType);
     }
 }

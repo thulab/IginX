@@ -1,46 +1,55 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.JoinAlgType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InnerJoin extends AbstractBinaryOperator {
 
-    private final String joinColumnA;
+    private final Filter filter;
 
-    private final String joinColumnB;
-
-    private final Filter extraFilter;
+    private final List<String> joinColumns;
 
     private final JoinAlgType joinAlgType;
 
-    public InnerJoin(Source sourceA, Source sourceB, String joinColumnA, String joinColumnB) {
-        this(sourceA, sourceB, joinColumnA, joinColumnB, null, JoinAlgType.HashJoin);
+    private final boolean isNaturalJoin;
+
+    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns) {
+        this(sourceA, sourceB, filter, joinColumns, false);
     }
 
-    public InnerJoin(Source sourceA, Source sourceB, String joinColumnA, String joinColumnB,
-        Filter extraFilter, JoinAlgType joinAlgType) {
+    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns,
+        boolean isNaturalJoin) {
+        this(sourceA, sourceB, filter, joinColumns, isNaturalJoin, JoinAlgType.HashJoin);
+    }
+
+    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns,
+        boolean isNaturalJoin, JoinAlgType joinAlgType) {
         super(OperatorType.InnerJoin, sourceA, sourceB);
-        this.joinColumnA = joinColumnA;
-        this.joinColumnB = joinColumnB;
-        this.extraFilter = extraFilter;
+        this.filter = filter;
+        this.joinColumns = joinColumns;
         this.joinAlgType = joinAlgType;
+        this.isNaturalJoin = isNaturalJoin;
     }
 
-    public String getJoinColumnA() {
-        return joinColumnA;
+    public Filter getFilter() {
+        return filter;
     }
 
-    public String getJoinColumnB() {
-        return joinColumnB;
+    public List<String> getJoinColumns() {
+        return joinColumns;
     }
 
-    public Filter getExtraFilter() {
-        return extraFilter;
+    public JoinAlgType getJoinAlgType() {
+        return joinAlgType;
     }
 
     @Override
     public Operator copy() {
-        return new InnerJoin(getSourceA().copy(), getSourceB().copy(), joinColumnA, joinColumnB,
-            extraFilter.copy(), joinAlgType);
+        return new InnerJoin(getSourceA().copy(), getSourceB().copy(), filter.copy(),
+            new ArrayList<>(joinColumns), isNaturalJoin, joinAlgType);
     }
 }
