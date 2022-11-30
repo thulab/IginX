@@ -86,6 +86,10 @@ public interface TimeSeriesInterval extends Comparable<TimeSeriesInterval> {
         }
     }
 
+    public String getSchemaPrefix();
+
+    public void setSchemaPrefix(String schemaPrefix);
+
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval);
 
     public boolean isAfter(String tsName);
