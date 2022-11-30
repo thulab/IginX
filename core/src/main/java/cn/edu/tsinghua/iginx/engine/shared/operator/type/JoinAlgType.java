@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.shared.operator.type;
 
 public enum JoinAlgType {
     NestedLoopJoin,
