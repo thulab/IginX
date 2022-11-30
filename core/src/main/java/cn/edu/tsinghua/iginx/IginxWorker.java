@@ -428,20 +428,14 @@ public class IginxWorker implements IService.Iface {
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
-            case Constants.FILE_META:
-            case "":
             default:
-                localMetaStorageInfo = new LocalMetaStorageInfo(
-                    Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
-                );
+                logger.error("unexpected meta storage: " + config.getMetaStorage());
         }
 
-        if (metaStorageInfos != null) {
+        if (metaStorageInfos != null && !metaStorageInfos.isEmpty()) {
             resp.setMetaStorageInfos(metaStorageInfos);
         }
-        if (localMetaStorageInfo != null) {
-            resp.setLocalMetaStorageInfo(localMetaStorageInfo);
-        }
+        resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }
