@@ -11,6 +11,9 @@ import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionUtils;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.JoinAlgType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
@@ -270,24 +273,35 @@ public class QueryGenerator extends AbstractGenerator {
             JoinPart joinPart = selectStatement.getJoinParts().get(i - 1);
             Operator right = joinList.get(i);
 
+            JoinAlgType joinAlgType = JoinAlgType.NestedLoopJoin;
+            Filter filter = joinPart.getFilter();
+            if (filter != null && filter.getType().equals(FilterType.Path)) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
+
+            List<String> joinColumns = joinPart.getJoinColumns();
+            if (joinColumns != null && joinColumns.size() == 1) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
+
             switch (joinPart.getJoinType()) {
                 case CrossJoin:
                     left = new CrossJoin(new OperatorSource(left), new OperatorSource(right));
                     break;
                 case InnerJoin:
-                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), joinPart.getFilter(), joinPart.getJoinColumns());
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, false, joinAlgType);
                     break;
                 case NatualJoin:
-                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), joinPart.getFilter(), joinPart.getJoinColumns(), true);
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, true, joinAlgType);
                     break;
                 case FullOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.FULL, joinPart.getFilter(), joinPart.getJoinColumns());
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.FULL, filter, joinColumns, joinAlgType);
                     break;
                 case LeftOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, joinPart.getFilter(), joinPart.getJoinColumns());
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, joinAlgType);
                     break;
                 case RightOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, joinPart.getFilter(), joinPart.getJoinColumns());
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, joinAlgType);
                     break;
             }
         }

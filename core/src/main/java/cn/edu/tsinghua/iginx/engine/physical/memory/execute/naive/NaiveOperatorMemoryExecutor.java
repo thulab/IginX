@@ -37,6 +37,8 @@ import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
@@ -483,11 +485,57 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
+        switch (innerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopInnerJoin(innerJoin, tableA, tableB);
+            case HashJoin:
+                return executeHashInnerJoin(innerJoin, tableA, tableB);
+            case SortedMergeJoin:
+                return executeSortedMergeInnerJoin(innerJoin, tableA, tableB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + innerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeHashInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         // todo implement
         return null;
     }
 
     private RowStream executeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        switch (outerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopOuterJoin(outerJoin, tableA, tableB);
+            case HashJoin:
+                return executeHashOuterJoin(outerJoin, tableA, tableB);
+            case SortedMergeJoin:
+                return executeSortedMergeOuterJoin(outerJoin, tableA, tableB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + outerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeHashOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         // todo implement
         return null;
     }
