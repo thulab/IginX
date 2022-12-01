@@ -18,18 +18,21 @@ public class OuterJoin extends AbstractBinaryOperator {
 
     private final JoinAlgType joinAlgType;
 
+    private final boolean isNaturalJoin;
+
     public OuterJoin(Source sourceA, Source sourceB, OuterJoinType outerJoinType, Filter filter,
         List<String> joinColumns) {
-        this(sourceA, sourceB, outerJoinType, filter, joinColumns, JoinAlgType.HashJoin);
+        this(sourceA, sourceB, outerJoinType, filter, joinColumns, false, JoinAlgType.HashJoin);
     }
 
     public OuterJoin(Source sourceA, Source sourceB, OuterJoinType outerJoinType, Filter filter,
-        List<String> joinColumns, JoinAlgType joinAlgType) {
+        List<String> joinColumns,  boolean isNaturalJoin, JoinAlgType joinAlgType) {
         super(OperatorType.OuterJoin, sourceA, sourceB);
         this.outerJoinType = outerJoinType;
         this.filter = filter;
         this.joinColumns = joinColumns;
         this.joinAlgType = joinAlgType;
+        this.isNaturalJoin = isNaturalJoin;
     }
 
     public OuterJoinType getOuterJoinType() {
@@ -51,6 +54,6 @@ public class OuterJoin extends AbstractBinaryOperator {
     @Override
     public Operator copy() {
         return new OuterJoin(getSourceA().copy(), getSourceB().copy(), outerJoinType, filter.copy(),
-            new ArrayList<>(joinColumns), joinAlgType);
+            new ArrayList<>(joinColumns), isNaturalJoin, joinAlgType);
     }
 }

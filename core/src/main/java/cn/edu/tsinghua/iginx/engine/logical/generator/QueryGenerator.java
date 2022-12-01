@@ -291,17 +291,23 @@ public class QueryGenerator extends AbstractGenerator {
                 case InnerJoin:
                     left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, false, joinAlgType);
                     break;
-                case NatualJoin:
+                case InnerNatualJoin:
                     left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, true, joinAlgType);
                     break;
+                case LeftNatualJoin:
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, true, joinAlgType);
+                    break;
+                case RightNatualJoin:
+                    new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, true, joinAlgType);
+                    break;
                 case FullOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.FULL, filter, joinColumns, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.FULL, filter, joinColumns, false, joinAlgType);
                     break;
                 case LeftOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, false, joinAlgType);
                     break;
                 case RightOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, false, joinAlgType);
                     break;
             }
         }
