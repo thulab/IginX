@@ -141,12 +141,58 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
         return null;
     }
 
-    private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream tableA, RowStream tableB) throws PhysicalException {
+    private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        switch (innerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopInnerJoin(innerJoin, streamA, streamB);
+            case HashJoin:
+                return executeHashInnerJoin(innerJoin, streamA, streamB);
+            case SortedMergeJoin:
+                return executeSortedMergeInnerJoin(innerJoin, streamA, streamB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + innerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
         // todo implement
         return null;
     }
 
-    private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream tableA, RowStream tableB) throws PhysicalException {
+    private RowStream executeHashInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        switch (outerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopOuterJoin(outerJoin, streamA, streamB);
+            case HashJoin:
+                return executeHashOuterJoin(outerJoin, streamA, streamB);
+            case SortedMergeJoin:
+                return executeSortedMergeOuterJoin(outerJoin, streamA, streamB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + outerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeHashOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+
+    private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
         // todo implement
         return null;
     }
