@@ -140,9 +140,10 @@ colList
     ;
 
 join
-    : (INNER | NATURAL)? JOIN
+    : INNER? JOIN
     | CROSS JOIN
     | (LEFT | RIGHT | FULL) OUTER? JOIN
+    | NATURAL ((LEFT | RIGHT) OUTER?)? JOIN
     ;
 
 

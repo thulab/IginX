@@ -264,7 +264,15 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private JoinType parseJoinType(JoinContext joinContext) {
-        if (joinContext.LEFT() != null) {
+        if (joinContext.NATURAL() != null) {
+            if (joinContext.LEFT() != null) {
+                return JoinType.LeftNatualJoin;
+            } else if (joinContext.RIGHT() != null) {
+                return JoinType.RightNatualJoin;
+            } else {
+                return JoinType.InnerNatualJoin;
+            }
+        } else if (joinContext.LEFT() != null) {
             return JoinType.LeftOuterJoin;
         } else if (joinContext.RIGHT() != null) {
             return JoinType.RightOuterJoin;
@@ -272,8 +280,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return JoinType.FullOuterJoin;
         } else if (joinContext.CROSS() != null) {
             return JoinType.CrossJoin;
-        } else if (joinContext.NATURAL() != null) {
-            return JoinType.NatualJoin;
         } else {
             return JoinType.InnerJoin;
         }
