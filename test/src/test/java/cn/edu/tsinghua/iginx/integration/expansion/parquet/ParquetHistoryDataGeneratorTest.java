@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.integration.expansion;
+package cn.edu.tsinghua.iginx.integration.expansion.parquet;
 
 import static org.junit.Assert.fail;
 
@@ -10,6 +10,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import cn.edu.tsinghua.iginx.integration.expansion.BaseHistoryDataGenerator;
 import org.junit.Test;
 
 public class ParquetHistoryDataGeneratorTest {

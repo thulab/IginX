@@ -33,8 +33,13 @@ selectClause
    ;
 
 expression
-    : functionName LR_BRACKET path RR_BRACKET asClause?
+    : LR_BRACKET inBracketExpr=expression RR_BRACKET
+    | constant
+    | functionName LR_BRACKET path RR_BRACKET asClause?
     | path asClause?
+    | (PLUS | MINUS) expr=expression
+    | leftExpr=expression (STAR | DIV | MOD) rightExpr=expression
+    | leftExpr=expression (PLUS | MINUS) rightExpr=expression
     ;
 
 functionName
@@ -144,7 +149,7 @@ groupByClause
     ;
 
 groupByTimeClause
-    : GROUP timeInterval BY TIME_WITH_UNIT
+    : GROUP timeInterval BY TIME_WITH_UNIT (SLIDE TIME_WITH_UNIT)?
     ;
 
 groupByLevelClause
@@ -308,6 +313,7 @@ keyWords
     | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
+    | SLIDE
     ;
 
 dateFormat
@@ -627,6 +633,10 @@ CLOSING
 CLOSED
     : C L O S E D
     ;
+
+SLIDE
+    : S L I D E
+    ;
 //============================
 // End of the keywords list
 //============================
@@ -720,22 +730,7 @@ DATETIME
     ;
 
 /** Allow unicode rule/token names */
-ID : FIRST_NAME_CHAR NAME_CHAR*;
-
-fragment
-FIRST_NAME_CHAR
-    :   'A'..'Z'
-    |   'a'..'z'
-    |   '0'..'9'
-    |   '_'
-    |   '/'
-    |   '@'
-    |   '#'
-    |   '$'
-    |   '%'
-    |   '&'
-    |   CN_CHAR
-    ;
+ID : NAME_CHAR*;
 
 fragment
 NAME_CHAR
@@ -743,14 +738,12 @@ NAME_CHAR
     |   'a'..'z'
     |   '0'..'9'
     |   '_'
-    |   ':'
-    |   '/'
     |   '@'
     |   '#'
+    |   ':'
     |   '$'
-    |   '%'
-    |   '&'
-    |   '+'
+    |   '{'
+    |   '}'
     |   CN_CHAR
     ;
 

@@ -187,14 +187,33 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             throw new InvalidOperatorParameterException("downsample operator is not support for row stream without timestamps.");
         }
         List<Row> rows = table.getRows();
-        long bias = downsample.getTimeRange().getBeginTime();
+        long bias = downsample.getTimeRange().getActualBeginTime();
+        long endTime = downsample.getTimeRange().getActualEndTime();
         long precision = downsample.getPrecision();
+        long slideDistance = downsample.getSlideDistance();
+        // startTime + (n - 1) * slideDistance + precision - 1 >= endTime
+        int n = (int) (Math.ceil((double)(endTime - bias - precision + 1) / slideDistance) + 1);
         TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
         Map<String, Value> params = downsample.getFunctionCall().getParams();
-        for (Row row : rows) {
-            long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
-            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+        if (precision == slideDistance) {
+            for (Row row : rows) {
+                long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
+                groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+            }
+        } else {
+            long[] timestamps = new long[n];
+            for (int i = 0; i < n; i++) {
+                timestamps[i] = bias + i * slideDistance;
+            }
+            for (Row row : rows) {
+                long rowTimestamp = row.getTimestamp();
+                for (int i = 0; i < n; i++) {
+                    if (rowTimestamp - timestamps[i] >= 0 && rowTimestamp - timestamps[i] < precision) {
+                        groups.compute(timestamps[i], (k, v) -> v == null ? new ArrayList<>() : v).add(row);
+                    }
+                }
+            }
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
         try {
@@ -309,20 +328,28 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Map<Integer, Integer> reorderMap = new HashMap<>();
 
         for (String pattern : patterns) {
-            for (int i = 0; i < header.getFields().size(); i++) {
-                Field field  = header.getField(i);
-                if (!StringUtils.isPattern(pattern)) {
-                    if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
-                        reorderMap.put(targetFields.size(), i);
-                        targetFields.add(field);
-
-                    }
-                } else {
+            List<Pair<Field, Integer>> matchedFields = new ArrayList<>();
+            if (StringUtils.isPattern(pattern)) {
+                for (int i = 0; i < header.getFields().size(); i++) {
+                    Field field  = header.getField(i);
                     if (Pattern.matches(StringUtils.reformatColumnName(pattern), field.getName())) {
-                        reorderMap.put(targetFields.size(), i);
-                        targetFields.add(field);
+                        matchedFields.add(new Pair<>(field, i));
                     }
                 }
+            } else {
+                for (int i = 0; i < header.getFields().size(); i++) {
+                    Field field  = header.getField(i);
+                    if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
+                        matchedFields.add(new Pair<>(field, i));
+                    }
+                }
+            }
+            if (!matchedFields.isEmpty()) {
+                matchedFields.sort(Comparator.comparing(pair -> pair.getK().getFullName()));
+                matchedFields.forEach(pair -> {
+                    reorderMap.put(targetFields.size(), pair.getV());
+                    targetFields.add(pair.getK());
+                });
             }
         }
 

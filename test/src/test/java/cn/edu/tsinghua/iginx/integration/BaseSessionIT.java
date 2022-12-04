@@ -38,6 +38,7 @@ public abstract class BaseSessionIT extends BaseSessionConcurrencyIT {
     protected String storageEngineType;
     protected int defaultPort2;
     protected Map<String, String> extraParams;
+    protected Boolean ifNeedCapExp = true;
 
     //params for downSample
     private static final long PRECISION = 123L;
@@ -980,120 +981,122 @@ public abstract class BaseSessionIT extends BaseSessionConcurrencyIT {
             currPath += dataTypeLen;
         }
 
-        //addSameTypeOfStorageEngineTest
-        session.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
+        if (ifNeedCapExp) {
+            //addSameTypeOfStorageEngineTest
+            session.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
 
-        int addStorageLen = 5;
-        List<String> addStoragePaths = getPaths(currPath, addStorageLen);
-        insertNumRecords(addStoragePaths);
-        //query Test
-        SessionQueryDataSet addStQueryDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
-        int addStResLen = addStQueryDataSet.getTimestamps().length;
-        List<String> addStResPaths = addStQueryDataSet.getPaths();
-        assertEquals(addStorageLen, addStResPaths.size());
-        assertEquals(TIME_PERIOD, addStResLen);
-        assertEquals(TIME_PERIOD, addStQueryDataSet.getValues().size());
-        for (int i = 0; i < addStorageLen; i++) {
-            long timestamp = addStQueryDataSet.getTimestamps()[i];
-            assertEquals(i + START_TIME, timestamp);
-            List<Object> queryResult = addStQueryDataSet.getValues().get(i);
-            for (int j = 0; j < addStorageLen; j++) {
-                int pathNum = getPathNum(addStResPaths.get(j));
-                assertNotEquals(pathNum, -1);
-                assertEquals(timestamp + pathNum, queryResult.get(j));
-            }
-        }
-        //aggr Count
-        SessionAggregateQueryDataSet addStCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
-        assertNull(addStCountDataSet.getTimestamps());
-        List<String> addStCountResPaths = addStCountDataSet.getPaths();
-        Object[] addStCountResult = addStCountDataSet.getValues();
-        assertEquals(addStorageLen, addStCountResPaths.size());
-        assertEquals(addStorageLen, addStCountDataSet.getValues().length);
-        for (int i = 0; i < addStorageLen; i++) {
-            assertEquals(TIME_PERIOD, addStCountResult[i]);
-        }
-        //aggr Avg
-        SessionAggregateQueryDataSet addStAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
-        assertNull(addStAvgDataSet.getTimestamps());
-        List<String> addStAvgResPaths = addStAvgDataSet.getPaths();
-        Object[] addStAvgResult = addStAvgDataSet.getValues();
-        assertEquals(addStorageLen, addStAvgResPaths.size());
-        assertEquals(addStorageLen, addStAvgDataSet.getValues().length);
-        for (int i = 0; i < addStorageLen; i++) {
-            double avg = (START_TIME + END_TIME) / 2.0;
-            int pathNum = getPathNum(addStAvgResPaths.get(i));
-            assertNotEquals(pathNum, -1);
-            assertEquals(avg + pathNum, changeResultToDouble(addStAvgResult[i]), delta);
-        }
-        //deletePartial, with query, aggr count and aggr Avg
-        if (isAbleToDelete) {
-            int stRemoveLen = 3;
-            List<String> stDelPartPaths = getPaths(currPath, stRemoveLen);
-            // ensure after delete there are still points in the timeseries
-
-            //delete data
-            session.deleteDataInColumns(stDelPartPaths, delStartTime, delEndTime);
-            Thread.sleep(1000);
-            SessionQueryDataSet stDelPartDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
-            //query
-            int stDelPartLen = stDelPartDataSet.getTimestamps().length;
-            List<String> stDelPartResPaths = stDelPartDataSet.getPaths();
-            assertEquals(addStorageLen, stDelPartResPaths.size());
-            assertEquals(TIME_PERIOD, stDelPartDataSet.getTimestamps().length);
-            assertEquals(TIME_PERIOD, stDelPartDataSet.getValues().size());
-            for (int i = 0; i < stDelPartLen; i++) {
-                long timestamp = stDelPartDataSet.getTimestamps()[i];
+            int addStorageLen = 5;
+            List<String> addStoragePaths = getPaths(currPath, addStorageLen);
+            insertNumRecords(addStoragePaths);
+            //query Test
+            SessionQueryDataSet addStQueryDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
+            int addStResLen = addStQueryDataSet.getTimestamps().length;
+            List<String> addStResPaths = addStQueryDataSet.getPaths();
+            assertEquals(addStorageLen, addStResPaths.size());
+            assertEquals(TIME_PERIOD, addStResLen);
+            assertEquals(TIME_PERIOD, addStQueryDataSet.getValues().size());
+            for (int i = 0; i < addStorageLen; i++) {
+                long timestamp = addStQueryDataSet.getTimestamps()[i];
                 assertEquals(i + START_TIME, timestamp);
-                List<Object> result = stDelPartDataSet.getValues().get(i);
-                if (delStartTime <= timestamp && timestamp < delEndTime) {
-                    for (int j = 0; j < addStorageLen; j++) {
-                        int pathNum = getPathNum(stDelPartResPaths.get(j));
-                        assertNotEquals(pathNum, -1);
-                        if (pathNum >= currPath + stRemoveLen) {
+                List<Object> queryResult = addStQueryDataSet.getValues().get(i);
+                for (int j = 0; j < addStorageLen; j++) {
+                    int pathNum = getPathNum(addStResPaths.get(j));
+                    assertNotEquals(pathNum, -1);
+                    assertEquals(timestamp + pathNum, queryResult.get(j));
+                }
+            }
+            //aggr Count
+            SessionAggregateQueryDataSet addStCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+            assertNull(addStCountDataSet.getTimestamps());
+            List<String> addStCountResPaths = addStCountDataSet.getPaths();
+            Object[] addStCountResult = addStCountDataSet.getValues();
+            assertEquals(addStorageLen, addStCountResPaths.size());
+            assertEquals(addStorageLen, addStCountDataSet.getValues().length);
+            for (int i = 0; i < addStorageLen; i++) {
+                assertEquals(TIME_PERIOD, addStCountResult[i]);
+            }
+            //aggr Avg
+            SessionAggregateQueryDataSet addStAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            assertNull(addStAvgDataSet.getTimestamps());
+            List<String> addStAvgResPaths = addStAvgDataSet.getPaths();
+            Object[] addStAvgResult = addStAvgDataSet.getValues();
+            assertEquals(addStorageLen, addStAvgResPaths.size());
+            assertEquals(addStorageLen, addStAvgDataSet.getValues().length);
+            for (int i = 0; i < addStorageLen; i++) {
+                double avg = (START_TIME + END_TIME) / 2.0;
+                int pathNum = getPathNum(addStAvgResPaths.get(i));
+                assertNotEquals(pathNum, -1);
+                assertEquals(avg + pathNum, changeResultToDouble(addStAvgResult[i]), delta);
+            }
+            //deletePartial, with query, aggr count and aggr Avg
+            if (isAbleToDelete) {
+                int stRemoveLen = 3;
+                List<String> stDelPartPaths = getPaths(currPath, stRemoveLen);
+                // ensure after delete there are still points in the timeseries
+
+                //delete data
+                session.deleteDataInColumns(stDelPartPaths, delStartTime, delEndTime);
+                Thread.sleep(1000);
+                SessionQueryDataSet stDelPartDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
+                //query
+                int stDelPartLen = stDelPartDataSet.getTimestamps().length;
+                List<String> stDelPartResPaths = stDelPartDataSet.getPaths();
+                assertEquals(addStorageLen, stDelPartResPaths.size());
+                assertEquals(TIME_PERIOD, stDelPartDataSet.getTimestamps().length);
+                assertEquals(TIME_PERIOD, stDelPartDataSet.getValues().size());
+                for (int i = 0; i < stDelPartLen; i++) {
+                    long timestamp = stDelPartDataSet.getTimestamps()[i];
+                    assertEquals(i + START_TIME, timestamp);
+                    List<Object> result = stDelPartDataSet.getValues().get(i);
+                    if (delStartTime <= timestamp && timestamp < delEndTime) {
+                        for (int j = 0; j < addStorageLen; j++) {
+                            int pathNum = getPathNum(stDelPartResPaths.get(j));
+                            assertNotEquals(pathNum, -1);
+                            if (pathNum >= currPath + stRemoveLen) {
+                                assertEquals(timestamp + pathNum, result.get(j));
+                            } else {
+                                assertNull(result.get(j));
+                            }
+                        }
+                    } else {
+                        for (int j = 0; j < addStorageLen; j++) {
+                            int pathNum = getPathNum(stDelPartResPaths.get(j));
+                            assertNotEquals(pathNum, -1);
                             assertEquals(timestamp + pathNum, result.get(j));
-                        } else {
-                            assertNull(result.get(j));
                         }
                     }
-                } else {
-                    for (int j = 0; j < addStorageLen; j++) {
-                        int pathNum = getPathNum(stDelPartResPaths.get(j));
-                        assertNotEquals(pathNum, -1);
-                        assertEquals(timestamp + pathNum, result.get(j));
+                }
+
+                // Test avg for the delete
+                SessionAggregateQueryDataSet stDelPartAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+                List<String> stDelPartAvgResPaths = stDelPartAvgDataSet.getPaths();
+                Object[] stDelPartAvgResult = stDelPartAvgDataSet.getValues();
+                assertEquals(addStorageLen, stDelPartAvgResPaths.size());
+                assertEquals(addStorageLen, stDelPartAvgDataSet.getValues().length);
+                for (int i = 0; i < addStorageLen; i++) {
+                    int pathNum = getPathNum(stDelPartAvgResPaths.get(i));
+                    assertNotEquals(pathNum, -1);
+                    if (pathNum < currPath + stRemoveLen) { // Here is the removed rows
+                        assertEquals(deleteAvg + pathNum, changeResultToDouble(stDelPartAvgResult[i]), delta);
+                    } else {
+                        assertEquals(originAvg + pathNum, changeResultToDouble(stDelPartAvgResult[i]), delta);
                     }
                 }
-            }
 
-            // Test avg for the delete
-            SessionAggregateQueryDataSet stDelPartAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
-            List<String> stDelPartAvgResPaths = stDelPartAvgDataSet.getPaths();
-            Object[] stDelPartAvgResult = stDelPartAvgDataSet.getValues();
-            assertEquals(addStorageLen, stDelPartAvgResPaths.size());
-            assertEquals(addStorageLen, stDelPartAvgDataSet.getValues().length);
-            for (int i = 0; i < addStorageLen; i++) {
-                int pathNum = getPathNum(stDelPartAvgResPaths.get(i));
-                assertNotEquals(pathNum, -1);
-                if (pathNum < currPath + stRemoveLen) { // Here is the removed rows
-                    assertEquals(deleteAvg + pathNum, changeResultToDouble(stDelPartAvgResult[i]), delta);
-                } else {
-                    assertEquals(originAvg + pathNum, changeResultToDouble(stDelPartAvgResult[i]), delta);
-                }
-            }
-
-            // Test count for the delete
-            SessionAggregateQueryDataSet stDelPartCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
-            List<String> stDelPartCountResPaths = stDelPartCountDataSet.getPaths();
-            Object[] stDelPartCountResult = stDelPartCountDataSet.getValues();
-            assertEquals(addStorageLen, stDelPartCountResPaths.size());
-            assertEquals(addStorageLen, stDelPartCountDataSet.getValues().length);
-            for (int i = 0; i < addStorageLen; i++) {
-                int pathNum = getPathNum(stDelPartAvgResPaths.get(i));
-                assertNotEquals(pathNum, -1);
-                if (pathNum < currPath + stRemoveLen) { // Here is the removed rows
-                    assertEquals(TIME_PERIOD - delTimePeriod, stDelPartCountResult[i]);
-                } else {
-                    assertEquals(TIME_PERIOD, stDelPartCountResult[i]);
+                // Test count for the delete
+                SessionAggregateQueryDataSet stDelPartCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+                List<String> stDelPartCountResPaths = stDelPartCountDataSet.getPaths();
+                Object[] stDelPartCountResult = stDelPartCountDataSet.getValues();
+                assertEquals(addStorageLen, stDelPartCountResPaths.size());
+                assertEquals(addStorageLen, stDelPartCountDataSet.getValues().length);
+                for (int i = 0; i < addStorageLen; i++) {
+                    int pathNum = getPathNum(stDelPartAvgResPaths.get(i));
+                    assertNotEquals(pathNum, -1);
+                    if (pathNum < currPath + stRemoveLen) { // Here is the removed rows
+                        assertEquals(TIME_PERIOD - delTimePeriod, stDelPartCountResult[i]);
+                    } else {
+                        assertEquals(TIME_PERIOD, stDelPartCountResult[i]);
+                    }
                 }
             }
         }

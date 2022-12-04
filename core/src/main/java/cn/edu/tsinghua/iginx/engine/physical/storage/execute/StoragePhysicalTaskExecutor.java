@@ -89,64 +89,66 @@ public class StoragePhysicalTaskExecutor {
                 long storageId = after.getStorageEngineId();
                 dispatchers.put(id, dispatcher);
                 dispatcher.submit(() -> {
-                    StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
-                    Pair<IStorage, ThreadPoolExecutor> p = storageManager.getStorage(storageId);
-                    while (p == null) {
-                        p = storageManager.getStorage(storageId);
-                        logger.info("spinning for IStorage!");
-                        try {
-                            Thread.sleep(5);
-                        } catch (InterruptedException e) {
-                            logger.error("encounter error when spinning: ", e);
-                        }
-                    }
-                    Pair<IStorage, ThreadPoolExecutor> pair = p;
-                    while (true) {
-                        StoragePhysicalTask task = taskQueue.getTask();
-                        task.setStorageUnit(id);
-                        task.setDummyStorageUnit(isDummy);
-//                        logger.info("take out new task: " + task);
-                        if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
-                            task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
-                            continue;
-                        }
-                        pair.v.submit(() -> {
-                            TaskExecuteResult result = null;
+                    try {
+                        StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
+                        Pair<IStorage, ThreadPoolExecutor> p = storageManager.getStorage(storageId);
+                        while (p == null) {
+                            p = storageManager.getStorage(storageId);
+                            logger.info("spinning for IStorage!");
                             try {
-                                result = pair.k.execute(task);
-//                                logger.info("task " + task + " execute finished");
-                            } catch (Exception e) {
-                                logger.error("execute task error: " + e);
-                                result = new TaskExecuteResult(new PhysicalException(e));
+                                Thread.sleep(5);
+                            } catch (InterruptedException e) {
+                                logger.error("encounter error when spinning: ", e);
                             }
-                            task.setResult(result);
-                            if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
-                                MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
-                                boolean isFollowerTaskReady = followerTask.notifyParentReady();
-                                if (isFollowerTaskReady) {
-                                    memoryTaskExecutor.addMemoryTask(followerTask);
+                        }
+                        Pair<IStorage, ThreadPoolExecutor> pair = p;
+                        while (true) {
+                            StoragePhysicalTask task = taskQueue.getTask();
+                            task.setStorageUnit(id);
+                            task.setDummyStorageUnit(isDummy);
+                            if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
+                                task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
+                                continue;
+                            }
+                            pair.v.submit(() -> {
+                                TaskExecuteResult result = null;
+                                try {
+                                    result = pair.k.execute(task);
+                                } catch (Exception e) {
+                                    logger.error("execute task error: " + e);
+                                    result = new TaskExecuteResult(new PhysicalException(e));
                                 }
-                            }
-                            if (task.isNeedBroadcasting()) { // 需要传播
-                                if (result.getException() != null) {
-                                    logger.error("task " + task + " will not broadcasting to replicas for the sake of exception: " + result.getException());
-                                    task.setResult(new TaskExecuteResult(result.getException()));
-                                } else {
-                                    StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
-                                    List<String> replicaIds = masterStorageUnit.getReplicas()
-                                        .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
-                                    replicaIds.add(masterStorageUnit.getId());
-                                    for (String replicaId : replicaIds) {
-                                        if (replicaId.equals(task.getStorageUnit())) {
-                                            continue;
-                                        }
-                                        StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
-                                        storageTaskQueues.get(replicaId).addTask(replicaTask);
-                                        logger.info("broadcasting task " + task + " to " + replicaId);
+                                task.setResult(result);
+                                if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
+                                    MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
+                                    boolean isFollowerTaskReady = followerTask.notifyParentReady();
+                                    if (isFollowerTaskReady) {
+                                        memoryTaskExecutor.addMemoryTask(followerTask);
                                     }
                                 }
-                            }
-                        });
+                                if (task.isNeedBroadcasting()) { // 需要传播
+                                    if (result.getException() != null) {
+                                        logger.error("task " + task + " will not broadcasting to replicas for the sake of exception: " + result.getException());
+                                        task.setResult(new TaskExecuteResult(result.getException()));
+                                    } else {
+                                        StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
+                                        List<String> replicaIds = masterStorageUnit.getReplicas()
+                                                .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                        replicaIds.add(masterStorageUnit.getId());
+                                        for (String replicaId : replicaIds) {
+                                            if (replicaId.equals(task.getStorageUnit())) {
+                                                continue;
+                                            }
+                                            StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
+                                            storageTaskQueues.get(replicaId).addTask(replicaTask);
+                                            logger.info("broadcasting task " + task + " to " + replicaId);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        logger.error("unexpected exception during dispatcher memory task, please contact developer to check: ", e);
                     }
                 });
                 logger.info("process for new storage unit finished!");

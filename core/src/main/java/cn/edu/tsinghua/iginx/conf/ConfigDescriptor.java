@@ -141,6 +141,7 @@ public class ConfigDescriptor {
 
             config.setHistoricalPrefixList(properties.getProperty("historicalPrefixList", ""));
             config.setExpectedStorageUnitNum(Integer.parseInt(properties.getProperty("expectedStorageUnitNum", "0")));
+            config.setLocalParquetStorage(Boolean.parseBoolean(properties.getProperty("isLocalParquetStorage", "true")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -205,6 +206,7 @@ public class ConfigDescriptor {
         config.setNeedInitBasicUDFFunctions(EnvUtils.loadEnv("needInitBasicUDFFunctions", config.isNeedInitBasicUDFFunctions()));
         config.setHistoricalPrefixList(EnvUtils.loadEnv("historicalPrefixList", config.getHistoricalPrefixList()));
         config.setExpectedStorageUnitNum(EnvUtils.loadEnv("expectedStorageUnitNum", config.getExpectedStorageUnitNum()));
+        config.setLocalParquetStorage(EnvUtils.loadEnv("isLocalParquetStorage", config.isLocalParquetStorage()));
     }
 
     private void loadUDFListFromFile() {
