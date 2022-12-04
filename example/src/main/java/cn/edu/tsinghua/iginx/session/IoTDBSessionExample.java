@@ -116,7 +116,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertColumnRecords...");
-        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null, "ns");
     }
 
     private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
@@ -158,7 +158,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertNonAlignedColumnRecords...");
-        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null, "ns");
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
@@ -193,7 +193,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertRowRecords...");
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null, "ns");
     }
 
     private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
@@ -232,7 +232,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertNonAlignedRowRecords...");
-        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null, "ns");
     }
 
     private static void showTimeSeries() throws ExecutionException, SessionException {
@@ -252,6 +252,9 @@ public class IoTDBSessionExample {
 
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         dataSet.print();
+
+        dataSet = session.queryData(paths, startTime, endTime, null, "ms");
+        dataSet.print();
     }
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
@@ -266,31 +269,31 @@ public class IoTDBSessionExample {
         System.out.println("Aggregate Query: ");
 
         // MAX
-        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
+        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX, "ns");
         dataSet.print();
 
         // MIN
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN, "ns");
         dataSet.print();
 
         // FIRST_VALUE
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, "ns");
         dataSet.print();
 
         // LAST_VALUE
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, "ns");
         dataSet.print();
 
         // COUNT
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT, "ns");
         dataSet.print();
 
         // SUM
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM, "ns");
         dataSet.print();
 
         // AVG
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG, "ns");
         dataSet.print();
 
         // 聚合查询结束
@@ -320,31 +323,31 @@ public class IoTDBSessionExample {
         System.out.println("Downsample Query: ");
 
         // MAX
-        SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, INTERVAL * 100L);
+        SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // MIN
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // FIRST_VALUE
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // LAST_VALUE
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // COUNT
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // SUM
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // AVG
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, INTERVAL * 100L);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, INTERVAL * 100L, "ns");
         dataSet.print();
 
         // 降采样查询结束
