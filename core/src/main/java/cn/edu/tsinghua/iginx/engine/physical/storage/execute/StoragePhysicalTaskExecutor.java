@@ -54,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -76,6 +77,12 @@ public class StoragePhysicalTaskExecutor {
     private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
     private final int maxCachedPhysicalTaskPerStorage = ConfigDescriptor.getInstance().getConfig().getMaxCachedPhysicalTaskPerStorage();
+
+    public final AtomicLong allRequests = new AtomicLong(0);
+
+    public final AtomicLong submittedRequests = new AtomicLong(0);
+
+    public final AtomicLong completedRequests = new AtomicLong(0);
 
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
@@ -113,16 +120,21 @@ public class StoragePhysicalTaskExecutor {
                             task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
                             continue;
                         }
+                        allRequests.incrementAndGet();
                         pair.v.submit(() -> {
                             TaskExecuteResult result = null;
+                            long startTime = System.nanoTime();
                             long taskId = System.nanoTime();
+                            submittedRequests.incrementAndGet();
                             try {
                                 result = pair.k.execute(task);
                             } catch (Exception e) {
                                 logger.error("execute task error: " + e);
                                 result = new TaskExecuteResult(new PhysicalException(e));
                             }
-                            task.setResult(result);
+//                            logger.error("PhysicalTaskExecutor time: {}", System.nanoTime() - startTime);
+                            completedRequests.incrementAndGet();
+                            startTime = System.nanoTime();
                             try {
                                 HotSpotMonitor.getInstance()
                                         .recordAfter(taskId, task.getTargetFragment(),
@@ -134,6 +146,7 @@ public class StoragePhysicalTaskExecutor {
                             } catch (Exception e) {
                                 logger.error("Monitor catch error:", e);
                             }
+                            task.setResult(result);
                             if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
                                 boolean isFollowerTaskReady = followerTask.notifyParentReady();
@@ -160,6 +173,7 @@ public class StoragePhysicalTaskExecutor {
                                     }
                                 }
                             }
+//                            logger.error("PhysicalTaskExecutor memory time: {}", System.nanoTime() - startTime);
                         });
                     }
                 });

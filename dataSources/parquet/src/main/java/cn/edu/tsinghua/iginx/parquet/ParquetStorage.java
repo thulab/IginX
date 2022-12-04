@@ -333,6 +333,8 @@ public class ParquetStorage implements IStorage {
         }
 
         // write data
+//        long startTime = System.nanoTime();
+
         String insertPrefix = generateInsertStmtPrefix(data, writePlan, tableName);
         String insertBody;
         switch (data.getRawDataType()) {
@@ -355,6 +357,8 @@ public class ParquetStorage implements IStorage {
         stmt.close();
 //        pool.pushBack(conn);
         conn.close();
+
+//        logger.error("insert consumption time: {}", System.nanoTime() - startTime);
     }
 
     private String generateRowInsertStmtBody(DataViewWrapper data, WritePlan writePlan) {

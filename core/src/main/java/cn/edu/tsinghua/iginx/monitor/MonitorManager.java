@@ -110,6 +110,9 @@ public class MonitorManager implements Runnable {
         metaManager.clearMonitors();
         logger.error("end clear monitors");
         Thread.sleep(interval * 1000L);
+        logger.error("allRequests = {}", StoragePhysicalTaskExecutor.getInstance().allRequests);
+        logger.error("submittedRequests = {}", StoragePhysicalTaskExecutor.getInstance().submittedRequests);
+        logger.error("completedRequests = {}", StoragePhysicalTaskExecutor.getInstance().completedRequests);
 
         //发起负载均衡判断
         DefaultMetaManager.getInstance().executeReshardJudging();

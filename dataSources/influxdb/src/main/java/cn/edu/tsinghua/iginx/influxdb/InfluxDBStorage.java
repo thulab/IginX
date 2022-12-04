@@ -484,7 +484,9 @@ public class InfluxDBStorage implements IStorage {
 
         try {
             logger.info("开始数据写入");
+            long startTime = System.nanoTime();
             client.getWriteApiBlocking().writePoints(bucket.getId(), organization.getId(), points);
+            logger.error("insert consumption time: {}", System.nanoTime() - startTime);
         } catch (Exception e) {
             logger.error("encounter error when write points to influxdb: ", e);
         } finally {
