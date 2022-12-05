@@ -37,6 +37,8 @@ import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
@@ -612,8 +614,113 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeHashInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
-        // todo implement
-        return null;
+        Filter filter = innerJoin.getFilter();
+        List<String> joinColumns = innerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (innerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("inner join operator is not support for row stream without timestamps.");
+        }
+        
+        String joinColumnA, joinColumnB;
+        if (filter != null) {
+            if (!filter.getType().equals(FilterType.Path)) {
+                throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
+            }
+            Pair<String, String> p = FilterUtils.getHashJoinColumnFromPathFilter((PathFilter) filter);
+            if (p == null) {
+                throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
+            }
+            if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
+                joinColumnA = p.k;
+                joinColumnB = p.v;
+            } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
+                joinColumnA = p.v;
+                joinColumnB = p.k;
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join path filter input.");
+            }
+        } else {
+            if (joinColumns.size() != 1) {
+                throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
+            }
+            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
+                joinColumnA = joinColumns.get(0);
+                joinColumnB = joinColumns.get(0);
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join column input.");
+            }
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        HashMap<Integer, Row> rowsAHashMap = new HashMap<Integer, Row>();
+        for (Row rowA: rowsA) {
+            rowsAHashMap.put(rowA.getValue(joinColumnA).hashCode(), rowA);
+        }
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowB : rowsB) {
+                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        transformedRows.add(transformedRow);
+                    }
+                }
+            }
+        } else { // Join condition: natural or using
+            for (Field fieldB : fieldsB) {
+                if (!fieldB.getName().equals(joinColumnB)) {
+                    fieldsA.add(fieldB);
+                }
+            }
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowB : rowsB) {
+                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    int k = valuesA.length + 1;
+                    int index = headerB.indexOf(joinColumnB);
+                    for (int j = 0; j < valuesB.length && j != index; j++) {
+                        valuesJoin[k++] = valuesB[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
     }
 
     private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
@@ -853,9 +960,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
                 }
                 if (hasNull) {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length + 1];
                     valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length + 1, valuesB.length);
                     transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
@@ -879,13 +986,241 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
     
     private RowStream executeHashLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
-        // todo implement
-        return null;
+        Filter filter = outerJoin.getFilter();
+        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (outerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("inner join operator is not support for row stream without timestamps.");
+        }
+    
+        String joinColumnA, joinColumnB;
+        if (filter != null) {
+            if (!filter.getType().equals(FilterType.Path)) {
+                throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
+            }
+            Pair<String, String> p = FilterUtils.getHashJoinColumnFromPathFilter((PathFilter) filter);
+            if (p == null) {
+                throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
+            }
+            if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
+                joinColumnA = p.k;
+                joinColumnB = p.v;
+            } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
+                joinColumnA = p.v;
+                joinColumnB = p.k;
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join path filter input.");
+            }
+        } else {
+            if (joinColumns.size() != 1) {
+                throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
+            }
+            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
+                joinColumnA = joinColumns.get(0);
+                joinColumnB = joinColumns.get(0);
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join column input.");
+            }
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        HashMap<Integer, Row> rowsBHashMap = new HashMap<Integer, Row>();
+        for (Row rowB: rowsB) {
+            rowsBHashMap.put(rowB.getValue(joinColumnA).hashCode(), rowB);
+        }
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                Object[] valuesA = rowA.getValues();
+                if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
+                    Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        transformedRows.add(transformedRow);
+                    }
+                } else {
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        } else { // Join condition: natural or using
+            for (Field fieldB : fieldsB) {
+                if (!fieldB.getName().equals(joinColumnB)) {
+                    fieldsA.add(fieldB);
+                }
+            }
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                Object[] valuesA = rowA.getValues();
+                if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
+                    Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    int k = valuesA.length + 1;
+                    int index = headerB.indexOf(joinColumnB);
+                    for (int j = 0; j < valuesB.length && j != index; j++) {
+                        valuesJoin[k++] = valuesB[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                } else {
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
     }
     
     private RowStream executeHashRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
-        // todo implement
-        return null;
+        Filter filter = outerJoin.getFilter();
+        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (outerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("inner join operator is not support for row stream without timestamps.");
+        }
+    
+        String joinColumnA, joinColumnB;
+        if (filter != null) {
+            if (!filter.getType().equals(FilterType.Path)) {
+                throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
+            }
+            Pair<String, String> p = FilterUtils.getHashJoinColumnFromPathFilter((PathFilter) filter);
+            if (p == null) {
+                throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
+            }
+            if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
+                joinColumnA = p.k;
+                joinColumnB = p.v;
+            } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
+                joinColumnA = p.v;
+                joinColumnB = p.k;
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join path filter input.");
+            }
+        } else {
+            if (joinColumns.size() != 1) {
+                throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
+            }
+            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
+                joinColumnA = joinColumns.get(0);
+                joinColumnB = joinColumns.get(0);
+            } else {
+                throw new InvalidOperatorParameterException("invalid hash join column input.");
+            }
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        HashMap<Integer, Row> rowsAHashMap = new HashMap<Integer, Row>();
+        for (Row rowA: rowsA) {
+            rowsAHashMap.put(rowA.getValue(joinColumnA).hashCode(), rowA);
+        }
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowB : rowsB) {
+                Object[] valuesB = rowB.getValues();
+                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        transformedRows.add(transformedRow);
+                    }
+                } else {
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
+                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    transformedRows.add(new Row(newHeader, valuesJoin));
+                }
+            }
+        } else { // Join condition: natural or using
+            for (Field fieldB : fieldsB) {
+                if (!fieldB.getName().equals(joinColumnB)) {
+                    fieldsA.add(fieldB);
+                }
+            }
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowB : rowsB) {
+                Object[] valuesB = rowB.getValues();
+                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    int k = valuesA.length + 1;
+                    int index = headerB.indexOf(joinColumnB);
+                    for (int j = 0; j < valuesB.length && j != index; j++) {
+                        valuesJoin[k++] = valuesB[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                } else {
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length];
+                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length, valuesB.length);
+                    transformedRows.add(new Row(newHeader, valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
     }
 
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {

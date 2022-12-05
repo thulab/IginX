@@ -24,6 +24,8 @@ import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+
 import java.util.List;
 
 public class FilterUtils {
@@ -151,5 +153,12 @@ public class FilterUtils {
                 return ValueUtils.regexCompare(valueA, valueB);
         }
         return false;
+    }
+    
+    public static Pair<String, String> getHashJoinColumnFromPathFilter(PathFilter pathFilter) {
+        if (pathFilter.getOp().equals(Op.E)) {
+            return new Pair<>(pathFilter.getPathA(), pathFilter.getPathB());
+        }
+        return null;
     }
 }
