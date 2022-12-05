@@ -47,6 +47,10 @@ public class InnerJoin extends AbstractBinaryOperator {
         return joinAlgType;
     }
 
+    public boolean isNaturalJoin() {
+        return isNaturalJoin;
+    }
+    
     @Override
     public Operator copy() {
         return new InnerJoin(getSourceA().copy(), getSourceB().copy(), filter.copy(),

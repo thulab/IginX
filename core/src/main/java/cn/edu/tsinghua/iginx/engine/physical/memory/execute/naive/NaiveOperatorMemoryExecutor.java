@@ -37,8 +37,6 @@ import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
@@ -480,8 +478,32 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeCrossJoin(CrossJoin crossJoin, Table tableA, Table tableB) throws PhysicalException {
-        // todo implement
-        return null;
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("cross join operator is not support for row stream without timestamps.");
+        }
+        List<Field> fieldsA = headerA.getFields();
+        List<Field> fieldsB = headerA.getFields();
+        fieldsA.add(Field.TIME);
+        fieldsA.addAll(fieldsB);
+        Header newHeader = new Header(Field.TIME, fieldsA);
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        List<Row> transformedRows = new ArrayList<>();
+        for (Row rowA : rowsA) {
+            for (Row rowB : rowsB) {
+                Object[] valuesA = rowA.getValues();
+                Object[] valuesB = rowB.getValues();
+                Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                valuesJoin[valuesA.length] = rowB.getTimestamp();
+                System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                transformedRows.add(transformedRow);
+            }
+        }
+        return new Table(newHeader, transformedRows);
     }
 
     private RowStream executeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
@@ -498,8 +520,95 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
-        // todo implement
-        return null;
+        Filter filter = innerJoin.getFilter();
+        List<String> joinColumns = innerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (innerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("inner join operator is not support for row stream without timestamps.");
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                for (Row rowB : rowsB) {
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        transformedRows.add(transformedRow);
+                    }
+                }
+            }
+        } else { // Join condition: natural or using
+            int[] indexOfJoinColumnInTableB = new int[joinColumns.size()];
+            int i = 0;
+            flag1:
+            for (Field fieldB : fieldsB) {
+                for (String joinColumn : joinColumns) {
+                    if (Objects.equals(fieldB.getName(), joinColumn)) {
+                        indexOfJoinColumnInTableB[i++] = headerB.indexOf(fieldB);
+                        continue flag1;
+                    }
+                }
+                fieldsA.add(fieldB);
+            }
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                flag2:
+                for (Row rowB : rowsB) {
+                    for (String joinColumn : joinColumns){
+                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                            continue flag2;
+                        }
+                    }
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    int k = valuesA.length + 1;
+                    flag3:
+                    for (int j = 0; j < valuesB.length; j++) {
+                        for (int index : indexOfJoinColumnInTableB) {
+                            if (j == index) {
+                                continue flag3;
+                            }
+                        }
+                        valuesJoin[k++] = valuesB[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
     }
 
     private RowStream executeHashInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
@@ -526,16 +635,280 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        switch (outerJoin.getOuterJoinType()) {
+            case LEFT:
+                return executeNestedLoopLeftOuterJoin(outerJoin, tableA, tableB);
+            case RIGHT:
+                return executeNestedLoopRightOuterJoin(outerJoin, tableA, tableB);
+            case FULL:
+                RowStream resLeftOuterJoin = executeNestedLoopLeftOuterJoin(outerJoin, tableA, tableB);
+                RowStream resRightOuterJoin = executeNestedLoopRightOuterJoin(outerJoin, tableA, tableB);
+                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+            default:
+                throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
+        }
+    }
+    
+    private RowStream executeNestedLoopLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        Filter filter = outerJoin.getFilter();
+        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (outerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("outer join operator is not support for row stream without timestamps.");
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                Object[] valuesA = rowA.getValues();
+                boolean hasNull = true;
+                for (Row rowB : rowsB) {
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        hasNull = false;
+                        transformedRows.add(transformedRow);
+                    }
+                }
+                if (hasNull) {
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        } else { // Join condition: natural or using
+            int[] indexOfJoinColumnInTableB = new int[joinColumns.size()];
+            int i = 0;
+            flag1:
+            for (Field fieldB : fieldsB) {
+                for (String joinColumn : joinColumns) {
+                    if (Objects.equals(fieldB.getName(), joinColumn)) {
+                        indexOfJoinColumnInTableB[i++] = headerB.indexOf(fieldB);
+                        continue flag1;
+                    }
+                }
+                fieldsA.add(fieldB);
+            }
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowA : rowsA) {
+                Object[] valuesA = rowA.getValues();
+                boolean hasNull = true;
+                flag2:
+                for (Row rowB : rowsB) {
+                    for (String joinColumn : joinColumns){
+                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                            continue flag2;
+                        }
+                    }
+                    hasNull = false;
+                    Object[] valuesB = rowB.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    int k = valuesA.length + 1;
+                    flag3:
+                    for (int j = 0; j < valuesB.length; j++) {
+                        for (int index : indexOfJoinColumnInTableB) {
+                            if (j == index) {
+                                continue flag3;
+                            }
+                        }
+                        valuesJoin[k++] = valuesB[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+                if (hasNull) {
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
+    }
+    
+    private RowStream executeNestedLoopRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        Filter filter = outerJoin.getFilter();
+        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<Field> fieldsA = tableA.getHeader().getFields();
+        List<Field> fieldsB = tableB.getHeader().getFields();
+        if (outerJoin.isNaturalJoin()) {
+            if (joinColumns != null) {
+                throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
+            }
+            joinColumns = new ArrayList<>();
+            for (Field fieldA : fieldsA) {
+                for (Field fieldB : fieldsB) {
+                    if (fieldA.equals(fieldB)) {
+                        joinColumns.add(fieldA.getName());
+                    }
+                }
+            }
+        }
+        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
+        }
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("outer join operator is not support for row stream without timestamps.");
+        }
+        List<Row> rowsA = tableA.getRows();
+        List<Row> rowsB = tableB.getRows();
+        Header newHeader;
+        List<Row> transformedRows = new ArrayList<>();
+        fieldsA.add(Field.TIME);
+        if (filter != null) { // Join condition: on
+            fieldsA.addAll(fieldsB);
+            newHeader = new Header(Field.TIME, fieldsA);
+            for (Row rowB : rowsB) {
+                Object[] valuesB = rowB.getValues();
+                boolean hasNull = true;
+                for (Row rowA : rowsA) {
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    if (FilterUtils.validate(filter, transformedRow)) {
+                        hasNull = false;
+                        transformedRows.add(transformedRow);
+                    }
+                }
+                if (hasNull) {
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
+                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    transformedRows.add(new Row(newHeader, valuesJoin));
+                }
+            }
+        } else { // Join condition: natural or using
+            int[] indexOfJoinColumnInTableA = new int[joinColumns.size()];
+            int i = 0;
+            flag1:
+            for (Field fieldA : fieldsA) {
+                for (String joinColumn : joinColumns) {
+                    if (Objects.equals(fieldA.getName(), joinColumn)) {
+                        indexOfJoinColumnInTableA[i++] = headerB.indexOf(fieldA);
+                        continue flag1;
+                    }
+                }
+                fieldsB.add(fieldA);
+            }
+            newHeader = new Header(Field.TIME, fieldsB);
+            for (Row rowB : rowsB) {
+                Object[] valuesB = rowB.getValues();
+                boolean hasNull = true;
+                flag2:
+                for (Row rowA : rowsA) {
+                    for (String joinColumn : joinColumns){
+                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                            continue flag2;
+                        }
+                    }
+                    hasNull = false;
+                    Object[] valuesA = rowA.getValues();
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableA.length + 1];
+                    valuesJoin[valuesA.length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    int k = 0;
+                    flag3:
+                    for (int j = 0; j < valuesA.length; j++) {
+                        for (int index : indexOfJoinColumnInTableA) {
+                            if (j == index) {
+                                continue flag3;
+                            }
+                        }
+                        valuesJoin[k++] = valuesA[j];
+                    }
+                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                }
+                if (hasNull) {
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
+                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    transformedRows.add(new Row(newHeader, valuesJoin));
+                }
+            }
+        }
+        return new Table(newHeader, transformedRows);
+    }
+    
+    private RowStream executeHashOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        switch (outerJoin.getOuterJoinType()) {
+            case LEFT:
+                return executeHashLeftOuterJoin(outerJoin, tableA, tableB);
+            case RIGHT:
+                return executeHashRightOuterJoin(outerJoin, tableA, tableB);
+            case FULL:
+                RowStream resLeftOuterJoin = executeHashLeftOuterJoin(outerJoin, tableA, tableB);
+                RowStream resRightOuterJoin = executeHashRightOuterJoin(outerJoin, tableA, tableB);
+                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+            default:
+                throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
+        }
+    }
+    
+    private RowStream executeHashLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         // todo implement
         return null;
     }
-
-    private RowStream executeHashOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+    
+    private RowStream executeHashRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         // todo implement
         return null;
     }
 
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        switch (outerJoin.getOuterJoinType()) {
+            case LEFT:
+                return executeSortedMergeLeftOuterJoin(outerJoin, tableA, tableB);
+            case RIGHT:
+                return executeSortedMergeRightOuterJoin(outerJoin, tableA, tableB);
+            case FULL:
+                RowStream resLeftOuterJoin = executeSortedMergeLeftOuterJoin(outerJoin, tableA, tableB);
+                RowStream resRightOuterJoin = executeSortedMergeRightOuterJoin(outerJoin, tableA, tableB);
+                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+            default:
+                throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
+        }
+    }
+    
+    private RowStream executeSortedMergeLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
+        // todo implement
+        return null;
+    }
+    
+    private RowStream executeSortedMergeRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         // todo implement
         return null;
     }

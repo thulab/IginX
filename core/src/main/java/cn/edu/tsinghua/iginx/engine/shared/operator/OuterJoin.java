@@ -51,6 +51,10 @@ public class OuterJoin extends AbstractBinaryOperator {
         return joinAlgType;
     }
 
+    public boolean isNaturalJoin() {
+        return isNaturalJoin;
+    }
+    
     @Override
     public Operator copy() {
         return new OuterJoin(getSourceA().copy(), getSourceB().copy(), outerJoinType, filter.copy(),
