@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecut
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.TableUtils;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
@@ -485,11 +486,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
             throw new InvalidOperatorParameterException("cross join operator is not support for row stream without timestamps.");
         }
-        List<Field> fieldsA = headerA.getFields();
-        List<Field> fieldsB = headerA.getFields();
-        fieldsA.add(Field.TIME);
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         fieldsA.addAll(fieldsB);
-        Header newHeader = new Header(Field.TIME, fieldsA);
+        Header newHeader = new Header(fieldsA);
         List<Row> rowsA = tableA.getRows();
         List<Row> rowsB = tableB.getRows();
         List<Row> transformedRows = new ArrayList<>();
@@ -497,11 +497,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             for (Row rowB : rowsB) {
                 Object[] valuesA = rowA.getValues();
                 Object[] valuesB = rowB.getValues();
-                Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                 System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                valuesJoin[valuesA.length] = rowB.getTimestamp();
-                System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                Row transformedRow = new Row(newHeader, valuesJoin);
                 transformedRows.add(transformedRow);
             }
         }
@@ -524,8 +523,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
         List<String> joinColumns = innerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
@@ -551,19 +550,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rowsB = tableB.getRows();
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 for (Row rowB : rowsB) {
                     Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         transformedRows.add(transformedRow);
                     }
@@ -582,21 +579,20 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
                 fieldsA.add(fieldB);
             }
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 flag2:
                 for (Row rowB : rowsB) {
                     for (String joinColumn : joinColumns){
-                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                        if (rowA.getValue(joinColumn) != rowB.getValue(joinColumn)){
                             continue flag2;
                         }
                     }
                     Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    int k = valuesA.length + 1;
+                    int k = valuesA.length;
                     flag3:
                     for (int j = 0; j < valuesB.length; j++) {
                         for (int index : indexOfJoinColumnInTableB) {
@@ -606,7 +602,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         }
                         valuesJoin[k++] = valuesB[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         }
@@ -616,8 +612,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeHashInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
         List<String> joinColumns = innerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
@@ -677,20 +673,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
                 if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
                     Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
                     Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         transformedRows.add(transformedRow);
                     }
@@ -702,7 +696,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     fieldsA.add(fieldB);
                 }
             }
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
                 if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
                     Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
@@ -710,13 +704,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     Object[] valuesB = rowB.getValues();
                     Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    int k = valuesA.length + 1;
+                    int k = valuesA.length;
                     int index = headerB.indexOf(joinColumnB);
                     for (int j = 0; j < valuesB.length && j != index; j++) {
                         valuesJoin[k++] = valuesB[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         }
@@ -750,7 +743,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             case FULL:
                 RowStream resLeftOuterJoin = executeNestedLoopLeftOuterJoin(outerJoin, tableA, tableB);
                 RowStream resRightOuterJoin = executeNestedLoopRightOuterJoin(outerJoin, tableA, tableB);
-                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+                return TableUtils.UnionTable(transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
             default:
                 throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
         }
@@ -759,8 +752,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeNestedLoopLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = outerJoin.getFilter();
         List<String> joinColumns = outerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
@@ -786,29 +779,27 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rowsB = tableB.getRows();
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 Object[] valuesA = rowA.getValues();
                 boolean hasNull = true;
                 for (Row rowB : rowsB) {
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         hasNull = false;
                         transformedRows.add(transformedRow);
                     }
                 }
                 if (hasNull) {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         } else { // Join condition: natural or using
@@ -824,23 +815,22 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
                 fieldsA.add(fieldB);
             }
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 Object[] valuesA = rowA.getValues();
                 boolean hasNull = true;
                 flag2:
                 for (Row rowB : rowsB) {
                     for (String joinColumn : joinColumns){
-                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                        if (rowA.getValue(joinColumn) != rowB.getValue(joinColumn)){
                             continue flag2;
                         }
                     }
                     hasNull = false;
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    int k = valuesA.length + 1;
+                    int k = valuesA.length;
                     flag3:
                     for (int j = 0; j < valuesB.length; j++) {
                         for (int index : indexOfJoinColumnInTableB) {
@@ -850,12 +840,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         }
                         valuesJoin[k++] = valuesB[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
                 if (hasNull) {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         }
@@ -865,8 +855,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeNestedLoopRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = outerJoin.getFilter();
         List<String> joinColumns = outerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
@@ -892,29 +882,26 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rowsB = tableB.getRows();
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
                 Object[] valuesB = rowB.getValues();
                 boolean hasNull = true;
                 for (Row rowA : rowsA) {
                     Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         hasNull = false;
                         transformedRows.add(transformedRow);
                     }
                 }
                 if (hasNull) {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
-                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length];
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length, valuesB.length);
                     transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
@@ -931,22 +918,21 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
                 fieldsB.add(fieldA);
             }
-            newHeader = new Header(Field.TIME, fieldsB);
+            newHeader = new Header(fieldsB);
             for (Row rowB : rowsB) {
                 Object[] valuesB = rowB.getValues();
                 boolean hasNull = true;
                 flag2:
                 for (Row rowA : rowsA) {
                     for (String joinColumn : joinColumns){
-                        if (rowA.getAsValue(joinColumn) != rowB.getAsValue(joinColumn)){
+                        if (rowA.getValue(joinColumn) != rowB.getValue(joinColumn)){
                             continue flag2;
                         }
                     }
                     hasNull = false;
                     Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableA.length + 1];
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableA.length];
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - indexOfJoinColumnInTableA.length, valuesB.length);
                     int k = 0;
                     flag3:
                     for (int j = 0; j < valuesA.length; j++) {
@@ -957,12 +943,11 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         }
                         valuesJoin[k++] = valuesA[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
                 if (hasNull) {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length + 1];
-                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length + 1, valuesB.length);
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length];
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length  - indexOfJoinColumnInTableA.length, valuesB.length);
                     transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
@@ -979,7 +964,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             case FULL:
                 RowStream resLeftOuterJoin = executeHashLeftOuterJoin(outerJoin, tableA, tableB);
                 RowStream resRightOuterJoin = executeHashRightOuterJoin(outerJoin, tableA, tableB);
-                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+                return TableUtils.UnionTable(transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
             default:
                 throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
         }
@@ -988,8 +973,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeHashLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = outerJoin.getFilter();
         List<String> joinColumns = outerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
@@ -1049,27 +1034,25 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 Object[] valuesA = rowA.getValues();
                 if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
                     Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         transformedRows.add(transformedRow);
                     }
                 } else {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         } else { // Join condition: natural or using
@@ -1078,25 +1061,24 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     fieldsA.add(fieldB);
                 }
             }
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
                 Object[] valuesA = rowA.getValues();
                 if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
                     Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    int k = valuesA.length + 1;
+                    int k = valuesA.length;
                     int index = headerB.indexOf(joinColumnB);
                     for (int j = 0; j < valuesB.length && j != index; j++) {
                         valuesJoin[k++] = valuesB[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 } else {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length - 1];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         }
@@ -1106,8 +1088,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeHashRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = outerJoin.getFilter();
         List<String> joinColumns = outerJoin.getJoinColumns();
-        List<Field> fieldsA = tableA.getHeader().getFields();
-        List<Field> fieldsB = tableB.getHeader().getFields();
+        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
+        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
@@ -1167,27 +1149,24 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
-        fieldsA.add(Field.TIME);
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
                 Object[] valuesB = rowB.getValues();
                 if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
                     Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
                     Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 1, valuesB.length);
-                    Row transformedRow = new Row(newHeader, rowA.getTimestamp(), valuesJoin);
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
+                    Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
                         transformedRows.add(transformedRow);
                     }
                 } else {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length + 1];
-                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length + 1, valuesB.length);
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length];
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length, valuesB.length);
                     transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
@@ -1197,25 +1176,23 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     fieldsA.add(fieldB);
                 }
             }
-            newHeader = new Header(Field.TIME, fieldsA);
+            newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
                 Object[] valuesB = rowB.getValues();
                 if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
                     Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
                     Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    valuesJoin[valuesA.length] = rowB.getTimestamp();
-                    int k = valuesA.length + 1;
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
+                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - 1, valuesB.length);
+                    int k = 0;
                     int index = headerB.indexOf(joinColumnB);
-                    for (int j = 0; j < valuesB.length && j != index; j++) {
-                        valuesJoin[k++] = valuesB[j];
+                    for (int j = 0; j < valuesA.length && j != index; j++) {
+                        valuesJoin[k++] = valuesA[j];
                     }
-                    transformedRows.add(new Row(newHeader, rowA.getTimestamp(), valuesJoin));
+                    transformedRows.add(new Row(newHeader, valuesJoin));
                 } else {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length];
-                    valuesJoin[rowsA.get(0).getValues().length] = rowB.getTimestamp();
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length, valuesB.length);
+                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length - 1];
+                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length - 1, valuesB.length);
                     transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
@@ -1232,7 +1209,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             case FULL:
                 RowStream resLeftOuterJoin = executeSortedMergeLeftOuterJoin(outerJoin, tableA, tableB);
                 RowStream resRightOuterJoin = executeSortedMergeRightOuterJoin(outerJoin, tableA, tableB);
-                return executeUnion(null, transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
+                return TableUtils.UnionTable(transformToTable(resLeftOuterJoin), transformToTable(resRightOuterJoin));
             default:
                 throw new PhysicalException("Unknown outer join type: " + outerJoin.getOuterJoinType());
         }
