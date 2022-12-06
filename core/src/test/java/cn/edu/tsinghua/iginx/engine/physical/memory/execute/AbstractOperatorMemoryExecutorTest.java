@@ -238,6 +238,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             InnerJoin innerJoin = new InnerJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
                 false,
@@ -256,6 +257,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             InnerJoin innerJoin = new InnerJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
                 false,
@@ -364,6 +366,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.LEFT,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
@@ -383,6 +386,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.LEFT,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
@@ -402,6 +406,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.RIGHT,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
@@ -421,6 +426,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.RIGHT,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
@@ -440,6 +446,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.FULL,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
@@ -459,6 +466,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             OuterJoin outerJoin = new OuterJoin(
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
+                "a", "b",
                 OuterJoinType.FULL,
                 new PathFilter("a.a", Op.E, "b.a"),
                 Collections.emptyList(),
