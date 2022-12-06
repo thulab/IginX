@@ -539,7 +539,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();
@@ -631,7 +631,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();
@@ -774,7 +774,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();
@@ -880,7 +880,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();
@@ -1003,7 +1003,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();
@@ -1121,7 +1121,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        if ((filter == null && joinColumns == null) || (filter != null && joinColumns != null)) {
+        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
         Header headerA = tableA.getHeader();

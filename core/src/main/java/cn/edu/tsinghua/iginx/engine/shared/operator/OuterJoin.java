@@ -30,7 +30,11 @@ public class OuterJoin extends AbstractBinaryOperator {
         super(OperatorType.OuterJoin, sourceA, sourceB);
         this.outerJoinType = outerJoinType;
         this.filter = filter;
-        this.joinColumns = joinColumns;
+        if (joinColumns != null) {
+            this.joinColumns = joinColumns;
+        } else {
+            this.joinColumns = new ArrayList<>();
+        }
         this.joinAlgType = joinAlgType;
         this.isNaturalJoin = isNaturalJoin;
     }

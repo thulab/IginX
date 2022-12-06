@@ -30,7 +30,11 @@ public class InnerJoin extends AbstractBinaryOperator {
         boolean isNaturalJoin, JoinAlgType joinAlgType) {
         super(OperatorType.InnerJoin, sourceA, sourceB);
         this.filter = filter;
-        this.joinColumns = joinColumns;
+        if (joinColumns != null) {
+            this.joinColumns = joinColumns;
+        } else {
+            this.joinColumns = new ArrayList<>();
+        }
         this.joinAlgType = joinAlgType;
         this.isNaturalJoin = isNaturalJoin;
     }
