@@ -532,8 +532,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
-                    if (fieldA.equals(fieldB)) {
-                        joinColumns.add(fieldA.getName());
+                    String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
+                    String joinColumnB = fieldB.getName().replaceFirst(innerJoin.getPrefixB() + '.', "");
+                    if (joinColumnA.equals(joinColumnB)) {
+                        joinColumns.add(joinColumnA);
                     }
                 }
             }
@@ -570,7 +572,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             flag1:
             for (Field fieldB : fieldsB) {
                 for (String joinColumn : joinColumns) {
-                    if (Objects.equals(fieldB.getName(), joinColumn)) {
+                    if (Objects.equals(fieldB.getName(), innerJoin.getPrefixB() + '.' + joinColumn)) {
                         indexOfJoinColumnInTableB[i++] = headerB.indexOf(fieldB);
                         continue flag1;
                     }
@@ -582,7 +584,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 flag2:
                 for (Row rowB : rowsB) {
                     for (String joinColumn : joinColumns){
-                        if (rowA.getValue(joinColumn) != rowB.getValue(joinColumn)){
+                        if (rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn) != rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn)){
                             continue flag2;
                         }
                     }
@@ -619,8 +621,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
-                    if (fieldA.equals(fieldB)) {
-                        joinColumns.add(fieldA.getName());
+                    String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
+                    String joinColumnB = fieldB.getName().replaceFirst(innerJoin.getPrefixB() + '.', "");
+                    if (joinColumnA.equals(joinColumnB)) {
+                        joinColumns.add(joinColumnA);
                     }
                 }
             }
@@ -631,7 +635,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
         
-        String joinColumnA, joinColumnB;
+        String joinColumn;
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
                 throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
@@ -641,11 +645,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
             }
             if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                joinColumnA = p.k;
-                joinColumnB = p.v;
+                joinColumn = p.k.replaceFirst(innerJoin.getPrefixA() + '.', "");
             } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                joinColumnA = p.v;
-                joinColumnB = p.k;
+                joinColumn = p.v.replaceFirst(innerJoin.getPrefixA() + '.', "");
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join path filter input.");
             }
@@ -653,9 +655,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             if (joinColumns.size() != 1) {
                 throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
             }
-            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
-                joinColumnA = joinColumns.get(0);
-                joinColumnB = joinColumns.get(0);
+            if (headerA.indexOf(innerJoin.getPrefixA() + '.' + joinColumns.get(0)) != -1 && headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumns.get(0)) != -1) {
+                joinColumn = joinColumns.get(0);
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join column input.");
             }
@@ -664,7 +665,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rowsB = tableB.getRows();
         HashMap<Integer, Row> rowsAHashMap = new HashMap<>();
         for (Row rowA: rowsA) {
-            rowsAHashMap.put(rowA.getValue(joinColumnA).hashCode(), rowA);
+            rowsAHashMap.put(rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn).hashCode(), rowA);
         }
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
@@ -672,8 +673,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             fieldsA.addAll(fieldsB);
             newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
-                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
-                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                if (rowsAHashMap.containsKey(rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn).hashCode());
                     Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
                     Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
@@ -687,20 +688,20 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         } else { // Join condition: natural or using
             for (Field fieldB : fieldsB) {
-                if (!fieldB.getName().equals(joinColumnB)) {
+                if (!fieldB.getName().equals(innerJoin.getPrefixB() + '.' + joinColumn)) {
                     fieldsA.add(fieldB);
                 }
             }
             newHeader = new Header(fieldsA);
             for (Row rowB : rowsB) {
-                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
-                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
+                if (rowsAHashMap.containsKey(rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn).hashCode());
                     Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
                     Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
                     int k = valuesA.length;
-                    int index = headerB.indexOf(joinColumnB);
+                    int index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumn);
                     for (int j = 0; j < valuesB.length && j != index; j++) {
                         valuesJoin[k++] = valuesB[j];
                     }
@@ -741,8 +742,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
-                    if (fieldA.equals(fieldB)) {
-                        joinColumns.add(fieldA.getName());
+                    String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
+                    String joinColumnB = fieldB.getName().replaceFirst(outerJoin.getPrefixB() + '.', "");
+                    if (joinColumnA.equals(joinColumnB)) {
+                        joinColumns.add(joinColumnA);
                     }
                 }
             }
@@ -792,7 +795,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             flag1:
             for (Field fieldB : fieldsB) {
                 for (String joinColumn : joinColumns) {
-                    if (Objects.equals(fieldB.getName(), joinColumn)) {
+                    if (Objects.equals(fieldB.getName(),outerJoin.getPrefixB() + '.' + joinColumn)) {
                         indexOfJoinColumnInTableB[i++] = headerB.indexOf(fieldB);
                         continue flag1;
                     }
@@ -808,7 +811,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 for (int indexB = 0; indexB < rowsB.size(); indexB++) {
                     Row rowB = rowsB.get(indexB);
                     for (String joinColumn : joinColumns){
-                        if (rowA.getValue(joinColumn) != rowB.getValue(joinColumn)){
+                        if (rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumn) != rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn)){
                             continue flag2;
                         }
                     }
@@ -870,23 +873,21 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeHashOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
-        return executeHashLeftOuterJoin(outerJoin, tableA, tableB);
-    }
-    
-    private RowStream executeHashLeftOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = outerJoin.getFilter();
         List<String> joinColumns = outerJoin.getJoinColumns();
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (joinColumns != null) {
-                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+                throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
             }
             joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
-                    if (fieldA.equals(fieldB)) {
-                        joinColumns.add(fieldA.getName());
+                    String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
+                    String joinColumnB = fieldB.getName().replaceFirst(outerJoin.getPrefixB() + '.', "");
+                    if (joinColumnA.equals(joinColumnB)) {
+                        joinColumns.add(joinColumnA);
                     }
                 }
             }
@@ -894,11 +895,11 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
-
+    
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
     
-        String joinColumnA, joinColumnB;
+        String joinColumn;
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
                 throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
@@ -908,11 +909,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
             }
             if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                joinColumnA = p.k;
-                joinColumnB = p.v;
+                joinColumn = p.k.replaceFirst(outerJoin.getPrefixA() + '.', "");
             } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                joinColumnA = p.v;
-                joinColumnB = p.k;
+                joinColumn = p.v.replaceFirst(outerJoin.getPrefixA() + '.', "");
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join path filter input.");
             }
@@ -920,187 +919,105 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             if (joinColumns.size() != 1) {
                 throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
             }
-            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
-                joinColumnA = joinColumns.get(0);
-                joinColumnB = joinColumns.get(0);
+            if (headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumns.get(0)) != -1 && headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumns.get(0)) != -1) {
+                joinColumn = joinColumns.get(0);
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join column input.");
             }
         }
-
+    
         List<Row> rowsA = tableA.getRows();
         List<Row> rowsB = tableB.getRows();
-
-        HashMap<Integer, Row> rowsBHashMap = new HashMap<>();
-        for (Row rowB: rowsB) {
-            rowsBHashMap.put(rowB.getValue(joinColumnA).hashCode(), rowB);
+    
+        Bitmap bitmapA = new Bitmap(rowsA.size());
+        Bitmap bitmapB = new Bitmap(rowsB.size());
+    
+        HashMap<Integer, Row> rowsAHashMap = new HashMap<>();
+        HashMap<Integer, Integer> indexOfRowAHashMap = new HashMap<>();
+        for (int indexA = 0; indexA < rowsA.size(); indexA++) {
+            rowsAHashMap.put(rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumn).hashCode(), rowsA.get(indexA));
+            indexOfRowAHashMap.put(rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumn).hashCode(), indexA);
         }
         Header newHeader;
         List<Row> transformedRows = new ArrayList<>();
         if (filter != null) { // Join condition: on
             fieldsA.addAll(fieldsB);
             newHeader = new Header(fieldsA);
-            for (Row rowA : rowsA) {
-                Object[] valuesA = rowA.getValues();
-                if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
-                    Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
+            for (int indexB = 0; indexB < rowsB.size(); indexB++) {
+                Row rowB = rowsB.get(indexB);
+                if (rowsAHashMap.containsKey(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode());
+                    int indexA = indexOfRowAHashMap.get(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode());
+                    Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
                     Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
                     System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
                     Row transformedRow = new Row(newHeader, valuesJoin);
                     if (FilterUtils.validate(filter, transformedRow)) {
+                        if (!bitmapA.get(indexA)) {
+                            bitmapA.mark(indexA);
+                        }
+                        if (!bitmapB.get(indexB)) {
+                            bitmapB.mark(indexB);
+                        }
                         transformedRows.add(transformedRow);
                     }
-                } else {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length];
-                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, valuesJoin));
                 }
             }
         } else { // Join condition: natural or using
             for (Field fieldB : fieldsB) {
-                if (!fieldB.getName().equals(joinColumnB)) {
+                if (!fieldB.getName().equals(outerJoin.getPrefixB() + '.' + joinColumn)) {
                     fieldsA.add(fieldB);
                 }
             }
+        
             newHeader = new Header(fieldsA);
-            for (Row rowA : rowsA) {
-                Object[] valuesA = rowA.getValues();
-                if (rowsBHashMap.containsKey(rowA.getValue(joinColumnB).hashCode())) {
-                    Row rowB = rowsBHashMap.get(rowA.getValue(joinColumnB).hashCode());
+            for (int indexB = 0; indexB < rowsB.size(); indexB++) {
+                Row rowB = rowsB.get(indexB);
+                if (rowsAHashMap.containsKey(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode())) {
+                    Row rowA = rowsAHashMap.get(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode());
+                    int indexA = indexOfRowAHashMap.get(rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode());
+                    Object[] valuesA = rowA.getValues();
                     Object[] valuesB = rowB.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
+                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
                     System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
                     int k = valuesA.length;
-                    int index = headerB.indexOf(joinColumnB);
+                    int index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumn);
                     for (int j = 0; j < valuesB.length && j != index; j++) {
                         valuesJoin[k++] = valuesB[j];
                     }
+                    if (!bitmapA.get(indexA)) {
+                        bitmapA.mark(indexA);
+                    }
+                    if (!bitmapB.get(indexB)) {
+                        bitmapB.mark(indexB);
+                    }
                     transformedRows.add(new Row(newHeader, valuesJoin));
-                } else {
-                    Object[] valuesJoin = new Object[valuesA.length + rowsB.get(0).getValues().length - 1];
-                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    transformedRows.add(new Row(newHeader, valuesJoin));
+                }
+            }
+        }
+        OuterJoinType outerType = outerJoin.getOuterJoinType();
+        if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
+            int anotherRowSize = rowsB.get(0).getValues().length;
+            for (int i = 0; i < rowsA.size(); i++) {
+                if (!bitmapA.get(i)) {
+                    Row unMatchedRow = new Row(newHeader, buildUnMatchedRows(rowsA.get(i), anotherRowSize, true));
+                    transformedRows.add(unMatchedRow);
+                }
+            }
+        }
+        if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
+            int anotherRowSize = rowsA.get(0).getValues().length;
+            for (int i = 0; i < rowsB.size(); i++) {
+                if (!bitmapB.get(i)) {
+                    Row unMatchedRow = new Row(newHeader, buildUnMatchedRows(rowsB.get(i), anotherRowSize, false));
+                    transformedRows.add(unMatchedRow);
                 }
             }
         }
         return new Table(newHeader, transformedRows);
-    }
-    
-    private RowStream executeHashRightOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
-        Filter filter = outerJoin.getFilter();
-        List<String> joinColumns = outerJoin.getJoinColumns();
-        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
-        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
-        if (outerJoin.isNaturalJoin()) {
-            if (joinColumns != null) {
-                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
-            }
-            joinColumns = new ArrayList<>();
-            for (Field fieldA : fieldsA) {
-                for (Field fieldB : fieldsB) {
-                    if (fieldA.equals(fieldB)) {
-                        joinColumns.add(fieldA.getName());
-                    }
-                }
-            }
-        }
-        if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
-            throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
-        }
-        Header headerA = tableA.getHeader();
-        Header headerB = tableB.getHeader();
-        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
-            throw new InvalidOperatorParameterException("inner join operator is not support for row stream without timestamps.");
-        }
-    
-        String joinColumnA, joinColumnB;
-        if (filter != null) {
-            if (!filter.getType().equals(FilterType.Path)) {
-                throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
-            }
-            Pair<String, String> p = FilterUtils.getHashJoinColumnFromPathFilter((PathFilter) filter);
-            if (p == null) {
-                throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
-            }
-            if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                joinColumnA = p.k;
-                joinColumnB = p.v;
-            } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                joinColumnA = p.v;
-                joinColumnB = p.k;
-            } else {
-                throw new InvalidOperatorParameterException("invalid hash join path filter input.");
-            }
-        } else {
-            if (joinColumns.size() != 1) {
-                throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
-            }
-            if (headerA.indexOf(joinColumns.get(0)) != -1 && headerB.indexOf(joinColumns.get(0)) != -1) {
-                joinColumnA = joinColumns.get(0);
-                joinColumnB = joinColumns.get(0);
-            } else {
-                throw new InvalidOperatorParameterException("invalid hash join column input.");
-            }
-        }
-        List<Row> rowsA = tableA.getRows();
-        List<Row> rowsB = tableB.getRows();
-        HashMap<Integer, Row> rowsAHashMap = new HashMap<Integer, Row>();
-        for (Row rowA: rowsA) {
-            rowsAHashMap.put(rowA.getValue(joinColumnA).hashCode(), rowA);
-        }
-        Header newHeader;
-        List<Row> transformedRows = new ArrayList<>();
-        if (filter != null) { // Join condition: on
-            fieldsA.addAll(fieldsB);
-            newHeader = new Header(fieldsA);
-            for (Row rowB : rowsB) {
-                Object[] valuesB = rowB.getValues();
-                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
-                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
-                    Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-                    System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
-                    Row transformedRow = new Row(newHeader, valuesJoin);
-                    if (FilterUtils.validate(filter, transformedRow)) {
-                        transformedRows.add(transformedRow);
-                    }
-                } else {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length];
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length, valuesB.length);
-                    transformedRows.add(new Row(newHeader, valuesJoin));
-                }
-            }
-        } else { // Join condition: natural or using
-            for (Field fieldB : fieldsB) {
-                if (!fieldB.getName().equals(joinColumnB)) {
-                    fieldsA.add(fieldB);
-                }
-            }
-            newHeader = new Header(fieldsA);
-            for (Row rowB : rowsB) {
-                Object[] valuesB = rowB.getValues();
-                if (rowsAHashMap.containsKey(rowB.getValue(joinColumnB).hashCode())) {
-                    Row rowA = rowsAHashMap.get(rowB.getValue(joinColumnB).hashCode());
-                    Object[] valuesA = rowA.getValues();
-                    Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
-                    System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - 1, valuesB.length);
-                    int k = 0;
-                    int index = headerB.indexOf(joinColumnB);
-                    for (int j = 0; j < valuesA.length && j != index; j++) {
-                        valuesJoin[k++] = valuesA[j];
-                    }
-                    transformedRows.add(new Row(newHeader, valuesJoin));
-                } else {
-                    Object[] valuesJoin = new Object[valuesB.length + rowsA.get(0).getValues().length - 1];
-                    System.arraycopy(valuesB, 0, valuesJoin, rowsA.get(0).getValues().length - 1, valuesB.length);
-                    transformedRows.add(new Row(newHeader, valuesJoin));
-                }
-            }
-        }
-        return new Table(newHeader, transformedRows);
+
     }
 
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
