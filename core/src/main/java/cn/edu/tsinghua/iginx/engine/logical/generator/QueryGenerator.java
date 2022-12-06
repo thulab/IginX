@@ -269,9 +269,12 @@ public class QueryGenerator extends AbstractGenerator {
         });
         // 2. merge by declare
         Operator left = joinList.get(0);
+        String prefixA = selectStatement.getFromPath();
         for (int i = 1; i < joinList.size(); i++) {
             JoinPart joinPart = selectStatement.getJoinParts().get(i - 1);
             Operator right = joinList.get(i);
+
+            String prefixB = joinPart.getPathPrefix();
 
             JoinAlgType joinAlgType = JoinAlgType.NestedLoopJoin;
             Filter filter = joinPart.getFilter();
@@ -289,27 +292,29 @@ public class QueryGenerator extends AbstractGenerator {
                     left = new CrossJoin(new OperatorSource(left), new OperatorSource(right));
                     break;
                 case InnerJoin:
-                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, false, joinAlgType);
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, filter, joinColumns, false, joinAlgType);
                     break;
                 case InnerNatualJoin:
-                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), filter, joinColumns, true, joinAlgType);
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, filter, joinColumns, true, joinAlgType);
                     break;
                 case LeftNatualJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, true, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.LEFT, filter, joinColumns, true, joinAlgType);
                     break;
                 case RightNatualJoin:
-                    new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, true, joinAlgType);
+                    new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.RIGHT, filter, joinColumns, true, joinAlgType);
                     break;
                 case FullOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.FULL, filter, joinColumns, false, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.FULL, filter, joinColumns, false, joinAlgType);
                     break;
                 case LeftOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.LEFT, filter, joinColumns, false, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.LEFT, filter, joinColumns, false, joinAlgType);
                     break;
                 case RightOuterJoin:
-                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), OuterJoinType.RIGHT, filter, joinColumns, false, joinAlgType);
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.RIGHT, filter, joinColumns, false, joinAlgType);
                     break;
             }
+
+            prefixA = prefixB;
         }
         return left;
     }

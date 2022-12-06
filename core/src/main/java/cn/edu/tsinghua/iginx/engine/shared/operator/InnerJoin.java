@@ -9,6 +9,10 @@ import java.util.List;
 
 public class InnerJoin extends AbstractBinaryOperator {
 
+    private final String prefixA;
+
+    private final String prefixB;
+
     private final Filter filter;
 
     private final List<String> joinColumns;
@@ -17,18 +21,21 @@ public class InnerJoin extends AbstractBinaryOperator {
 
     private final boolean isNaturalJoin;
 
-    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns) {
-        this(sourceA, sourceB, filter, joinColumns, false);
+    public InnerJoin(Source sourceA, Source sourceB, String prefixA, String prefixB, Filter filter,
+        List<String> joinColumns) {
+        this(sourceA, sourceB, prefixA, prefixB, filter, joinColumns, false);
     }
 
-    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns,
-        boolean isNaturalJoin) {
-        this(sourceA, sourceB, filter, joinColumns, isNaturalJoin, JoinAlgType.HashJoin);
+    public InnerJoin(Source sourceA, Source sourceB, String prefixA, String prefixB, Filter filter,
+        List<String> joinColumns, boolean isNaturalJoin) {
+        this(sourceA, sourceB, prefixA, prefixB, filter, joinColumns, isNaturalJoin, JoinAlgType.HashJoin);
     }
 
-    public InnerJoin(Source sourceA, Source sourceB, Filter filter, List<String> joinColumns,
-        boolean isNaturalJoin, JoinAlgType joinAlgType) {
+    public InnerJoin(Source sourceA, Source sourceB, String prefixA, String prefixB, Filter filter,
+        List<String> joinColumns, boolean isNaturalJoin, JoinAlgType joinAlgType) {
         super(OperatorType.InnerJoin, sourceA, sourceB);
+        this.prefixA = prefixA;
+        this.prefixB = prefixB;
         this.filter = filter;
         if (joinColumns != null) {
             this.joinColumns = joinColumns;
@@ -37,6 +44,14 @@ public class InnerJoin extends AbstractBinaryOperator {
         }
         this.joinAlgType = joinAlgType;
         this.isNaturalJoin = isNaturalJoin;
+    }
+
+    public String getPrefixA() {
+        return prefixA;
+    }
+
+    public String getPrefixB() {
+        return prefixB;
     }
 
     public Filter getFilter() {
@@ -57,7 +72,7 @@ public class InnerJoin extends AbstractBinaryOperator {
     
     @Override
     public Operator copy() {
-        return new InnerJoin(getSourceA().copy(), getSourceB().copy(), filter.copy(),
-            new ArrayList<>(joinColumns), isNaturalJoin, joinAlgType);
+        return new InnerJoin(getSourceA().copy(), getSourceB().copy(), prefixA, prefixB,
+            filter.copy(), new ArrayList<>(joinColumns), isNaturalJoin, joinAlgType);
     }
 }
