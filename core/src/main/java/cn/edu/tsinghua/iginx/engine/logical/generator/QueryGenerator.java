@@ -265,7 +265,7 @@ public class QueryGenerator extends AbstractGenerator {
             Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = getFragmentsByTSInterval(selectStatement, new TimeSeriesInterval(prefix, prefix));
             Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
             List<FragmentMeta> dummyFragments = pair.v;
-            joinList.add(mergeRawData(fragments, dummyFragments, Collections.singletonList(ALL_PATH), tagFilter));
+            joinList.add(mergeRawData(fragments, dummyFragments, Collections.singletonList(prefix), tagFilter));
         });
         // 2. merge by declare
         Operator left = joinList.get(0);
