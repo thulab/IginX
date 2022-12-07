@@ -36,4 +36,6 @@ public interface SyncProtocol {
      */
     void endProposal(String key, SyncProposal syncProposal) throws NetworkException, ExecutionException;
 
+    void close();
+
 }

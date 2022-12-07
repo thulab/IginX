@@ -206,7 +206,7 @@ public class InfluxDBStorage implements IStorage {
         boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
             Project project = (Project) op;
-            return isDummyStorageUnit ? executeHistoryProjectTask(fragment.getTimeInterval(), project) : executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            return isDummyStorageUnit ? executeHistoryProjectTask(task.getTargetFragment().getTsInterval(), fragment.getTimeInterval(), project) : executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -217,11 +217,18 @@ public class InfluxDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    private TaskExecuteResult executeHistoryProjectTask(TimeInterval timeInterval, Project project) {
+    private String getRealPathWithoutPrefix(String oriPath, String prefix) {
+        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
+            return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
+        }
+        return oriPath;
+    }
+
+    private TaskExecuteResult executeHistoryProjectTask(TimeSeriesInterval timeSeriesInterval, TimeInterval timeInterval, Project project) {
         Map<String, String> bucketQueries = new HashMap<>();
         TagFilter tagFilter = project.getTagFilter();
         for (String pattern: project.getPatterns()) {
-            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern, tagFilter);
+            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(getRealPathWithoutPrefix(pattern, timeSeriesInterval.getSchemaPrefix()), tagFilter);
             String bucketName = pair.k;
             String query = pair.v;
             String fullQuery = "";
@@ -250,7 +257,7 @@ public class InfluxDBStorage implements IStorage {
             bucketQueryResults.put(bucket, client.getQueryApi().query(statement, organization.getId()));
         }
 
-        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns());
+        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns(), timeSeriesInterval.getSchemaPrefix());
         return new TaskExecuteResult(rowStream);
     }
 
