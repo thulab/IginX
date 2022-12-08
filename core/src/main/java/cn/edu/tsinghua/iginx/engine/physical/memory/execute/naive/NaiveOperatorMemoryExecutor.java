@@ -526,7 +526,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
-            if (joinColumns != null) {
+            if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
             joinColumns = new ArrayList<>();
@@ -615,7 +615,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
-            if (joinColumns != null) {
+            if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
             joinColumns = new ArrayList<>();
@@ -736,7 +736,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
-            if (joinColumns != null) {
+            if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
             }
             joinColumns = new ArrayList<>();
@@ -878,7 +878,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
-            if (joinColumns != null) {
+            if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
             }
             joinColumns = new ArrayList<>();
@@ -1017,7 +1017,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         return new Table(newHeader, transformedRows);
-
     }
 
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
