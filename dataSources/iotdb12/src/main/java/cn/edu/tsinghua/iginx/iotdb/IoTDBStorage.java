@@ -574,7 +574,7 @@ public class IoTDBStorage implements IStorage {
                 logger.error(e.getMessage());
                 return e;
             }
-            logger.error("insertTablets time: {}", System.nanoTime() - executeStartTime);
+//            logger.error("insertTablets time: {}", System.nanoTime() - executeStartTime);
 
             for (Tablet tablet : tablets.values()) {
                 tablet.reset();

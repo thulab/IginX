@@ -1,15 +1,12 @@
 package cn.edu.tsinghua.iginx.monitor;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
-import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -21,7 +18,7 @@ import java.util.Map.Entry;
 
 public class MonitorManager implements Runnable {
 
-  private static final Logger logger = LoggerFactory.getLogger(MQTTService.class);
+  private static final Logger logger = LoggerFactory.getLogger(MonitorManager.class);
 
   private static final int interval = ConfigDescriptor.getInstance().getConfig()
       .getLoadBalanceCheckInterval();
@@ -136,6 +133,8 @@ public class MonitorManager implements Runnable {
         metaManager.submitMaxActiveEndTime();
         Map<FragmentMeta, Long> writeHotspotMap = HotSpotMonitor.getInstance().getWriteHotspotMap();
         Map<FragmentMeta, Long> readHotspotMap = HotSpotMonitor.getInstance().getReadHotspotMap();
+        logger.error("writeHotspotMap = {}", writeHotspotMap);
+        logger.error("readHotspotMap = {}", readHotspotMap);
         metaManager.updateFragmentHeat(writeHotspotMap, readHotspotMap);
         //等待收集完成
 //        int waitTime = 0;

@@ -76,7 +76,7 @@ public class DynamicPolicy implements IPolicy {
   @Override
   public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(
       DataStatement statement) {
-    List<String> paths = Utils.getPathListFromStatement(statement);
+    List<String> paths = Utils.getNonWildCardPaths(Utils.getPathListFromStatement(statement));
     TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
     if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
@@ -172,60 +172,44 @@ public class DynamicPolicy implements IPolicy {
    * This storage unit initialization method is used when no information about workloads is
    * provided
    */
-  public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(
-      List<String> inspaths, TimeInterval timeInterval) {
+  private Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> paths, TimeInterval timeInterval) {
     List<FragmentMeta> fragmentList = new ArrayList<>();
     List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-    List<String> paths = new ArrayList<>();
-    if (inspaths.size() > 0) {
-      paths.add(inspaths.get(0));
-    }
-
-    if (inspaths.size() > 1) {
-      paths.add(inspaths.get(inspaths.size() - 1));
-    }
 
     int storageEngineNum = iMetaManager.getStorageEngineNum();
-    int replicaNum = Math
-        .min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+    int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
     List<Long> storageEngineIdList;
     Pair<FragmentMeta, StorageUnitMeta> pair;
     int index = 0;
-
-    // [0, startTime) & (-∞, +∞)
-    // 一般情况下该范围内几乎无数据，因此作为一个分片处理
-    if (timeInterval.getStartTime() != 0) {
-      storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0,
-          timeInterval.getStartTime(), storageEngineIdList);
-      fragmentList.add(pair.k);
-      storageUnitList.add(pair.v);
-    }
-
-    // [startTime, +∞) & (null, startPath)
-    storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0),
-        timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-    fragmentList.add(pair.k);
-    storageUnitList.add(pair.v);
 
     // [startTime, +∞) & [startPath, endPath)
     int splitNum = Math.max(Math.min(storageEngineNum, paths.size() - 1), 0);
     for (int i = 0; i < splitNum; i++) {
       storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
-          paths.get(i * (paths.size() - 1) / splitNum),
-          paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(),
-          Long.MAX_VALUE, storageEngineIdList);
+      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
       fragmentList.add(pair.k);
       storageUnitList.add(pair.v);
     }
 
     // [startTime, +∞) & [endPath, null)
+    storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+    fragmentList.add(pair.k);
+    storageUnitList.add(pair.v);
+
+    // [0, startTime) & (-∞, +∞)
+    // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+    // TODO 考虑大规模插入历史数据的情况
+    if (timeInterval.getStartTime() != 0) {
+      storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+      fragmentList.add(pair.k);
+      storageUnitList.add(pair.v);
+    }
+
+    // [startTime, +∞) & (null, startPath)
     storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
-        paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE,
-        storageEngineIdList);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
     fragmentList.add(pair.k);
     storageUnitList.add(pair.v);
 
@@ -271,6 +255,7 @@ public class DynamicPolicy implements IPolicy {
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
       List<Long> toScaleInNodes) {
+    logger.error("start to execute executeReshardAndMigration");
     MigrationLogger migrationLogger = new MigrationLogger();
     MigrationManager.getInstance().getMigration().setMigrationLogger(migrationLogger);
 
@@ -335,7 +320,7 @@ public class DynamicPolicy implements IPolicy {
     }
     if (maxWriteLoadFragment != null || maxReadLoadFragment != null) {
       if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
-        logger.info("start to execute timeseries reshard");
+        logger.error("start to execute timeseries reshard");
         if (maxWriteLoad >= maxReadLoad) {
           executeTimeseriesReshard(maxWriteLoadFragment,
               fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap, true);
