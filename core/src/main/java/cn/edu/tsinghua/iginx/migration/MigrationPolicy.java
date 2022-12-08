@@ -431,6 +431,9 @@ public abstract class MigrationPolicy {
             SortedSet<String> pathSet = new TreeSet<>();
             rowStream.getHeader().getFields().forEach(field -> {
                 String timeSeries = field.getName();
+                if (timeSeries.contains("{") && timeSeries.contains("}")) {
+                    timeSeries = timeSeries.split("\\{")[0];
+                }
                 if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
                     pathSet.add(timeSeries);
                 }
