@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
+
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -382,7 +384,7 @@ public class TimeUtils {
             .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS)
             .toFormatter();
 
-    public static final String DEFAULT_TIMESTAMP_PRECISION = "ns";
+    public static final TimePrecision DEFAULT_TIMESTAMP_PRECISION = TimePrecision.NS;
 
     public static long getTimeInMs(long timestamp, String timePrecision) {
         long timeInMs;
@@ -402,19 +404,19 @@ public class TimeUtils {
         return timeInMs;
     }
 
-    public static long getTimeInNs(long timestamp, String timePrecision) {
+    public static long getTimeInNs(long timestamp, TimePrecision timePrecision) {
         long timeInNs;
         switch (timePrecision) {
-            case "s":
+            case S:
                 timeInNs = timestamp * 1000000000;
                 break;
-            case "ms":
+            case MS:
                 timeInNs = timestamp * 1000000;
                 break;
-            case "us":
+            case US:
                 timeInNs = timestamp * 1000;
                 break;
-            case "ns":
+            case NS:
                 timeInNs = timestamp;
                 break;
             default:
@@ -423,19 +425,19 @@ public class TimeUtils {
         return timeInNs;
     }
 
-    public static long getTimeFromNsToSpecPrecision(long timestamp, String timePrecision) {
+    public static long getTimeFromNsToSpecPrecision(long timestamp, TimePrecision timePrecision) {
         long time;
         switch (timePrecision) {
-            case "s":
+            case S:
                 time = timestamp / 1000000000;
                 break;
-            case "ms":
+            case MS:
                 time = timestamp / 1000000;
                 break;
-            case "us":
+            case US:
                 time = timestamp / 1000;
                 break;
-            case "ns":
+            case NS:
                 time = timestamp;
                 break;
             default:
@@ -483,7 +485,7 @@ public class TimeUtils {
     }
 
     public static long convertTimeWithUnitStrToLong(
-            long currentTime, long value, String unit, String timestampPrecision) {
+            long currentTime, long value, String unit, TimePrecision timestampPrecision) {
         DurationUnit durationUnit = DurationUnit.valueOf(unit);
         long res = value;
         switch (durationUnit) {
@@ -525,12 +527,12 @@ public class TimeUtils {
                 break;
         }
 
-        switch (timestampPrecision.toLowerCase()) {
-            case "s":
+        switch (timestampPrecision) {
+            case S:
                 return res / 1_000_000_000L;
-            case "ms":
+            case MS:
                 return res / 1_000_000L;
-            case "us":
+            case US:
                 return res / 1_000L;
             default:  // include "ns"
                 return res;

@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -165,7 +166,7 @@ public class DataPointsParser {
             query.addQueryMetrics(metric);
             query.setStartAbsolute(1L);
             query.setEndAbsolute(2L);
-            query.setTimePrecision("ns");
+            query.setTimePrecision(TimePrecision.NS);
 
             //执行查询
             QueryExecutor executor = new QueryExecutor(query);
@@ -214,7 +215,7 @@ public class DataPointsParser {
         type.add(DataType.BINARY);
         valuesList[0] = value;
         try {
-            session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, "ns");
+            session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, TimePrecision.NS);
         } catch (ExecutionException e) {
             LOGGER.error("Error occurred during insert ", e);
             throw e;
@@ -237,7 +238,7 @@ public class DataPointsParser {
         type.add(DataType.BINARY);
         ANNOPATHS.add(ANNOTAIONSEQUENCE);
         try {
-            session.insertNonAlignedColumnRecords(ANNOPATHS, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, "ns");
+            session.insertNonAlignedColumnRecords(ANNOPATHS, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, TimePrecision.NS);
         } catch (ExecutionException e) {
             LOGGER.error("Error occurred during insert ", e);
             throw e;
@@ -276,7 +277,7 @@ public class DataPointsParser {
             valuesList[0] = valuesAnno;
             type.add(typeAb);
             try {
-                session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList, "ns");
+                session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList, TimePrecision.NS);
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
                 throw e;
@@ -355,7 +356,7 @@ public class DataPointsParser {
         insertExe(metric, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
     }
 
-    private void insertExe(Metric metric, String timePrecision) throws Exception {
+    private void insertExe(Metric metric, TimePrecision timePrecision) throws Exception {
         //LHZ以下代码重复了，能否合并到一个函数？？？
         //执行插入
         StringBuilder path = new StringBuilder();
@@ -409,7 +410,7 @@ public class DataPointsParser {
                     metricGetData(metric,queryBase,queryResultDataset,queryBase.getAnnotationLimit(),pl);
 
                     //执行插入
-                    insertExe(metric, "ns");
+                    insertExe(metric, TimePrecision.NS);
                 }
             }
         } catch (Exception e) {
@@ -475,7 +476,7 @@ public class DataPointsParser {
                     //添加anno的title等信息，以及数据点信息
                     metricGetData(metric,queryBase,queryResultDataset,queryBase.getNewAnnotationLimit(),pl);
 
-                    insertExe(metric, "ns");
+                    insertExe(metric, TimePrecision.NS);
                 }
             }
         } catch (Exception e) {

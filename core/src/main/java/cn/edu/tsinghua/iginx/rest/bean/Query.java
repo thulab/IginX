@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.rest.bean;
 
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class Query {
     private Long endAbsolute;
     private Long cacheTime;
     private String timeZone;
-    private String timePrecision;
+    private TimePrecision timePrecision;
     private List<QueryMetric> queryMetrics = new ArrayList<>();
 
     public void addQueryMetrics(QueryMetric queryMetric) {
