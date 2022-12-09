@@ -22,7 +22,9 @@ import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.Objects;
 
-public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> {
+public final class TimeSeriesInterval implements TimeSeriesRange, Comparable<TimeSeriesRange> {
+
+    private final TimeSeriesRange.TYPE type = TimeSeriesRange.TYPE.NORMAL;
 
     private String startTimeSeries;
 
@@ -43,7 +45,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         this(startTimeSeries, endTimeSeries, false);
     }
 
-    public static TimeSeriesInterval fromString(String str) {
+    public static TimeSeriesRange fromString(String str) {
         String[] parts = str.split("-");
         assert parts.length == 2;
         return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
@@ -59,34 +61,42 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return s1.compareTo(s2);
     }
 
+    private String realTimeSeries(String timeSeries) {
+        if (timeSeries != null && schemaPrefix != null) return schemaPrefix + "." + timeSeries;
+        return timeSeries;
+    }
+
+    @Override
+    public TYPE getType() {
+        return type;
+    }
+
+    @Override
     public String getStartTimeSeries() {
         return startTimeSeries;
     }
 
+    @Override
     public void setStartTimeSeries(String startTimeSeries) {
         this.startTimeSeries = startTimeSeries;
     }
 
+    @Override
     public String getEndTimeSeries() {
         return endTimeSeries;
     }
 
-    public String getSchemaPrefix() {
-        return schemaPrefix;
-    }
-
+    @Override
     public void setEndTimeSeries(String endTimeSeries) {
         this.endTimeSeries = endTimeSeries;
     }
 
-    public void setSchemaPrefix(String schemaPrefix) {
-        this.schemaPrefix = schemaPrefix;
-    }
-
+    @Override
     public boolean isClosed() {
         return isClosed;
     }
 
+    @Override
     public void setClosed(boolean closed) {
         isClosed = closed;
     }
@@ -97,11 +107,21 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     @Override
+    public String getSchemaPrefix() {
+        return schemaPrefix;
+    }
+
+    @Override
+    public void setSchemaPrefix(String schemaPrefix) {
+        this.schemaPrefix = schemaPrefix;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TimeSeriesInterval that = (TimeSeriesInterval) o;
-        return Objects.equals(startTimeSeries, that.startTimeSeries) && Objects.equals(endTimeSeries, that.endTimeSeries);
+        TimeSeriesRange that = (TimeSeriesRange) o;
+        return Objects.equals(startTimeSeries, that.getStartTimeSeries()) && Objects.equals(endTimeSeries, that.getEndTimeSeries());
     }
 
     @Override
@@ -109,18 +129,14 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return Objects.hash(startTimeSeries, endTimeSeries);
     }
 
-    private String realTimeSeries(String timeSeries) {
-        if (timeSeries != null && schemaPrefix != null) return schemaPrefix + "." + timeSeries;
-        return timeSeries;
-    }
-
+    @Override
     public boolean isContain(String tsName) {
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
         String endTimeSeries = realTimeSeries(this.endTimeSeries);
 
         return (startTimeSeries == null || (tsName != null && StringUtils.compare(tsName, startTimeSeries, true) >= 0))
-            && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
+                && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
     }
 
     public boolean isCompletelyBefore(String tsName) {
@@ -130,42 +146,44 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return endTimeSeries != null && tsName != null && endTimeSeries.compareTo(tsName) <= 0;
     }
 
-    public boolean isIntersect(TimeSeriesInterval tsInterval) {
+    @Override
+    public boolean isIntersect(TimeSeriesRange tsInterval) {
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
         String endTimeSeries = realTimeSeries(this.endTimeSeries);
 
-        return (tsInterval.startTimeSeries == null || endTimeSeries == null || StringUtils.compare(tsInterval.startTimeSeries, endTimeSeries, false) < 0)
-            && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
+        return (tsInterval.getStartTimeSeries() == null || endTimeSeries == null || StringUtils.compare(tsInterval.getStartTimeSeries(), endTimeSeries, false) < 0)
+                && (tsInterval.getEndTimeSeries() == null || startTimeSeries == null || StringUtils.compare(tsInterval.getEndTimeSeries(), startTimeSeries, true) >= 0);
     }
 
-    public TimeSeriesInterval getIntersect(TimeSeriesInterval tsInterval) {
+    public TimeSeriesRange getIntersect(TimeSeriesRange tsInterval) {
         if (!isIntersect(tsInterval)) {
             return null;
         }
-
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
         String endTimeSeries = realTimeSeries(this.endTimeSeries);
 
-        String start = startTimeSeries == null ? tsInterval.startTimeSeries :
-            tsInterval.startTimeSeries == null ? startTimeSeries :
-                StringUtils.compare(tsInterval.startTimeSeries, startTimeSeries, true) < 0 ? startTimeSeries :
-                    tsInterval.startTimeSeries;
-        String end = endTimeSeries == null ? tsInterval.endTimeSeries :
-            tsInterval.endTimeSeries == null ? endTimeSeries :
-                StringUtils.compare(tsInterval.endTimeSeries, endTimeSeries, false) < 0 ? tsInterval.endTimeSeries :
-                    endTimeSeries;
+        String start = startTimeSeries == null ? tsInterval.getStartTimeSeries() :
+                tsInterval.getStartTimeSeries() == null ? startTimeSeries :
+                        StringUtils.compare(tsInterval.getStartTimeSeries(), startTimeSeries, true) < 0 ? startTimeSeries :
+                                tsInterval.getStartTimeSeries();
+        String end = endTimeSeries == null ? tsInterval.getEndTimeSeries() :
+                tsInterval.getEndTimeSeries() == null ? endTimeSeries :
+                        StringUtils.compare(tsInterval.getEndTimeSeries(), endTimeSeries, false) < 0 ? tsInterval.getEndTimeSeries() :
+                                endTimeSeries;
         return new TimeSeriesInterval(start, end);
     }
 
-    public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
+    @Override
+    public boolean isCompletelyAfter(TimeSeriesRange tsInterval) {
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
 
-        return tsInterval.endTimeSeries != null && startTimeSeries != null && StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) < 0;
+        return tsInterval.getEndTimeSeries() != null && startTimeSeries != null && StringUtils.compare(tsInterval.getEndTimeSeries(), startTimeSeries, true) < 0;
     }
 
+    @Override
     public boolean isAfter(String tsName) {
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
@@ -174,14 +192,14 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     @Override
-    public int compareTo(TimeSeriesInterval o) {
+    public int compareTo(TimeSeriesRange o) {
         //judge if is the dummy node && it will have specific prefix
         String startTimeSeries = realTimeSeries(this.startTimeSeries);
         String endTimeSeries = realTimeSeries(this.endTimeSeries);
 
-        int value = compareTo(startTimeSeries, o.startTimeSeries);
+        int value = compareTo(startTimeSeries, o.getStartTimeSeries());
         if (value != 0)
             return value;
-        return compareTo(endTimeSeries, o.endTimeSeries);
+        return compareTo(endTimeSeries, o.getEndTimeSeries());
     }
 }

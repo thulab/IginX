@@ -631,7 +631,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
             for (String tsIntervalName: tsIntervalNames) {
-                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                 if (fragmentTimeSeries.isContain(tsName)) {
                     List<FragmentMeta> fragments = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
@@ -655,12 +655,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval) {
         try {
             List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentMap = new HashMap<>();
             for (String tsIntervalName: tsIntervalNames) {
-                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                 if (fragmentTimeSeries.isIntersect(tsInterval)) {
                     List<FragmentMeta> fragments = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
@@ -686,16 +686,16 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
+    public Map<TimeSeriesRange, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentListMap = new HashMap<>();
             if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 this.client.create().withMode(CreateMode.PERSISTENT).forPath(FRAGMENT_NODE_PREFIX);
             } else {
                 List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
                 for (String tsIntervalName : tsIntervalNames) {
-                    TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                    TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                     List<FragmentMeta> fragmentMetaList = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
                     for (String timeIntervalName : timeIntervalNames) {
@@ -783,7 +783,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+    public void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta)
         throws MetaStorageException {
         try {
             this.client.delete()

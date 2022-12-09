@@ -63,7 +63,7 @@ public class SimplePolicy implements IPolicy {
         TimeInterval timeInterval = Utils.getTimeIntervalFromDataStatement(statement);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+            Pair<Map<TimeSeriesRange, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
         } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
@@ -73,8 +73,8 @@ public class SimplePolicy implements IPolicy {
     /**
      * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
      */
-    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+    public Pair<Map<TimeSeriesRange, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesRange, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
         List<StorageEngineMeta> storageEngineList = iMetaManager.getWriteableStorageEngineList();
@@ -313,12 +313,12 @@ public class SimplePolicy implements IPolicy {
     }
 
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
-        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-        Map<TimeSeriesInterval, Double> fragmentValue = latestFragments.keySet().stream().collect(
+        Map<TimeSeriesRange, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
+        Map<TimeSeriesRange, Double> fragmentValue = latestFragments.keySet().stream().collect(
             Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
         );
         timeseriesData.forEach((key, value) -> {
-            for (TimeSeriesInterval timeSeriesInterval : fragmentValue.keySet()) {
+            for (TimeSeriesRange timeSeriesInterval : fragmentValue.keySet()) {
                 if (timeSeriesInterval.isContain(key)) {
                     Double tmp = fragmentValue.get(timeSeriesInterval);
                     fragmentValue.put(timeSeriesInterval, value + tmp);

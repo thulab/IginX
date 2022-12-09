@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.utils;
 
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 
 public class PathUtils {
 
@@ -9,7 +10,7 @@ public class PathUtils {
     public static final Character MIN_CHAR = '!';
     public static final Character MAX_CHAR = '~';
 
-    public static TimeSeriesInterval trimTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public static TimeSeriesRange trimTimeSeriesInterval(TimeSeriesRange tsInterval) {
         String startPath = tsInterval.getStartTimeSeries();
         if (startPath.contains(STAR)) {
             if (startPath.startsWith(STAR)) {
