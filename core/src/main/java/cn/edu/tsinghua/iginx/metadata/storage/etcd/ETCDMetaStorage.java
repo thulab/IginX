@@ -23,8 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
-import com.google.gson.reflect.TypeToken;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
@@ -132,8 +131,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         Map<String, Integer> schemaMapping = null;
                         switch (event.getEventType()) {
                             case PUT:
-                                schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
-                                }.getType());
+                                schemaMapping = JsonUtils.transform(new String(event.getKeyValue().getValue().getBytes()));
                                 break;
                             case DELETE:
                                 break;
@@ -414,8 +412,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                 .get();
             response.getKvs().forEach(e -> {
                 String schema = e.getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
-                Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<String, Integer>>() {
-                }.getType());
+                Map<String, Integer> schemaMapping = JsonUtils.transform(e.getValue().toString(StandardCharsets.UTF_8));
                 schemaMappings.put(schema, schemaMapping);
             });
             return schemaMappings;

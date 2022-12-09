@@ -65,6 +65,17 @@ public final class StorageUnitMeta {
         this.initialStorageUnit = initialStorageUnit;
     }
 
+    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, long createdBy, boolean initialStorageUnit, boolean dummy, List<StorageUnitMeta> replicas) {
+        this.id = id;
+        this.storageEngineId = storageEngineId;
+        this.masterId = masterId;
+        this.isMaster = isMaster;
+        this.createdBy = createdBy;
+        this.initialStorageUnit = initialStorageUnit;
+        this.dummy = dummy;
+        this.replicas = replicas;
+    }
+
     public void addReplica(StorageUnitMeta storageUnit) {
         if (replicas == null)
             replicas = new ArrayList<>();
