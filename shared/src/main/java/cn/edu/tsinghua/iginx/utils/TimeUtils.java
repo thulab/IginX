@@ -407,6 +407,18 @@ public class TimeUtils {
     public static long getTimeInNs(long timestamp, TimePrecision timePrecision) {
         long timeInNs;
         switch (timePrecision) {
+            case WEEK:
+                timeInNs = timestamp * 7 * 24 * 60 * 60 * 1000000000;
+                break;
+            case DAY:
+                timeInNs = timestamp * 24 * 60 * 60 * 1000000000;
+                break;
+            case HOUR:
+                timeInNs = timestamp * 60 * 60 * 1000000000;
+                break;
+            case MIN:
+                timeInNs = timestamp * 60 * 1000000000;
+                break;
             case S:
                 timeInNs = timestamp * 1000000000;
                 break;
@@ -428,6 +440,18 @@ public class TimeUtils {
     public static long getTimeFromNsToSpecPrecision(long timestamp, TimePrecision timePrecision) {
         long time;
         switch (timePrecision) {
+            case WEEK:
+                time = timestamp / 1000000000 / 60 / 60 / 24 / 7;
+                break;
+            case DAY:
+                time = timestamp / 1000000000 / 60 / 60 / 24;
+                break;
+            case HOUR:
+                time = timestamp / 1000000000 / 60 / 60;
+                break;
+            case MIN:
+                time = timestamp / 1000000000 / 60;
+                break;
             case S:
                 time = timestamp / 1000000000;
                 break;
