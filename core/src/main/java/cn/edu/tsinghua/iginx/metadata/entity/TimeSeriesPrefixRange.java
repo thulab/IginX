@@ -1,7 +1,9 @@
 package cn.edu.tsinghua.iginx.metadata.entity;
 
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import com.alibaba.fastjson2.annotation.JSONType;
 
+@JSONType(typeName = "TimeSeriesPrefixRange")
 public class TimeSeriesPrefixRange implements TimeSeriesRange {
 
     private String timeSeries;

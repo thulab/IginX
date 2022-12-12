@@ -18,9 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
+import com.alibaba.fastjson2.annotation.JSONType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@JSONType(seeAlso = {TimeSeriesInterval.class, TimeSeriesPrefixRange.class}, typeKey = "type")
 public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
 
     public static Logger logger = LoggerFactory.getLogger(TimeSeriesRange.class);
@@ -55,7 +57,7 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
     default public String getStartTimeSeries() {
         if (getType() == TYPE.PREFIX) {
             logger.error("TimeSeriesInterval PREFIX can't not use the getStartTimeSeries func");
-            System.exit(0);
+            return null;
         }
         return null;
     }
@@ -70,7 +72,7 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
     default public String getEndTimeSeries() {
         if (getType() == TYPE.PREFIX) {
             logger.error("TimeSeriesInterval PREFIX can't not use the getEndTimeSeries func");
-            System.exit(0);
+            return null;
         }
         return null;
     }

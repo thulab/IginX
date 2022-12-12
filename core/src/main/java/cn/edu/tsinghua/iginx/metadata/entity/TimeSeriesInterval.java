@@ -19,9 +19,11 @@
 package cn.edu.tsinghua.iginx.metadata.entity;
 
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import com.alibaba.fastjson2.annotation.JSONType;
 
 import java.util.Objects;
 
+@JSONType(typeName = "TimeSeriesInterval")
 public final class TimeSeriesInterval implements TimeSeriesRange, Comparable<TimeSeriesRange> {
 
     private final TimeSeriesRange.TYPE type = TimeSeriesRange.TYPE.NORMAL;
