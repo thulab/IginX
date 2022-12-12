@@ -23,7 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
@@ -196,9 +196,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 List<String> schemas = this.client.getChildren()
                     .forPath(SCHEMA_MAPPING_PREFIX);
                 for (String schema : schemas) {
-                    Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(new String(this.client.getData()
-                        .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {
-                    }.getType());
+                    Map<String, Integer> schemaMapping = JsonUtils.transform(new String(this.client.getData()
+                            .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)));
                     schemaMappings.put(schema, schemaMapping);
                 }
             }
@@ -231,8 +230,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     data = event.getData().getData();
-                    schemaMapping = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<String, Integer>>() {
-                    }.getType());
+                    schemaMapping = JsonUtils.transform(new String(data));
                     break;
                 case NODE_REMOVED:
                 default:
