@@ -31,7 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
@@ -434,20 +434,14 @@ public class IginxWorker implements IService.Iface {
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
-            case Constants.FILE_META:
-            case "":
             default:
-                localMetaStorageInfo = new LocalMetaStorageInfo(
-                    Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
-                );
+                logger.error("unexpected meta storage: " + config.getMetaStorage());
         }
 
-        if (metaStorageInfos != null) {
+        if (metaStorageInfos != null && !metaStorageInfos.isEmpty()) {
             resp.setMetaStorageInfos(metaStorageInfos);
         }
-        if (localMetaStorageInfo != null) {
-            resp.setLocalMetaStorageInfo(localMetaStorageInfo);
-        }
+        resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }

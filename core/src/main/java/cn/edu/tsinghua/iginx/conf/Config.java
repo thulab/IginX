@@ -83,8 +83,6 @@ public class Config {
 
     private boolean enableRestService = true;
 
-    private String fileDataDir = "";
-
     private String etcdEndpoints = "http://localhost:2379";
 
     private boolean enableMQTT = false;
@@ -385,14 +383,6 @@ public class Config {
 
     public void setMetaStorage(String metaStorage) {
         this.metaStorage = metaStorage;
-    }
-
-    public String getFileDataDir() {
-        return fileDataDir;
-    }
-
-    public void setFileDataDir(String fileDataDir) {
-        this.fileDataDir = fileDataDir;
     }
 
     public long getDisorderMargin() {
