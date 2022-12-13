@@ -408,25 +408,25 @@ public class TimeUtils {
         long timeInNs;
         switch (timePrecision) {
             case WEEK:
-                timeInNs = timestamp * 7 * 24 * 60 * 60 * 1000000000;
+                timeInNs = timestamp * 7 * 24 * 3600_000_000_000L;
                 break;
             case DAY:
-                timeInNs = timestamp * 24 * 60 * 60 * 1000000000;
+                timeInNs = timestamp * 24 * 3600_000_000_000L;
                 break;
             case HOUR:
-                timeInNs = timestamp * 60 * 60 * 1000000000;
+                timeInNs = timestamp * 3600_000_000_000L;
                 break;
             case MIN:
-                timeInNs = timestamp * 60 * 1000000000;
+                timeInNs = timestamp * 60_000_000_000L;
                 break;
             case S:
-                timeInNs = timestamp * 1000000000;
+                timeInNs = timestamp * 1000_000_000L;
                 break;
             case MS:
-                timeInNs = timestamp * 1000000;
+                timeInNs = timestamp * 1000_000L;
                 break;
             case US:
-                timeInNs = timestamp * 1000;
+                timeInNs = timestamp * 1000L;
                 break;
             case NS:
                 timeInNs = timestamp;
@@ -441,25 +441,25 @@ public class TimeUtils {
         long time;
         switch (timePrecision) {
             case WEEK:
-                time = timestamp / 1000000000 / 60 / 60 / 24 / 7;
+                time = timestamp / 3600_000_000_000L / 24 / 7;
                 break;
             case DAY:
-                time = timestamp / 1000000000 / 60 / 60 / 24;
+                time = timestamp / 3600_000_000_000L / 24;
                 break;
             case HOUR:
-                time = timestamp / 1000000000 / 60 / 60;
+                time = timestamp / 3600_000_000_000L;
                 break;
             case MIN:
-                time = timestamp / 1000000000 / 60;
+                time = timestamp / 60_000_000_000L;
                 break;
             case S:
-                time = timestamp / 1000000000;
+                time = timestamp / 1000_000_000L;
                 break;
             case MS:
-                time = timestamp / 1000000;
+                time = timestamp / 1000_000L;
                 break;
             case US:
-                time = timestamp / 1000;
+                time = timestamp / 1000L;
                 break;
             case NS:
                 time = timestamp;
@@ -551,16 +551,7 @@ public class TimeUtils {
                 break;
         }
 
-        switch (timestampPrecision) {
-            case S:
-                return res / 1_000_000_000L;
-            case MS:
-                return res / 1_000_000L;
-            case US:
-                return res / 1_000L;
-            default:  // include "ns"
-                return res;
-        }
+        return getTimeFromNsToSpecPrecision(res, timestampPrecision);
     }
 
     public enum DurationUnit {
