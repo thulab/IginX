@@ -82,60 +82,76 @@ public class DataPointsParser {
         }
     }
 
+    private boolean ifInputDataVaild(JsonNode node) {
+        String name = node.get("name").toString();
+        if (!name.contains(".")) {
+            LOGGER.error("The input path should contains at least second order path");
+            return false;
+        }
+        return true;
+    }
     //如果有anno信息会直接放入到插入路径中
-    private Metric getMetricObject(JsonNode node, boolean isAnnotation) {
-        Metric ret = new Metric();
-        ret.setName(node.get("name").asText());
-        Iterator<String> fieldNames = node.get("tags").fieldNames();
-        Iterator<JsonNode> elements = node.get("tags").elements();
-        //insert语句的tag只能有一个val
-        while (elements.hasNext() && fieldNames.hasNext()) {
-            ret.addTag(fieldNames.next(), elements.next().textValue());
-        }
+    private Metric getMetricObject(JsonNode node, boolean isAnnotation) throws Exception {
+        try {
+            Metric ret = new Metric();
+            if (!ifInputDataVaild(node)) {
+                throw new Exception("The input correctness check is abnormal");
+            }
+            ret.setName(node.get("name").asText());
+            Iterator<String> fieldNames = node.get("tags").fieldNames();
+            Iterator<JsonNode> elements = node.get("tags").elements();
+            //insert语句的tag只能有一个val
+            while (elements.hasNext() && fieldNames.hasNext()) {
+                ret.addTag(fieldNames.next(), elements.next().textValue());
+            }
 
-        JsonNode tim = node.get("timestamp"), val = node.get("value");
-        if (tim != null && val != null) {
-            ret.addTimestamp(tim.asLong());
-            ret.addValue(val.asText());
-        }
-        JsonNode dp = node.get("datapoints");
-        if (dp != null) {
-            if (dp.isArray()) {
-                for (JsonNode dpnode : dp) {
-                    if (dpnode.isArray()) {
-                        ret.addTimestamp(dpnode.get(0).asLong());
-                        ret.addValue(dpnode.get(1).asText());
+            JsonNode tim = node.get("timestamp"), val = node.get("value");
+            if (tim != null && val != null) {
+                ret.addTimestamp(tim.asLong());
+                ret.addValue(val.asText());
+            }
+            JsonNode dp = node.get("datapoints");
+            if (dp != null) {
+                if (dp.isArray()) {
+                    for (JsonNode dpnode : dp) {
+                        if (dpnode.isArray()) {
+                            ret.addTimestamp(dpnode.get(0).asLong());
+                            ret.addValue(dpnode.get(1).asText());
+                        }
                     }
                 }
             }
-        }
-        JsonNode anno = node.get("annotation");
-        if (anno != null) {
-            String title=null,description=null;
-            JsonNode titleNode = anno.get("title");
-            if(titleNode!=null)
-                title = titleNode.asText();
-            JsonNode dspNode = anno.get("description");
-            if(dspNode!=null)
-                description = dspNode.asText();
-            List<String> category = new ArrayList<>();
-            JsonNode categoryNode = anno.get("category");
-            if (categoryNode.isArray()) {
-                for (JsonNode objNode : categoryNode) {
-                    category.add(objNode.asText());
+            JsonNode anno = node.get("annotation");
+            if (anno != null) {
+                String title=null,description=null;
+                JsonNode titleNode = anno.get("title");
+                if(titleNode!=null)
+                    title = titleNode.asText();
+                JsonNode dspNode = anno.get("description");
+                if(dspNode!=null)
+                    description = dspNode.asText();
+                List<String> category = new ArrayList<>();
+                JsonNode categoryNode = anno.get("category");
+                if (categoryNode.isArray()) {
+                    for (JsonNode objNode : categoryNode) {
+                        category.add(objNode.asText());
+                    }
                 }
-            }
 
-            //将cat的key与val颠倒后作为tag进行插入
-            for(String cat : category){
-                ret.addTag(cat, RestUtils.CATEGORY);
+                //将cat的key与val颠倒后作为tag进行插入
+                for(String cat : category){
+                    ret.addTag(cat, RestUtils.CATEGORY);
+                }
+                if(title!=null)
+                    ret.addAnno("title",title);
+                if(description!=null)
+                    ret.addAnno("description",description);
             }
-            if(title!=null)
-                ret.addAnno("title",title);
-            if(description!=null)
-                ret.addAnno("description",description);
+            return ret;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during parsing data ", e);
+            throw e;
         }
-        return ret;
     }
 
     public void sendData() {

@@ -124,6 +124,7 @@ public class RestIT {
         try {
             result = execute(json,TYPE.QUERY);
         } catch (Exception e) {
+//            if (e.toString().equals())
             logger.error("executeAndCompare fail. Caused by: {}.", e.toString());
         }
         assertEquals(output, result);
@@ -264,5 +265,16 @@ public class RestIT {
         String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive.file.tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
         json = "testQueryWithTags.json";
         executeAndCompare(json,result);
+    }
+
+    @Test
+//    @Ignore
+    public void pathVaildTest()  throws Exception {
+        try{
+            String res = execute("pathVaildTest.json",TYPE.INSERT);
+            logger.error("insertData fail. Caused by: {}.", res);
+        } catch (Exception e) {
+            logger.error("insertData fail. Caused by: {}.", e.toString());
+        }
     }
 }
