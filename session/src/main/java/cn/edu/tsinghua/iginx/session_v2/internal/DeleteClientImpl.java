@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 
@@ -76,7 +77,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementData(String measurement, long startTime, long endTime, String timePrecision) throws IginXException {
+    public void deleteMeasurementData(String measurement, long startTime, long endTime, TimePrecision timePrecision) throws IginXException {
         deleteMeasurementData(measurement, startTime, endTime, null, timePrecision);
     }
 
@@ -86,7 +87,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime, String timePrecision) throws IginXException {
+    public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime, TimePrecision timePrecision) throws IginXException {
         deleteMeasurementsData(measurements, startTime, endTime, null, timePrecision);
     }
 
@@ -96,7 +97,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime, String timePrecision) throws IginXException {
+    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime, TimePrecision timePrecision) throws IginXException {
         deleteMeasurementData(measurementType, startTime, endTime, null, timePrecision);
     }
 
@@ -107,7 +108,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementData(String measurement, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecision) throws IginXException {
+    public void deleteMeasurementData(String measurement, long startTime, long endTime, Map<String, List<String>> tagsList, TimePrecision timePrecision) throws IginXException {
         Arguments.checkNotNull(measurement, "measurement");
         deleteMeasurementsData(Collections.singletonList(measurement), startTime, endTime, tagsList, timePrecision);
     }
@@ -118,7 +119,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecision) throws IginXException {
+    public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList, TimePrecision timePrecision) throws IginXException {
         Arguments.checkNotNull(measurements, "measurements");
         measurements.forEach(measurement -> Arguments.checkNotNull(measurement, "measurement"));
 
@@ -148,7 +149,7 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecision) throws IginXException {
+    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList, TimePrecision timePrecision) throws IginXException {
         Arguments.checkNotNull(measurementType, "measurementType");
         Collection<String> measurements = measurementMapper.toMeasurements(measurementType);
         deleteMeasurementsData(measurements, startTime, endTime, tagsList, timePrecision);

@@ -90,7 +90,7 @@ public class InsertWorker extends Thread {
             }
             response = Response.status(Response.Status.OK).build();
         } catch (Exception e) {
-            response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+            response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity(e.toString())).build();
         }
         asyncResponse.resume(response);
     }
