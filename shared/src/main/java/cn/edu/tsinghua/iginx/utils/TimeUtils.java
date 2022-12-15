@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
+
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -382,7 +384,7 @@ public class TimeUtils {
             .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS)
             .toFormatter();
 
-    public static final String DEFAULT_TIMESTAMP_PRECISION = "ns";
+    public static final TimePrecision DEFAULT_TIMESTAMP_PRECISION = TimePrecision.NS;
 
     public static long getTimeInMs(long timestamp, String timePrecision) {
         long timeInMs;
@@ -402,19 +404,31 @@ public class TimeUtils {
         return timeInMs;
     }
 
-    public static long getTimeInNs(long timestamp, String timePrecision) {
+    public static long getTimeInNs(long timestamp, TimePrecision timePrecision) {
         long timeInNs;
         switch (timePrecision) {
-            case "s":
-                timeInNs = timestamp * 1000000000;
+            case WEEK:
+                timeInNs = timestamp * 7 * 24 * 3600_000_000_000L;
                 break;
-            case "ms":
-                timeInNs = timestamp * 1000000;
+            case DAY:
+                timeInNs = timestamp * 24 * 3600_000_000_000L;
                 break;
-            case "us":
-                timeInNs = timestamp * 1000;
+            case HOUR:
+                timeInNs = timestamp * 3600_000_000_000L;
                 break;
-            case "ns":
+            case MIN:
+                timeInNs = timestamp * 60_000_000_000L;
+                break;
+            case S:
+                timeInNs = timestamp * 1000_000_000L;
+                break;
+            case MS:
+                timeInNs = timestamp * 1000_000L;
+                break;
+            case US:
+                timeInNs = timestamp * 1000L;
+                break;
+            case NS:
                 timeInNs = timestamp;
                 break;
             default:
@@ -423,19 +437,31 @@ public class TimeUtils {
         return timeInNs;
     }
 
-    public static long getTimeFromNsToSpecPrecision(long timestamp, String timePrecision) {
+    public static long getTimeFromNsToSpecPrecision(long timestamp, TimePrecision timePrecision) {
         long time;
         switch (timePrecision) {
-            case "s":
-                time = timestamp / 1000000000;
+            case WEEK:
+                time = timestamp / 3600_000_000_000L / 24 / 7;
                 break;
-            case "ms":
-                time = timestamp / 1000000;
+            case DAY:
+                time = timestamp / 3600_000_000_000L / 24;
                 break;
-            case "us":
-                time = timestamp / 1000;
+            case HOUR:
+                time = timestamp / 3600_000_000_000L;
                 break;
-            case "ns":
+            case MIN:
+                time = timestamp / 60_000_000_000L;
+                break;
+            case S:
+                time = timestamp / 1000_000_000L;
+                break;
+            case MS:
+                time = timestamp / 1000_000L;
+                break;
+            case US:
+                time = timestamp / 1000L;
+                break;
+            case NS:
                 time = timestamp;
                 break;
             default:
@@ -483,7 +509,7 @@ public class TimeUtils {
     }
 
     public static long convertTimeWithUnitStrToLong(
-            long currentTime, long value, String unit, String timestampPrecision) {
+            long currentTime, long value, String unit, TimePrecision timestampPrecision) {
         DurationUnit durationUnit = DurationUnit.valueOf(unit);
         long res = value;
         switch (durationUnit) {
@@ -525,16 +551,7 @@ public class TimeUtils {
                 break;
         }
 
-        switch (timestampPrecision.toLowerCase()) {
-            case "s":
-                return res / 1_000_000_000L;
-            case "ms":
-                return res / 1_000_000L;
-            case "us":
-                return res / 1_000L;
-            default:  // include "ns"
-                return res;
-        }
+        return getTimeFromNsToSpecPrecision(res, timestampPrecision);
     }
 
     public enum DurationUnit {

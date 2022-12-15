@@ -41,8 +41,8 @@ public class ContextBuilder {
         return instance;
     }
 
-    public long getTimeWithPrecision(long time, String timePrecision) {
-        if(timePrecision==null) timePrecision = config.getTimePrecision();
+    public long getTimeWithPrecision(long time, TimePrecision timePrecision) {
+        if (timePrecision == null) timePrecision = config.getTimePrecision();
         return TimeUtils.getTimeInNs(time, timePrecision);
     }
 
@@ -73,10 +73,10 @@ public class ContextBuilder {
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
                                               byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList,
-                                              List<Map<String, String>> tagsList, String timePrecision) {
+                                              List<Map<String, String>> tagsList, TimePrecision timePrecision) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
-        if(timePrecision==null) timePrecision = config.getTimePrecision();
+        if (timePrecision == null) timePrecision = config.getTimePrecision();
         for (long time : timeArray) {
             times.add(TimeUtils.getTimeInNs(time, timePrecision));
         }

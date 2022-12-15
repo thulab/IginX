@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import cn.edu.tsinghua.iginx.utils.TagKVUtils;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class Config {
 
     private int replicaNum = 1;
 
-    private String timePrecision = "ns";
+    private TimePrecision timePrecision = TimePrecision.NS;
 
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor,parquet=cn.edu.tsinghua.iginx.parquet.parquetStorage";
     //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
@@ -260,7 +261,7 @@ public class Config {
         this.replicaNum = replicaNum;
     }
 
-    public String getTimePrecision() {
+    public TimePrecision getTimePrecision() {
         return timePrecision;
     }
 

@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class QueryAggregatorLast extends QueryAggregator {
     }
 
     @Override
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp, String timePrecision) {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp, TimePrecision timePrecision) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths, tagList, startTimestamp, endTimestamp, AggregateType.LAST_VALUE, getDur(), timePrecision);

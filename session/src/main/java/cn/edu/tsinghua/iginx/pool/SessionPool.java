@@ -424,7 +424,7 @@ public class SessionPool {
     }
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
+                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision precision) throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
             Session session = getSession();
             try {
@@ -481,7 +481,7 @@ public class SessionPool {
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision)
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision precision)
             throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
             Session session = getSession();
@@ -520,7 +520,7 @@ public class SessionPool {
     }
 
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precison) throws SessionException, ExecutionException {
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision precison) throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
             Session session = getSession();
             try {
@@ -577,7 +577,7 @@ public class SessionPool {
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision)
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision precision)
             throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
             Session session = getSession();
