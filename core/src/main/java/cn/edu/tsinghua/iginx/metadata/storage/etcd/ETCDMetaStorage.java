@@ -663,9 +663,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
+    public Map<TimeSeriesRange, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                 .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                     GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
@@ -721,9 +721,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval) {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                     .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                             GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
@@ -757,7 +757,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+    public void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta)
         throws MetaStorageException {
 
     }
