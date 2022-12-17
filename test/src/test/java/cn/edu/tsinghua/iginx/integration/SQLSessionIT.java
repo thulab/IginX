@@ -1479,6 +1479,196 @@ public abstract class SQLSessionIT {
     }
 
     @Test
+    public void testJoin() {
+        String insert = "insert into test(time, a.a, a.b, b.a, b.b) values (1, 1, 1.1, 2, 2.1), (2, 3, 3.1, 3, 3.1), (3, 5, 5.1, 4, 4.1), (4, 7, 7.1, 5, 5.1), (5, 9, 9.1, 6, 6.1);";
+        execute(insert);
+
+        String statement = "select * from test.a join test.b on test.a.a = test.b.a";
+        String expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a inner join test.b on test.a.a = test.b.a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a left join test.b on test.a.a = test.b.a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "|       1|     1.1|    null|    null|\n"
+                + "|       7|     7.1|    null|    null|\n"
+                + "|       9|     9.1|    null|    null|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a left join test.b using a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.b|\n"
+                + "+--------+--------+--------+\n"
+                + "|       3|     3.1|     3.1|\n"
+                + "|       5|     5.1|     5.1|\n"
+                + "|       1|     1.1|    null|\n"
+                + "|       7|     7.1|    null|\n"
+                + "|       9|     9.1|    null|\n"
+                + "+--------+--------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a right join test.b on test.a.a = test.b.a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "|    null|    null|       2|     2.1|\n"
+                + "|    null|    null|       4|     4.1|\n"
+                + "|    null|    null|       6|     6.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a right join test.b using a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+\n"
+                + "|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+\n"
+                + "|     3.1|       3|     3.1|\n"
+                + "|     5.1|       5|     5.1|\n"
+                + "|    null|       2|     2.1|\n"
+                + "|    null|       4|     4.1|\n"
+                + "|    null|       6|     6.1|\n"
+                + "+--------+--------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a full join test.b on test.a.a = test.b.a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "|       1|     1.1|    null|    null|\n"
+                + "|       7|     7.1|    null|    null|\n"
+                + "|       9|     9.1|    null|    null|\n"
+                + "|    null|    null|       2|     2.1|\n"
+                + "|    null|    null|       4|     4.1|\n"
+                + "|    null|    null|       6|     6.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 8\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a, test.b";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       1|     1.1|       2|     2.1|\n"
+                + "|       1|     1.1|       3|     3.1|\n"
+                + "|       1|     1.1|       4|     4.1|\n"
+                + "|       1|     1.1|       5|     5.1|\n"
+                + "|       1|     1.1|       6|     6.1|\n"
+                + "|       3|     3.1|       2|     2.1|\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       3|     3.1|       4|     4.1|\n"
+                + "|       3|     3.1|       5|     5.1|\n"
+                + "|       3|     3.1|       6|     6.1|\n"
+                + "|       5|     5.1|       2|     2.1|\n"
+                + "|       5|     5.1|       3|     3.1|\n"
+                + "|       5|     5.1|       4|     4.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "|       5|     5.1|       6|     6.1|\n"
+                + "|       7|     7.1|       2|     2.1|\n"
+                + "|       7|     7.1|       3|     3.1|\n"
+                + "|       7|     7.1|       4|     4.1|\n"
+                + "|       7|     7.1|       5|     5.1|\n"
+                + "|       7|     7.1|       6|     6.1|\n"
+                + "|       9|     9.1|       2|     2.1|\n"
+                + "|       9|     9.1|       3|     3.1|\n"
+                + "|       9|     9.1|       4|     4.1|\n"
+                + "|       9|     9.1|       5|     5.1|\n"
+                + "|       9|     9.1|       6|     6.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 25\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a, test.b where test.a.a = test.b.a";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select * from test.a cross join test.b";
+        expected =
+            "ResultSets:\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|test.a.a|test.a.b|test.b.a|test.b.b|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "|       1|     1.1|       2|     2.1|\n"
+                + "|       1|     1.1|       3|     3.1|\n"
+                + "|       1|     1.1|       4|     4.1|\n"
+                + "|       1|     1.1|       5|     5.1|\n"
+                + "|       1|     1.1|       6|     6.1|\n"
+                + "|       3|     3.1|       2|     2.1|\n"
+                + "|       3|     3.1|       3|     3.1|\n"
+                + "|       3|     3.1|       4|     4.1|\n"
+                + "|       3|     3.1|       5|     5.1|\n"
+                + "|       3|     3.1|       6|     6.1|\n"
+                + "|       5|     5.1|       2|     2.1|\n"
+                + "|       5|     5.1|       3|     3.1|\n"
+                + "|       5|     5.1|       4|     4.1|\n"
+                + "|       5|     5.1|       5|     5.1|\n"
+                + "|       5|     5.1|       6|     6.1|\n"
+                + "|       7|     7.1|       2|     2.1|\n"
+                + "|       7|     7.1|       3|     3.1|\n"
+                + "|       7|     7.1|       4|     4.1|\n"
+                + "|       7|     7.1|       5|     5.1|\n"
+                + "|       7|     7.1|       6|     6.1|\n"
+                + "|       9|     9.1|       2|     2.1|\n"
+                + "|       9|     9.1|       3|     3.1|\n"
+                + "|       9|     9.1|       4|     4.1|\n"
+                + "|       9|     9.1|       5|     5.1|\n"
+                + "|       9|     9.1|       6|     6.1|\n"
+                + "+--------+--------+--------+--------+\n"
+                + "Total line number = 25\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
     public void testBasicArithmeticExpr() {
         String insert = "INSERT INTO us.d3 (timestamp, s1, s2, s3) values " +
             "(1, 1, 6, 1.5), (2, 2, 5, 2.5), (3, 3, 4, 3.5), (4, 4, 3, 4.5), (5, 5, 2, 5.5), (6, 6, 1, 6.5);";

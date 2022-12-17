@@ -203,7 +203,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Table tableB = generateTableFromValues(
             true,
             Arrays.asList(
-                new Field("b.a", DataType.INTEGER),
+                new Field("b.k", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
@@ -222,7 +222,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
-                new Field("b.a", DataType.INTEGER),
+                new Field("b.k", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
@@ -232,6 +232,21 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(3, 3.2, false, 3, 3.1, false),
                 Arrays.asList(3, 3.2, false, 3, 3.2, false),
                 Arrays.asList(5, 5.1, false, 5, 5.1, true)
+            ));
+
+        Table usingTarget = generateTableFromValues(
+            false,
+            Arrays.asList(
+                new Field("a.a", DataType.INTEGER),
+                new Field("a.b", DataType.DOUBLE),
+                new Field("a.c", DataType.BOOLEAN),
+                new Field("b.k", DataType.INTEGER),
+                new Field("b.c", DataType.BOOLEAN)
+            ),
+            Arrays.asList(
+                Arrays.asList(3, 3.1, false, 3, false),
+                Arrays.asList(3, 3.2, false, 3, false),
+                Arrays.asList(5, 5.1, false, 5, true)
             ));
 
         {
@@ -244,7 +259,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
                 "a", "b",
-                new PathFilter("a.a", Op.E, "b.a"),
+                new PathFilter("a.a", Op.E, "b.k"),
                 Collections.emptyList(),
                 false,
                 JoinAlgType.NestedLoopJoin);
@@ -263,7 +278,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
                 "a", "b",
-                new PathFilter("a.a", Op.E, "b.a"),
+                new PathFilter("a.a", Op.E, "b.k"),
                 Collections.emptyList(),
                 false,
                 JoinAlgType.HashJoin);
@@ -282,13 +297,70 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 EmptySource.EMPTY_SOURCE,
                 EmptySource.EMPTY_SOURCE,
                 "a", "b",
-                new PathFilter("a.a", Op.E, "b.a"),
+                new PathFilter("a.a", Op.E, "b.k"),
                 Collections.emptyList(),
                 false,
                 JoinAlgType.SortedMergeJoin);
 
             RowStream stream = getExecutor().executeBinaryOperator(innerJoin, tableA, tableB);
             assertStreamEqual(stream, target);
+        }
+
+        {
+            // using & NestedLoopJoin
+            tableA.reset();
+            tableB.reset();
+            usingTarget.reset();
+
+            InnerJoin innerJoin = new InnerJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                null,
+                Collections.singletonList("b"),
+                false,
+                JoinAlgType.NestedLoopJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(innerJoin, tableA, tableB);
+            assertStreamEqual(stream, usingTarget);
+        }
+
+        {
+            // using & HashJoin
+            tableA.reset();
+            tableB.reset();
+            usingTarget.reset();
+
+            InnerJoin innerJoin = new InnerJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                null,
+                Collections.singletonList("b"),
+                false,
+                JoinAlgType.HashJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(innerJoin, tableA, tableB);
+            assertStreamEqual(stream, usingTarget);
+        }
+
+        {
+            // using & SortedMergeJoin
+            tableA.reset();
+            tableB.reset();
+            usingTarget.reset();
+
+            InnerJoin innerJoin = new InnerJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                null,
+                Collections.singletonList("b"),
+                false,
+                JoinAlgType.SortedMergeJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(innerJoin, tableA, tableB);
+            assertStreamEqual(stream, usingTarget);
         }
     }
 
@@ -306,7 +378,10 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(3, 3.1, false),
                 Arrays.asList(4, 4.1, true),
                 Arrays.asList(5, 5.1, false),
-                Arrays.asList(6, 6.1, true)
+                Arrays.asList(6, 6.1, true),
+                Arrays.asList(11, 11.1, false),
+                Arrays.asList(12, 12.1, true),
+                Arrays.asList(13, 13.1, false)
             ));
 
         Table tableB = generateTableFromValues(
@@ -321,7 +396,10 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(3, 3.1, false),
                 Arrays.asList(5, 5.1, true),
                 Arrays.asList(7, 7.1, false),
-                Arrays.asList(9, 9.1, true)
+                Arrays.asList(9, 9.1, true),
+                Arrays.asList(16, 16.1, false),
+                Arrays.asList(17, 17.1, true),
+                Arrays.asList(18, 18.1, false)
             ));
 
         Table leftTarget = generateTableFromValues(
@@ -339,7 +417,10 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(5, 5.1, false, 5, 5.1, true),
                 Arrays.asList(2, 2.1, true, null, null, null),
                 Arrays.asList(4, 4.1, true, null, null, null),
-                Arrays.asList(6, 6.1, true, null, null, null)
+                Arrays.asList(6, 6.1, true, null, null, null),
+                Arrays.asList(11, 11.1, false, null, null, null),
+                Arrays.asList(12, 12.1, true, null, null, null),
+                Arrays.asList(13, 13.1, false, null, null, null)
             ));
 
         Table rightTarget = generateTableFromValues(
@@ -357,7 +438,10 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(5, 5.1, false, 5, 5.1, true),
                 Arrays.asList(null, null, null, 1, 1.1, true),
                 Arrays.asList(null, null, null, 7, 7.1, false),
-                Arrays.asList(null, null, null, 9, 9.1, true)
+                Arrays.asList(null, null, null, 9, 9.1, true),
+                Arrays.asList(null, null, null, 16, 16.1, false),
+                Arrays.asList(null, null, null, 17, 17.1, true),
+                Arrays.asList(null, null, null, 18, 18.1, false)
             ));
 
         Table fullTarget = generateTableFromValues(
@@ -376,9 +460,15 @@ public abstract class AbstractOperatorMemoryExecutorTest {
                 Arrays.asList(2, 2.1, true, null, null, null),
                 Arrays.asList(4, 4.1, true, null, null, null),
                 Arrays.asList(6, 6.1, true, null, null, null),
+                Arrays.asList(11, 11.1, false, null, null, null),
+                Arrays.asList(12, 12.1, true, null, null, null),
+                Arrays.asList(13, 13.1, false, null, null, null),
                 Arrays.asList(null, null, null, 1, 1.1, true),
                 Arrays.asList(null, null, null, 7, 7.1, false),
-                Arrays.asList(null, null, null, 9, 9.1, true)
+                Arrays.asList(null, null, null, 9, 9.1, true),
+                Arrays.asList(null, null, null, 16, 16.1, false),
+                Arrays.asList(null, null, null, 17, 17.1, true),
+                Arrays.asList(null, null, null, 18, 18.1, false)
             ));
 
         {
@@ -717,6 +807,66 @@ public abstract class AbstractOperatorMemoryExecutorTest {
 
             RowStream stream = getExecutor().executeBinaryOperator(outerJoin, tableA, tableB);
             assertStreamEqual(stream, leftTarget);
+        }
+
+        {
+            // left & HashJoin
+            tableA.reset();
+            tableB.reset();
+            leftTarget.reset();
+
+            OuterJoin outerJoin = new OuterJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                OuterJoinType.LEFT,
+                null,
+                Collections.emptyList(),
+                true,
+                JoinAlgType.HashJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(outerJoin, tableA, tableB);
+            assertStreamEqual(stream, leftTarget);
+        }
+
+        {
+            // left & SortedMergeJoin
+            tableA.reset();
+            tableB.reset();
+            leftTarget.reset();
+
+            OuterJoin outerJoin = new OuterJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                OuterJoinType.LEFT,
+                null,
+                Collections.emptyList(),
+                true,
+                JoinAlgType.SortedMergeJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(outerJoin, tableA, tableB);
+            assertStreamEqual(stream, leftTarget);
+        }
+
+        {
+            // right & NestedLoopJoin
+            tableA.reset();
+            tableB.reset();
+            rightTarget.reset();
+
+            OuterJoin outerJoin = new OuterJoin(
+                EmptySource.EMPTY_SOURCE,
+                EmptySource.EMPTY_SOURCE,
+                "a", "b",
+                OuterJoinType.RIGHT,
+                null,
+                Collections.emptyList(),
+                true,
+                JoinAlgType.NestedLoopJoin);
+
+            RowStream stream = getExecutor().executeBinaryOperator(outerJoin, tableA, tableB);
+            assertStreamEqual(stream, rightTarget);
         }
 
         {

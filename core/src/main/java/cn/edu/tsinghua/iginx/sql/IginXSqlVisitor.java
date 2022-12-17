@@ -240,7 +240,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
                 for (JoinPartContext joinPartContext : ctx.joinPart()) {
                     String pathPrefix = joinPartContext.path().getText();
-                    if (joinPartContext.join() == null) {
+                    if (joinPartContext.join() == null) {  // cross join
                         selectStatement.setJoinPart(new JoinPart(pathPrefix));
                         continue;
                     }
@@ -278,8 +278,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return JoinType.RightOuterJoin;
         } else if (joinContext.FULL() != null) {
             return JoinType.FullOuterJoin;
-        } else if (joinContext.CROSS() != null) {
-            return JoinType.CrossJoin;
         } else {
             return JoinType.InnerJoin;
         }
