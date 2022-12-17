@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import java.util.List;
 
 public class RowUtils {
@@ -87,67 +88,43 @@ public class RowUtils {
             } else if (value2 == null) {
                 return 1;
             }
-            switch (row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column)).getType()) {
-                case BOOLEAN:
-                    boolean boolean1 = (boolean) value1;
-                    boolean boolean2 = (boolean) value2;
-                    if (boolean1 == boolean2) {
-                        continue;
-                    } else if (!boolean1) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                case INTEGER:
-                    int int1 = (int) value1;
-                    int int2 = (int) value2;
-                    if (int1 == int2) {
-                        continue;
-                    } else if (int1 < int2) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                case LONG:
-                    long long1 = (long) value1;
-                    long long2 = (long) value2;
-                    if (long1 == long2) {
-                        continue;
-                    } else if (long1 < long2) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                case FLOAT:
-                    float float1 = (float) value1;
-                    float float2 = (float) value2;
-                    if (float1 == float2) {
-                        continue;
-                    } else if (float1 < float2) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                case DOUBLE:
-                    double double1 = (double) value1;
-                    double double2 = (double) value2;
-                    if (double1 == double2) {
-                        continue;
-                    } else if (double1 < double2) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                case BINARY:
-                    String string1 = (String) value1;
-                    String string2 = (String) value2;
-                    if (string1.compareTo(string2) < 0) {
-                        return -1;
-                    } else if (string1.compareTo(string2) > 0) {
-                        return 1;
-                    }
+            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column)).getType();
+            int cmp = compareObjects(dataType, value1, value2);
+            if (cmp != 0) {
+                return cmp;
             }
         }
         return 0;
+    }
+
+    public static int compareObjects(DataType dataType, Object value1, Object value2) {
+        switch (dataType) {
+            case BOOLEAN:
+                boolean boolean1 = (boolean) value1;
+                boolean boolean2 = (boolean) value2;
+                return Boolean.compare(boolean1, boolean2);
+            case INTEGER:
+                int int1 = (int) value1;
+                int int2 = (int) value2;
+                return Integer.compare(int1, int2);
+            case LONG:
+                long long1 = (long) value1;
+                long long2 = (long) value2;
+                return Long.compare(long1, long2);
+            case FLOAT:
+                float float1 = (float) value1;
+                float float2 = (float) value2;
+                return Float.compare(float1, float2);
+            case DOUBLE:
+                double double1 = (double) value1;
+                double double2 = (double) value2;
+                return Double.compare(double1, double2);
+            case BINARY:
+                String string1 = (String) value1;
+                String string2 = (String) value2;
+                return string1.compareTo(string2);
+            default:
+                throw new IllegalArgumentException("unknown datatype: " + dataType);
+        }
     }
 }

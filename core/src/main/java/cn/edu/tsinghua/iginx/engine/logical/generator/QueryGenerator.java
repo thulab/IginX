@@ -278,14 +278,14 @@ public class QueryGenerator extends AbstractGenerator {
 
             JoinAlgType joinAlgType = JoinAlgType.NestedLoopJoin;
             Filter filter = joinPart.getFilter();
-//            if (filter != null && filter.getType().equals(FilterType.Path)) {
-//                joinAlgType = JoinAlgType.HashJoin;
-//            }
+            if (filter != null && filter.getType().equals(FilterType.Path)) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
 
             List<String> joinColumns = joinPart.getJoinColumns();
-//            if (joinColumns != null && joinColumns.size() == 1) {
-//                joinAlgType = JoinAlgType.HashJoin;
-//            }
+            if (joinColumns != null && joinColumns.size() == 1) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
 
             switch (joinPart.getJoinType()) {
                 case CrossJoin:

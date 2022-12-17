@@ -137,8 +137,7 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeCrossJoin(CrossJoin crossJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new CrossJoinLazyStream(crossJoin, streamA, streamB);
     }
 
     private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
@@ -155,18 +154,15 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new NestedLoopInnerJoinLazyStream(innerJoin, streamA, streamB);
     }
 
     private RowStream executeHashInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new HashInnerJoinLazyStream(innerJoin, streamA, streamB);
     }
 
     private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new SortedMergeInnerJoinLazyStream(innerJoin, streamA, streamB);
     }
 
     private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
@@ -183,18 +179,15 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new NestedLoopOuterJoinLazyStream(outerJoin, streamA, streamB);
     }
 
     private RowStream executeHashOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new HashOuterJoinLazyStream(outerJoin, streamA, streamB);
     }
 
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
-        // todo implement
-        return null;
+        return new SortedMergeOuterJoinLazyStream(outerJoin, streamA, streamB);
     }
 
     private RowStream executeUnion(Union union, RowStream streamA, RowStream streamB) {

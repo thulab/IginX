@@ -522,14 +522,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
-        List<String> joinColumns = innerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(innerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
@@ -538,6 +537,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         joinColumns.add(joinColumnA);
                     }
                 }
+            }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
             }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
@@ -584,7 +586,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 flag2:
                 for (Row rowB : rowsB) {
                     for (String joinColumn : joinColumns){
-                        if (rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn) != rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn)){
+                        if (!Objects.equals(rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn), rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn))) {
                             continue flag2;
                         }
                     }
@@ -611,14 +613,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeHashInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
-        List<String> joinColumns = innerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(innerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
@@ -628,6 +629,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     }
                 }
             }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
+            }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
@@ -635,7 +639,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
         
-        String joinColumn;
+        String joinColumnA, joinColumnB;
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
                 throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
@@ -645,9 +649,11 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
             }
             if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                joinColumn = p.k.replaceFirst(innerJoin.getPrefixA() + '.', "");
+                joinColumnA = p.k.replaceFirst(innerJoin.getPrefixA() + '.', "");
+                joinColumnB = p.v.replaceFirst(innerJoin.getPrefixB() + ".", "");
             } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                joinColumn = p.v.replaceFirst(innerJoin.getPrefixA() + '.', "");
+                joinColumnA = p.v.replaceFirst(innerJoin.getPrefixA() + '.', "");
+                joinColumnB = p.k.replaceFirst(innerJoin.getPrefixB() + ".", "");
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join path filter input.");
             }
@@ -656,7 +662,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
             }
             if (headerA.indexOf(innerJoin.getPrefixA() + '.' + joinColumns.get(0)) != -1 && headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumns.get(0)) != -1) {
-                joinColumn = joinColumns.get(0);
+                joinColumnA = joinColumnB = joinColumns.get(0);
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join column input.");
             }
@@ -666,7 +672,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rowsB = tableB.getRows();
         HashMap<Integer, List<Row>> rowsBHashMap = new HashMap<>();
         for (Row rowB: rowsB) {
-            int hash = rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn).hashCode();
+            int hash = rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumnB).hashCode();
             List<Row> l = rowsBHashMap.containsKey(hash) ? rowsBHashMap.get(hash) : new ArrayList<>();
             l.add(rowB);
             rowsBHashMap.put(hash, l);
@@ -677,7 +683,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             fieldsA.addAll(fieldsB);
             newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
-                int hash = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn).hashCode();
+                int hash = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA).hashCode();
                 if (rowsBHashMap.containsKey(hash)) {
                     List<Row> hashRowsB = rowsBHashMap.get(hash);
                     for (Row rowB : hashRowsB) {
@@ -695,22 +701,22 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         } else { // Join condition: natural or using
             for (Field fieldB : fieldsB) {
-                if (!fieldB.getName().equals(innerJoin.getPrefixB() + '.' + joinColumn)) {
+                if (!fieldB.getName().equals(innerJoin.getPrefixB() + '.' + joinColumnB)) {
                     fieldsA.add(fieldB);
                 }
             }
             newHeader = new Header(fieldsA);
             for (Row rowA : rowsA) {
-                int hash = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn).hashCode();
+                int hash = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA).hashCode();
                 if (rowsBHashMap.containsKey(hash)) {
                     List<Row> hashRowsB = rowsBHashMap.get(hash);
                     for (Row rowB : hashRowsB) {
                         Object[] valuesA = rowA.getValues();
                         Object[] valuesB = rowB.getValues();
-                        Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
+                        Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
                         System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
                         int k = valuesA.length;
-                        int index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumn);
+                        int index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
                         for (int j = 0; j < valuesB.length; j++) {
                             if (j != index) {
                                 valuesJoin[k++] = valuesB[j];
@@ -726,14 +732,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
-        List<String> joinColumns = innerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(innerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
@@ -742,6 +747,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         joinColumns.add(joinColumnA);
                     }
                 }
+            }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
             }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
@@ -752,7 +760,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     
         List<Row> rowsA = tableA.getRows();
         List<Row> rowsB = tableB.getRows();
-        
         if (filter != null) {
             joinColumns = new ArrayList<>();
             List<Pair<String, String>> pairs = FilterUtils.getJoinColumnsFromFilter(filter);
@@ -927,14 +934,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         OuterJoinType outerType = outerJoin.getOuterJoinType();
         Filter filter = outerJoin.getFilter();
-        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
@@ -943,6 +949,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         joinColumns.add(joinColumnA);
                     }
                 }
+            }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
             }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
@@ -1023,7 +1032,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 for (int indexB = 0; indexB < rowsB.size(); indexB++) {
                     Row rowB = rowsB.get(indexB);
                     for (String joinColumn : joinColumns){
-                        if (rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumn) != rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn)){
+                        if (!Objects.equals(rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumn), rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn))) {
                             continue flag2;
                         }
                     }
@@ -1108,14 +1117,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeHashOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         OuterJoinType outerType = outerJoin.getOuterJoinType();
         Filter filter = outerJoin.getFilter();
-        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural outer join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
@@ -1125,6 +1133,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     }
                 }
             }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
+            }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
@@ -1133,7 +1144,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
     
-        String joinColumn;
+        String joinColumnA, joinColumnB;
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
                 throw new InvalidOperatorParameterException("hash join only support one path filter yet.");
@@ -1143,9 +1154,11 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support equal path filter yet.");
             }
             if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                joinColumn = p.k.replaceFirst(outerJoin.getPrefixA() + '.', "");
+                joinColumnA = p.k.replaceFirst(outerJoin.getPrefixA() + '.', "");
+                joinColumnB = p.v.replaceFirst(outerJoin.getPrefixB() + ".", "");
             } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                joinColumn = p.v.replaceFirst(outerJoin.getPrefixA() + '.', "");
+                joinColumnA = p.v.replaceFirst(outerJoin.getPrefixA() + '.', "");
+                joinColumnB = p.k.replaceFirst(outerJoin.getPrefixB() + ".", "");
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join path filter input.");
             }
@@ -1154,7 +1167,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("hash join only support the number of join column is one yet.");
             }
             if (headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumns.get(0)) != -1 && headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumns.get(0)) != -1) {
-                joinColumn = joinColumns.get(0);
+                joinColumnA = joinColumnB = joinColumns.get(0);
             } else {
                 throw new InvalidOperatorParameterException("invalid hash join column input.");
             }
@@ -1169,7 +1182,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         HashMap<Integer, List<Row>> rowsBHashMap = new HashMap<>();
         HashMap<Integer, List<Integer>> indexOfRowBHashMap = new HashMap<>();
         for (int indexB = 0; indexB < rowsB.size(); indexB++) {
-            int hash = rowsB.get(indexB).getValue(outerJoin.getPrefixB() + '.' + joinColumn).hashCode();
+            int hash = rowsB.get(indexB).getValue(outerJoin.getPrefixB() + '.' + joinColumnB).hashCode();
             List<Row> l = rowsBHashMap.containsKey(hash) ? rowsBHashMap.get(hash) : new ArrayList<>();
             List<Integer> il = rowsBHashMap.containsKey(hash) ? indexOfRowBHashMap.get(hash) : new ArrayList<>();
             l.add(rowsB.get(indexB));
@@ -1185,7 +1198,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             newHeader = new Header(fieldsA);
             for (int indexA = 0; indexA < rowsB.size(); indexA++) {
                 Row rowA = rowsA.get(indexA);
-                int hash = rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumn).hashCode();
+                int hash = rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumnA).hashCode();
                 if (rowsBHashMap.containsKey(hash)) {
                     List<Row> hashRowsB = rowsBHashMap.get(hash);
                     List<Integer> hashIndexB = indexOfRowBHashMap.get(hash);
@@ -1213,7 +1226,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             List<Field> newFields = new ArrayList<>();
             if (outerType == OuterJoinType.RIGHT) {
                 for (Field fieldA : fieldsA) {
-                    if (Objects.equals(fieldA.getName(), outerJoin.getPrefixA() + '.' + joinColumn)) {
+                    if (Objects.equals(fieldA.getName(), outerJoin.getPrefixA() + '.' + joinColumnA)) {
                         continue;
                     }
                     newFields.add(fieldA);
@@ -1222,7 +1235,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             } else {
                 newFields.addAll(fieldsA);
                 for (Field fieldB : fieldsB) {
-                    if (Objects.equals(fieldB.getName(), outerJoin.getPrefixB() + '.' + joinColumn)) {
+                    if (Objects.equals(fieldB.getName(), outerJoin.getPrefixB() + '.' + joinColumnB)) {
                         continue;
                     }
                     newFields.add(fieldB);
@@ -1231,7 +1244,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             newHeader = new Header(newFields);
             for (int indexA = 0; indexA < rowsB.size(); indexA++) {
                 Row rowA = rowsA.get(indexA);
-                int hash = rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumn).hashCode();
+                int hash = rowsA.get(indexA).getValue(outerJoin.getPrefixA() + '.' + joinColumnA).hashCode();
                 if (rowsBHashMap.containsKey(hash)) {
                     List<Row> hashRowsB = rowsBHashMap.get(hash);
                     List<Integer> hashIndexB = indexOfRowBHashMap.get(hash);
@@ -1242,7 +1255,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         if (outerType == OuterJoinType.RIGHT) {
                             System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - 1, valuesB.length);
                             int k = 0;
-                            int index = headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumn);
+                            int index = headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumnA);
                             for (int m = 0; m < valuesA.length; m++) {
                                 if (m != index) {
                                     valuesJoin[k++] = valuesA[m];
@@ -1251,7 +1264,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         } else {
                             System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
                             int k = valuesA.length;
-                            int index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumn);
+                            int index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
                             for (int m = 0; m < valuesB.length; m++) {
                                 if (m != index) {
                                     valuesJoin[k++] = valuesB[m];
@@ -1302,14 +1315,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
         OuterJoinType outerType = outerJoin.getOuterJoinType();
         Filter filter = outerJoin.getFilter();
-        List<String> joinColumns = outerJoin.getJoinColumns();
+        List<String> joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
         List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
         List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
             if (!joinColumns.isEmpty()) {
                 throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
             }
-            joinColumns = new ArrayList<>();
             for (Field fieldA : fieldsA) {
                 for (Field fieldB : fieldsB) {
                     String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
@@ -1318,6 +1330,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         joinColumns.add(joinColumnA);
                     }
                 }
+            }
+            if (joinColumns.isEmpty()) {
+                throw new PhysicalException("natural join has no matching columns");
             }
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {

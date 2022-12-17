@@ -129,6 +129,7 @@ fromClause
 
 joinPart
     : COMMA path
+    | CROSS JOIN path
     | join path (
         ON orExpression
         | USING colList
@@ -141,7 +142,6 @@ colList
 
 join
     : INNER? JOIN
-    | CROSS JOIN
     | (LEFT | RIGHT | FULL) OUTER? JOIN
     | NATURAL ((LEFT | RIGHT) OUTER?)? JOIN
     ;
