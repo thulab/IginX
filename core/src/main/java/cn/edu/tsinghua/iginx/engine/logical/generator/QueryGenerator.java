@@ -336,7 +336,7 @@ public class QueryGenerator extends AbstractGenerator {
     }
 
     private Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> getFragmentsByTSInterval(SelectStatement selectStatement, TimeSeriesInterval interval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
+        Map<TimeSeriesRange, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
         if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
@@ -345,7 +345,7 @@ public class QueryGenerator extends AbstractGenerator {
         }
         return keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
     }
-    
+
     private List<String> pathMatchPrefix(List<String> pathList, String prefix) {
         if (prefix == null) return pathList;
         List<String> ans = new ArrayList<>();
