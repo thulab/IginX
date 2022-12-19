@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 import cn.edu.tsinghua.iginx.parquet.entity.ParquetQueryRowStream;
 import cn.edu.tsinghua.iginx.parquet.entity.WritePlan;
 import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy;
@@ -662,7 +663,7 @@ public class LocalExecutor implements Executor {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
         File rootDir = new File(dataDir);
         List<String> parquetFiles = new ArrayList<>();
         findParquetFiles(parquetFiles, rootDir);

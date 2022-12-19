@@ -476,7 +476,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             parseGroupByLevelClause(ctx.groupByClause().INT(), selectStatement);
         }
         if (ctx.groupByTimeClause() != null) {
-            parseGroupByTimeClause(ctx.groupByTimeClause().timeInterval(), ctx.groupByTimeClause().TIME_WITH_UNIT(), selectStatement);
+            parseGroupByTimeClause(ctx.groupByTimeClause().timeInterval(), ctx.groupByTimeClause().TIME_WITH_UNIT(0), selectStatement);
+            if (ctx.groupByTimeClause().SLIDE() != null) {
+                String slideDistanceStr = ctx.groupByTimeClause().TIME_WITH_UNIT(1).getText();
+                long distance = TimeUtils.convertTimeWithUnitStrToLong(0, slideDistanceStr);
+                selectStatement.setSlideDistance(distance);
+                selectStatement.setHasSlideWindow(true);
+            }
         }
         if (ctx.groupByLevelClause() != null) {
             parseGroupByLevelClause(ctx.groupByLevelClause().INT(), selectStatement);
@@ -488,9 +494,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         if (ctx.orderByClause() != null) {
             parseOrderByClause(ctx.orderByClause(), selectStatement);
-        }
-        if (ctx.slideWindowByTimeClause() != null) {
-            parseSlideWindowByTimeClause(ctx.slideWindowByTimeClause().timeInterval(), ctx.slideWindowByTimeClause().TIME_WITH_UNIT(0), ctx.slideWindowByTimeClause().TIME_WITH_UNIT(1), selectStatement);
         }
     }
 
@@ -521,9 +524,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSlideWindowByTimeClause(TimeIntervalContext timeIntervalContext, TerminalNode duration, TerminalNode slideDistance, SelectStatement selectStatement) {
         parseGroupByTimeClause(timeIntervalContext, duration, selectStatement);
         String slideDistanceStr = slideDistance.getText();
-        long distance = TimeUtils.convertTimeWithUnitStrToLong(0, slideDistanceStr);
-        selectStatement.setSlideDistance(distance);
-        selectStatement.setHasSlideWindow(true);
+
     }
 
     private void parseGroupByLevelClause(List<TerminalNode> layers, SelectStatement selectStatement) {
@@ -770,6 +771,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         for (String kv : kvStr) {
             String[] kvArray = kv.split(SQLConstant.COLON);
             if (kvArray.length != 2) {
+                if (kv.contains("url")) {
+                    map.put("url", kv.substring(kv.indexOf(":")+1));
+                }
                 continue;
             }
             map.put(kvArray[0].trim(), kvArray[1].trim());

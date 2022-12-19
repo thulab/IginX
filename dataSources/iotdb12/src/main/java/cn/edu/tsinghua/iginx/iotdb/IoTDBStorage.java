@@ -48,10 +48,7 @@ import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
 import cn.edu.tsinghua.iginx.iotdb.tools.DataViewWrapper;
 import cn.edu.tsinghua.iginx.iotdb.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.iotdb.tools.TagKVUtils;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -172,7 +169,7 @@ public class IoTDBStorage implements IStorage {
                 FragmentMeta fragment = task.getTargetFragment();
                 filter = new AndFilter(Arrays.asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()), new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
             }
-            return isDummyStorageUnit ? executeQueryHistoryTask(project, filter) : executeQueryTask(storageUnit, project, filter);
+            return isDummyStorageUnit ? executeQueryHistoryTask(task.getTargetFragment().getTsInterval(), project, filter) : executeQueryTask(storageUnit, project, filter);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -183,33 +180,44 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    @Override
+    public Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage(String dataPrefix) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         try {
-            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
-            while (dataSet.hasNext()) {
-                RowRecord record = dataSet.next();
-                if (record == null || record.getFields().size() < 4) {
-                    continue;
+            if (dataPrefix == null) {
+                SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
+                while (dataSet.hasNext()) {
+                    RowRecord record = dataSet.next();
+                    if (record == null || record.getFields().size() < 4) {
+                        continue;
+                    }
+                    String path = record.getFields().get(0).getStringValue();
+                    path = path.substring(5);
+                    path = TagKVUtils.splitFullName(path).k;
+                    paths.add(path);
                 }
-                String path = record.getFields().get(0).getStringValue();
-                path = path.substring(5);
-                path = TagKVUtils.splitFullName(path).k;
-                paths.add(path);
+                dataSet.close();
             }
-            dataSet.close();
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
         }
         paths.sort(String::compareTo);
-        if (paths.size() == 0) {
+        if (paths.size() == 0 && dataPrefix == null) {
             throw new PhysicalTaskExecuteFailureException("no data!");
         }
-        TimeSeriesInterval tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+        TimeSeriesRange tsInterval;
+        if (dataPrefix == null)
+            tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+        else
+            tsInterval = new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix));
 
         long minTime = 0, maxTime = Long.MAX_VALUE;
         try {
-            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement("select * from root");
+            SessionDataSetWrapper dataSet;
+            if (dataPrefix == null || dataPrefix.isEmpty())
+                dataSet = sessionPool.executeQueryStatement("select * from root");
+            else
+                dataSet = sessionPool.executeQueryStatement("select " + dataPrefix + " from root");
             if (dataSet.hasNext()) {
                 RowRecord record = dataSet.next();
                 minTime = record.getTimestamp();
@@ -298,16 +306,23 @@ public class IoTDBStorage implements IStorage {
         }
     }
 
-    private TaskExecuteResult executeQueryHistoryTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+    private String getRealPathWithoutPrefix(String oriPath, String prefix) {
+        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
+            return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
+        }
+        return oriPath;
+    }
+
+    private TaskExecuteResult executeQueryHistoryTask(TimeSeriesRange timeSeriesInterval, Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
         try {
             StringBuilder builder = new StringBuilder();
             for (String path : project.getPatterns()) {
-                builder.append(path);
+                builder.append(getRealPathWithoutPrefix(path, timeSeriesInterval.getSchemaPrefix()));
                 builder.append(',');
             }
             String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project));
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project, timeSeriesInterval.getSchemaPrefix()));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());

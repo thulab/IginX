@@ -74,6 +74,11 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
         testWriteAndQueryAfterCapacityExpansion_oriNoDataExpNoData();
     }
 
+    @Test
+    public void schemaPrefix() throws Exception {
+        testSchemaPrefix();
+    }
+
     //@Test
     public void testQueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from *";
@@ -440,6 +445,51 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
                 "|                    2|                     4|\n" +
                 "+---------------------+----------------------+\n" +
                 "Total line number = 1\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+    }
+
+    public void testSchemaPrefix() throws Exception {
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, schema_prefix:expansion, is_read_only:true\");");
+
+        String statement = "select * from expansion.ln.wf03";
+        String expect = "ResultSets:\n" +
+                "+----+-----------------------------+----------------------------------+\n" +
+                "|Time|expansion.ln.wf03.wt01.status|expansion.ln.wf03.wt01.temperature|\n" +
+                "+----+-----------------------------+----------------------------------+\n" +
+                "|  77|                         true|                              null|\n" +
+                "| 200|                        false|                             77.71|\n" +
+                "+----+-----------------------------+----------------------------------+\n" +
+                "Total line number = 2\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        statement = "count points";
+        expect = "Points num: 3\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+    }
+
+    @Test
+    public void testDataPrefix() throws Exception {
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, is_read_only:true\");");
+
+        String statement = "select * from test";
+        String expect = "ResultSets:\n" +
+                "+----+---------------------+--------------------------+\n" +
+                "|Time|test.wf03.wt01.status|test.wf03.wt01.temperature|\n" +
+                "+----+---------------------+--------------------------+\n" +
+                "|  77|                 true|                      null|\n" +
+                "| 200|                false|                     77.71|\n" +
+                "+----+---------------------+--------------------------+\n" +
+                "Total line number = 2\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        statement = "select * from ln";
+        expect = "ResultSets:\n" +
+                "+----+\n" +
+                "|Time|\n" +
+                "+----+\n" +
+                "+----+\n" +
+                "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
 }

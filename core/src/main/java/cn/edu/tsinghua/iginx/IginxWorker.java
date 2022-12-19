@@ -31,7 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
@@ -189,6 +189,7 @@ public class IginxWorker implements IService.Iface {
         }
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+        List<String> schemaPrefix = new ArrayList<>();
 
         for (StorageEngine storageEngine : storageEngines) {
             String type = storageEngine.getType();
@@ -202,6 +203,7 @@ public class IginxWorker implements IService.Iface {
             StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
+            schemaPrefix.add(extraParams.get(Constants.SCHEMA_PREFIX)); // get the user defined schema prefix
 
         }
         Status status = RpcUtils.SUCCESS;
@@ -229,20 +231,24 @@ public class IginxWorker implements IService.Iface {
             storageEngineMetas.get(storageEngineMetas.size() - 1).setNeedReAllocate(true); // 如果这批节点不是只读的话，每一批最后一个是 true，表示需要进行扩容
         }
         for (StorageEngineMeta meta: storageEngineMetas) {
+            int index = 0;
             if (meta.isHasData()) {
                 String dataPrefix = meta.getDataPrefix();
                 StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
-                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
+                Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta, dataPrefix);
                 FragmentMeta dummyFragment;
+                if (index < schemaPrefix.size() && schemaPrefix.get(index) != null) //set the virtual schema prefix
+                    boundary.k.setSchemaPrefix(schemaPrefix.get(index));
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
-                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                    dummyFragment = new FragmentMeta(new TimeSeriesPrefixRange(dataPrefix), boundary.v, dummyStorageUnit);
                 }
                 dummyFragment.setDummyFragment(true);
                 meta.setDummyStorageUnit(dummyStorageUnit);
                 meta.setDummyFragment(dummyFragment);
             }
+            index++;
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
@@ -428,20 +434,14 @@ public class IginxWorker implements IService.Iface {
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
-            case Constants.FILE_META:
-            case "":
             default:
-                localMetaStorageInfo = new LocalMetaStorageInfo(
-                    Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
-                );
+                logger.error("unexpected meta storage: " + config.getMetaStorage());
         }
 
-        if (metaStorageInfos != null) {
+        if (metaStorageInfos != null && !metaStorageInfos.isEmpty()) {
             resp.setMetaStorageInfos(metaStorageInfos);
         }
-        if (localMetaStorageInfo != null) {
-            resp.setLocalMetaStorageInfo(localMetaStorageInfo);
-        }
+        resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }

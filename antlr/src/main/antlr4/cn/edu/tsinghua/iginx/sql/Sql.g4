@@ -153,7 +153,6 @@ specialClause
     | groupByClause limitClause?
     | groupByTimeClause limitClause?
     | orderByClause limitClause?
-    | slideWindowByTimeClause limitClause?
     ;
 
 orderByClause
@@ -165,15 +164,11 @@ groupByClause
     ;
 
 groupByTimeClause
-    : GROUP timeInterval BY TIME_WITH_UNIT
+    : GROUP timeInterval BY TIME_WITH_UNIT (SLIDE TIME_WITH_UNIT)?
     ;
 
 groupByLevelClause
     : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
-    ;
-
-slideWindowByTimeClause
-    : WINDOW timeInterval BY TIME_WITH_UNIT SLIDE TIME_WITH_UNIT
     ;
 
 asClause
@@ -332,7 +327,6 @@ keyWords
     | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
-    | WINDOW
     | SLIDE
     | INNER
     | OUTER
@@ -658,10 +652,6 @@ CLOSING
 
 CLOSED
     : C L O S E D
-    ;
-
-WINDOW
-    : W I N D O W
     ;
 
 SLIDE

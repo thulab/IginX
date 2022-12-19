@@ -13,10 +13,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
@@ -54,10 +51,10 @@ public class InsertGenerator extends AbstractGenerator {
 
         List<String> pathList = new ArrayList<>(insertStatement.getPaths());
 
-        TimeSeriesInterval tsInterval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+        TimeSeriesRange tsInterval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
         TimeInterval timeInterval = new TimeInterval(insertStatement.getStartTime(), insertStatement.getEndTime() + 1);
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+        Map<TimeSeriesRange, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
         if (fragments.isEmpty()) {
             //on startup
             policy.setNeedReAllocate(false);
@@ -87,7 +84,7 @@ public class InsertGenerator extends AbstractGenerator {
 
     private DataView getDataSection(FragmentMeta meta, RawData rawData) {
         TimeInterval timeInterval = meta.getTimeInterval();
-        TimeSeriesInterval tsInterval = meta.getTsInterval();
+        TimeSeriesRange tsInterval = meta.getTsInterval();
         List<Long> insertTimes = rawData.getTimestamps();
         List<String> paths = rawData.getPaths();
 

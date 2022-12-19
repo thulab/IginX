@@ -42,10 +42,7 @@ import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBSchema;
 import cn.edu.tsinghua.iginx.influxdb.tools.SchemaTransformer;
 import cn.edu.tsinghua.iginx.influxdb.tools.TagFilterUtils;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -148,13 +145,13 @@ public class InfluxDBStorage implements IStorage {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage(String dataPrefix) throws PhysicalException {
         List<String> bucketNames = new ArrayList<>(historyBucketMap.keySet());
         bucketNames.sort(String::compareTo);
         if (bucketNames.size() == 0) {
             throw new PhysicalTaskExecuteFailureException("no data!");
         }
-        TimeSeriesInterval tsInterval = new TimeSeriesInterval(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
+        TimeSeriesRange tsInterval = new TimeSeriesInterval(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
         long minTime = Long.MAX_VALUE, maxTime = 0;
         for (Bucket bucket: historyBucketMap.values()) {
             String statement = String.format(
@@ -206,7 +203,7 @@ public class InfluxDBStorage implements IStorage {
         boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
             Project project = (Project) op;
-            return isDummyStorageUnit ? executeHistoryProjectTask(fragment.getTimeInterval(), project) : executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            return isDummyStorageUnit ? executeHistoryProjectTask(task.getTargetFragment().getTsInterval(), fragment.getTimeInterval(), project) : executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -217,11 +214,18 @@ public class InfluxDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    private TaskExecuteResult executeHistoryProjectTask(TimeInterval timeInterval, Project project) {
+    private String getRealPathWithoutPrefix(String oriPath, String prefix) {
+        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
+            return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
+        }
+        return oriPath;
+    }
+
+    private TaskExecuteResult executeHistoryProjectTask(TimeSeriesRange timeSeriesInterval, TimeInterval timeInterval, Project project) {
         Map<String, String> bucketQueries = new HashMap<>();
         TagFilter tagFilter = project.getTagFilter();
         for (String pattern: project.getPatterns()) {
-            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern, tagFilter);
+            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(getRealPathWithoutPrefix(pattern, timeSeriesInterval.getSchemaPrefix()), tagFilter);
             String bucketName = pair.k;
             String query = pair.v;
             String fullQuery = "";
@@ -250,7 +254,7 @@ public class InfluxDBStorage implements IStorage {
             bucketQueryResults.put(bucket, client.getQueryApi().query(statement, organization.getId()));
         }
 
-        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns());
+        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns(), timeSeriesInterval.getSchemaPrefix());
         return new TaskExecuteResult(rowStream);
     }
 
@@ -320,7 +324,7 @@ public class InfluxDBStorage implements IStorage {
         client.close();
     }
 
-    private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) {
+    private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesRange tsInterval, String storageUnit, Project project) {
 
         if (client.getBucketsApi().findBucketByName(storageUnit) == null) {
             logger.warn("storage engine {} doesn't exist", storageUnit);

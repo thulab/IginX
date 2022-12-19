@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -430,13 +431,13 @@ public class ExprUtils {
         return new TimeRange(begin, end);
     }
 
-    public static Filter getSubFilterFromFragment(Filter filter, TimeSeriesInterval interval) {
+    public static Filter getSubFilterFromFragment(Filter filter, TimeSeriesRange interval) {
         Filter filterWithoutNot = removeNot(filter);
         Filter filterWithTrue = setTrue(filterWithoutNot, interval);
         return mergeTrue(filterWithTrue);
     }
 
-    private static Filter setTrue(Filter filter, TimeSeriesInterval interval) {
+    private static Filter setTrue(Filter filter, TimeSeriesRange interval) {
         switch (filter.getType()) {
             case Or:
                 List<Filter> orChildren = ((OrFilter) filter).getChildren();

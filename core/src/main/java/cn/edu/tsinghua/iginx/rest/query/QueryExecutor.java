@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryShowTimeSeries;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +138,7 @@ public class QueryExecutor {
                     metrics.add(metric);
                     if(hasTitle) {
                         titleQuery.setQueryMetrics(metrics);
-                        titleQuery.setTimePrecision("ns");
+                        titleQuery.setTimePrecision(TimePrecision.NS);
                         this.query = titleQuery;
                         title = execute(false);
                         anno.getQueryResultDatasets().get(i).addTitle(getStringFromObject(title.getQueryResultDatasets().get(0).getValues().get(0)));
@@ -146,7 +147,7 @@ public class QueryExecutor {
                     }
                     if(hasDescription) {
                         descriptionQuery.setQueryMetrics(metrics);
-                        descriptionQuery.setTimePrecision("ns");
+                        descriptionQuery.setTimePrecision(TimePrecision.NS);
                         this.query = descriptionQuery;
                         description = execute(false);
                         anno.getQueryResultDatasets().get(i).addDescription(getStringFromObject(description.getQueryResultDatasets().get(0).getValues().get(0)));

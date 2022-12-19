@@ -20,6 +20,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.WithoutTagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 import cn.edu.tsinghua.iginx.parquet.exec.Executor;
 import cn.edu.tsinghua.iginx.parquet.thrift.DeleteReq;
 import cn.edu.tsinghua.iginx.parquet.thrift.GetStorageBoundryResp;
@@ -293,7 +294,7 @@ public class ParquetWorker implements ParquetService.Iface {
     @Override
     public GetStorageBoundryResp getBoundaryOfStorage() throws TException {
         try {
-            Pair<TimeSeriesInterval, TimeInterval> pair = executor.getBoundaryOfStorage();
+            Pair<TimeSeriesRange, TimeInterval> pair = executor.getBoundaryOfStorage();
             GetStorageBoundryResp resp = new GetStorageBoundryResp(SUCCESS);
             resp.setStartTime(pair.getV().getStartTime());
             resp.setEndTime(pair.getV().getEndTime());

@@ -63,7 +63,7 @@ public class NaivePolicy implements IPolicy {
         TimeInterval timeInterval = Utils.getTimeIntervalFromDataStatement(statement);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+            Pair<Map<TimeSeriesRange, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
         } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
@@ -130,8 +130,8 @@ public class NaivePolicy implements IPolicy {
     /**
      * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
      */
-    private Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+    private Pair<Map<TimeSeriesRange, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesRange, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
         List<StorageEngineMeta> storageEngineList = iMetaManager.getWriteableStorageEngineList();

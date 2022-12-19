@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.TimePrecision;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
@@ -116,7 +117,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertColumnRecords...");
-        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null, TimePrecision.NS);
     }
 
     private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
@@ -158,7 +159,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertNonAlignedColumnRecords...");
-        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null, TimePrecision.NS);
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
@@ -193,7 +194,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertRowRecords...");
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null, TimePrecision.NS);
     }
 
     private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
@@ -232,7 +233,7 @@ public class IoTDBSessionExample {
         }
 
         System.out.println("insertNonAlignedRowRecords...");
-        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null, TimePrecision.NS);
     }
 
     private static void showTimeSeries() throws ExecutionException, SessionException {
