@@ -23,8 +23,10 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
+import cn.edu.tsinghua.iginx.protocol.zk.ZooKeeperSyncProtocolImpl;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
-import com.google.gson.reflect.TypeToken;
 import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -36,9 +38,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import protocol.NetworkException;
-import protocol.Protocol;
-import protocol.zk.ZooKeeperProtocolImpl;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -161,7 +160,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private TreeCache transformCache;
 
-    private Map<String, Protocol> protocols = new HashMap<>();
+    private Map<String, SyncProtocol> protocols = new HashMap<>();
 
     private ReadWriteLock protocolLock = new ReentrantReadWriteLock();
 
@@ -1427,13 +1426,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void initProtocol(String category) throws NetworkException{
+    public void initProtocol(String category) throws NetworkException {
         protocolLock.writeLock().lock();
         try {
             if (protocols.containsKey(category)) {
                 return;
             }
-            Protocol protocol = new ZooKeeperProtocolImpl(category, client, null);
+            SyncProtocol protocol = new ZooKeeperSyncProtocolImpl(category, client, null);
             protocols.put(category, protocol);
         } finally {
             protocolLock.writeLock().unlock();
@@ -1445,8 +1444,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.maxActiveEndTimeStatisticsChangeHook = hook;
     }
 
-    public Protocol getProtocol(String category) {
-        Protocol protocol;
+    public SyncProtocol getProtocol(String category) {
+        SyncProtocol protocol;
         protocolLock.readLock().lock();
         protocol = protocols.get(category);
         protocolLock.readLock().unlock();

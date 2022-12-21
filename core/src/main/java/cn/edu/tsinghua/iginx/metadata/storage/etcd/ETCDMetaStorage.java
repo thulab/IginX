@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
@@ -35,13 +36,6 @@ import io.etcd.jetcd.watch.WatchResponse;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import proposal.Proposal;
-import proposal.ProposalListener;
-import proposal.Vote;
-import proposal.VoteListener;
-import protocol.NetworkException;
-import protocol.Protocol;
-import protocol.VoteExpiredException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -1085,7 +1079,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Protocol getProtocol(String category) {
+    public SyncProtocol getProtocol(String category) {
         return null;
     }
 

@@ -31,6 +31,8 @@ import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
@@ -41,14 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import proposal.Proposal;
-import proposal.ProposalListener;
-import proposal.Vote;
-import proposal.VoteListener;
-import protocol.ExecutionException;
-import protocol.NetworkException;
-import protocol.Protocol;
-import protocol.VoteExpiredException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1274,7 +1268,7 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public Protocol getProtocol(String category) {
+    public SyncProtocol getProtocol(String category) {
         return storage.getProtocol(category);
     }
 }

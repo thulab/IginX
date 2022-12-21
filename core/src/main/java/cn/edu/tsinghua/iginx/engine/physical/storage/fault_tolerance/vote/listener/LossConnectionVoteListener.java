@@ -2,7 +2,12 @@ package cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.vote.liste
 
 import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.proposal.content.LossConnectionProposalContent;
 import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.vote.content.LossConnectionVoteContent;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.proposal.SyncVote;
+import cn.edu.tsinghua.iginx.proposal.VoteListener;
+import cn.edu.tsinghua.iginx.protocol.ExecutionException;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /*
@@ -23,12 +28,7 @@ import org.slf4j.LoggerFactory;
  * specific language governing permissions and limitations
  * under the License.
  */
-import proposal.Proposal;
-import proposal.Vote;
-import proposal.VoteListener;
-import protocol.ExecutionException;
-import protocol.NetworkException;
-import protocol.Protocol;
+import cn.edu.tsinghua.iginx.proposal.SyncProposal;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,20 +39,20 @@ public class LossConnectionVoteListener implements VoteListener {
 
     private final int targetVote;
 
-    private final Map<Long, Vote> votes = new HashMap<>();
+    private final Map<Long, SyncVote> votes = new HashMap<>();
 
-    private final Proposal proposal;
+    private final SyncProposal proposal;
 
-    private final Protocol protocol;
+    private final SyncProtocol protocol;
 
-    public LossConnectionVoteListener(int targetVote, Proposal proposal, Protocol protocol) {
+    public LossConnectionVoteListener(int targetVote, SyncProposal proposal, SyncProtocol protocol) {
         this.targetVote = targetVote;
         this.protocol = protocol;
         this.proposal = proposal;
     }
 
     @Override
-    public synchronized void receive(String key, Vote vote) {
+    public synchronized void receive(String key, SyncVote vote) {
         long voter = vote.getVoter();
         votes.put(voter, vote);
         if (votes.size() != targetVote) {
@@ -60,7 +60,7 @@ public class LossConnectionVoteListener implements VoteListener {
         }
         logger.info("receive enough vote for " + key);
         int supportCount = 0;
-        for (Vote v: votes.values()) {
+        for (SyncVote v: votes.values()) {
             LossConnectionVoteContent content = JsonUtils.fromJson(v.getContent(), LossConnectionVoteContent.class);
             if (!content.isAlive()) {
                 supportCount++;

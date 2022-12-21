@@ -28,22 +28,18 @@ import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.vote.listen
 import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.vote.listener.RestoreConnectionVoteListener;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.proposal.ProposalListener;
+import cn.edu.tsinghua.iginx.proposal.SyncProposal;
+import cn.edu.tsinghua.iginx.proposal.SyncVote;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
+import cn.edu.tsinghua.iginx.protocol.VoteExpiredException;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.hutool.core.collection.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import proposal.Proposal;
-import proposal.ProposalListener;
-import proposal.Vote;
-import protocol.NetworkException;
-import protocol.Protocol;
-import protocol.VoteExpiredException;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +75,7 @@ public class ConnectionManager {
     private final ProposalListener lossConnectionListener = new ProposalListener() {
 
         @Override
-        public void onCreate(String key, Proposal proposal) {
+        public void onCreate(String key, SyncProposal proposal) {
             logger.info("receive proposal(key = " + key + ") create for loss connection: " + new String(JsonUtils.toJson(proposal)));
             LossConnectionProposalContent content = JsonUtils.fromJson(proposal.getContent(), LossConnectionProposalContent.class);
 
@@ -91,7 +87,7 @@ public class ConnectionManager {
         }
 
         @Override
-        public void onUpdate(String key, Proposal before, Proposal after) {
+        public void onUpdate(String key, SyncProposal before, SyncProposal after) {
             logger.info("receive proposal(key = " + key + ") update for loss connection: " + new String(JsonUtils.toJson(after)));
             LossConnectionProposalContent content = JsonUtils.fromJson(after.getContent(), LossConnectionProposalContent.class);
             long id = content.getId();
@@ -107,16 +103,11 @@ public class ConnectionManager {
             IStorageWrapper wrapper = (IStorageWrapper) StoragePhysicalTaskExecutor.getInstance().getStorageManager().getStorage(id).k;
             wrapper.setBlocked(true);
         }
-
-        @Override
-        public void onDelete(String s, Proposal proposal) {
-
-        }
     };
 
     private final ProposalListener restoreConnectionListener = new ProposalListener() {
         @Override
-        public void onCreate(String key, Proposal proposal) {
+        public void onCreate(String key, SyncProposal proposal) {
             logger.info("receive proposal(key = " + key + ") create for restore connection: " + new String(JsonUtils.toJson(proposal)));
             RestoreConnectionProposalContent content = JsonUtils.fromJson(proposal.getContent(), RestoreConnectionProposalContent.class);
 
@@ -128,7 +119,7 @@ public class ConnectionManager {
         }
 
         @Override
-        public void onUpdate(String key, Proposal before, Proposal after) {
+        public void onUpdate(String key, SyncProposal before, SyncProposal after) {
             logger.info("receive proposal(key = " + key + ") update for loss connection: " + new String(JsonUtils.toJson(after)));
             RestoreConnectionProposalContent content = JsonUtils.fromJson(after.getContent(), RestoreConnectionProposalContent.class);
             long id = content.getId();
@@ -143,16 +134,11 @@ public class ConnectionManager {
             IStorageWrapper wrapper = (IStorageWrapper) StoragePhysicalTaskExecutor.getInstance().getStorageManager().getStorage(id).k;
             wrapper.setBlocked(false);
         }
-
-        @Override
-        public void onDelete(String s, Proposal proposal) {
-
-        }
     };
 
-    private Protocol lossConnectionProtocol;
+    private SyncProtocol lossConnectionProtocol;
 
-    private Protocol restoreConnectionProtocol;
+    private SyncProtocol restoreConnectionProtocol;
 
     private ConnectionManager() {
         iMetaManager = DefaultMetaManager.getInstance();
@@ -200,7 +186,7 @@ public class ConnectionManager {
             LossConnectionVoteContent content = new LossConnectionVoteContent(checkConnection(id));
             logger.info("[checkAndVoteForLossConnection] async check connection for " + id + ", is alive? " + content.isAlive());
             try {
-                lossConnectionProtocol.voteFor(key, new Vote(iMetaManager.getIginxId(), JsonUtils.toJson(content)));
+                lossConnectionProtocol.voteFor(key, new SyncVote(iMetaManager.getIginxId(), JsonUtils.toJson(content)));
             } catch (NetworkException e) {
                 logger.error("[checkAndVoteForLossConnection] vote for " + id + " failure: ", e);
             } catch (VoteExpiredException e) {
@@ -214,7 +200,7 @@ public class ConnectionManager {
             RestoreConnectionVoteContent content = new RestoreConnectionVoteContent(checkConnection(id));
             logger.info("[checkAndVoteForRestoreConnection] async check connection for " + id + ", is alive? " + content.isAlive());
             try {
-                restoreConnectionProtocol.voteFor(key, new Vote(iMetaManager.getIginxId(), JsonUtils.toJson(content)));
+                restoreConnectionProtocol.voteFor(key, new SyncVote(iMetaManager.getIginxId(), JsonUtils.toJson(content)));
             } catch (NetworkException e) {
                 logger.error("[checkAndVoteForRestoreConnection] vote for " + id + " failure: ", e);
             } catch (VoteExpiredException e) {
@@ -283,7 +269,7 @@ public class ConnectionManager {
                     logger.info("not loss connection for " + id + ", curr timestamp = " + System.currentTimeMillis());
                     if (block) {
                         // start proposal for restore storage status
-                        Proposal proposal = new Proposal(iMetaManager.getIginxId(), JsonUtils.toJson(new RestoreConnectionProposalContent(id)));
+                        SyncProposal proposal = new SyncProposal(iMetaManager.getIginxId(), JsonUtils.toJson(new RestoreConnectionProposalContent(id)));
                         boolean success;
                         try {
                             success = restoreConnectionProtocol.startProposal(String.format(PROPOSAL_KEY, id), proposal, new RestoreConnectionVoteListener(iMetaManager.getIginxClusterSize(), proposal, restoreConnectionProtocol));
@@ -306,7 +292,7 @@ public class ConnectionManager {
             logger.error("loss connection for " + id + ", curr timestamp = " + System.currentTimeMillis());
 
             // start proposal for check storage status
-            Proposal proposal = new Proposal(iMetaManager.getIginxId(), JsonUtils.toJson(new LossConnectionProposalContent(id)));
+            SyncProposal proposal = new SyncProposal(iMetaManager.getIginxId(), JsonUtils.toJson(new LossConnectionProposalContent(id)));
             boolean success;
             try {
                 success = lossConnectionProtocol.startProposal(String.format(PROPOSAL_KEY, id), proposal, new LossConnectionVoteListener(iMetaManager.getIginxClusterSize(), proposal, lossConnectionProtocol));
