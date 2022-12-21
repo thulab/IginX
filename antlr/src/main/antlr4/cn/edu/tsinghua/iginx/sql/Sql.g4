@@ -67,16 +67,11 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | predicatePath) comparisonOperator constant
-    | constant comparisonOperator (TIME | TIMESTAMP | predicatePath)
-    | predicatePath comparisonOperator predicatePath
-    | predicatePath OPERATOR_LIKE regex=stringLiteral
+    : (TIME | TIMESTAMP | path) comparisonOperator constant
+    | constant comparisonOperator (TIME | TIMESTAMP | path)
+    | path comparisonOperator path
+    | path OPERATOR_LIKE regex=stringLiteral
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
-    ;
-
-predicatePath
-    : INTACT LR_BRACKET path RR_BRACKET
-    | path
     ;
 
 withClause
@@ -128,9 +123,29 @@ tagValue
     ;
 
 fromClause
-    : FROM path (COMMA path)*
-    | FROM LR_BRACKET queryClause RR_BRACKET
+    : FROM LR_BRACKET queryClause RR_BRACKET
+    | FROM path joinPart*
     ;
+
+joinPart
+    : COMMA path
+    | CROSS JOIN path
+    | join path (
+        ON orExpression
+        | USING colList
+      )?
+    ;
+
+colList
+    : path (COMMA path)*
+    ;
+
+join
+    : INNER? JOIN
+    | (LEFT | RIGHT | FULL) OUTER? JOIN
+    | NATURAL ((LEFT | RIGHT) OUTER?)? JOIN
+    ;
+
 
 specialClause
     : limitClause
@@ -296,7 +311,6 @@ keyWords
     | REPLICA
     | IOTDB
     | INFLUXDB
-    | INTACT
     | DROP
     | REGISTER
     | PYTHON
@@ -314,6 +328,16 @@ keyWords
     | TIME_OFFSET
     | CANCEL
     | SLIDE
+    | INNER
+    | OUTER
+    | CROSS
+    | NATURAL
+    | LEFT
+    | RIGHT
+    | FULL
+    | JOIN
+    | ON
+    | USING
     ;
 
 dateFormat
@@ -526,10 +550,6 @@ ASC
     : A S C
     ;
 
-INTACT
-    : I N T A C T
-    ;
-
 DROP
     : D R O P
     ;
@@ -636,6 +656,46 @@ CLOSED
 
 SLIDE
     : S L I D E
+    ;
+
+INNER
+    : I N N E R
+    ;
+
+OUTER
+    : O U T E R
+    ;
+
+CROSS
+    : C R O S S
+    ;
+
+NATURAL
+    : N A T U R A L
+    ;
+
+LEFT
+    : L E F T
+    ;
+
+RIGHT
+    : R I G H T
+    ;
+
+FULL
+    : F U L L
+    ;
+
+JOIN
+    : J O I N
+    ;
+
+ON
+    : O N
+    ;
+
+USING
+    : U S I N G
     ;
 //============================
 // End of the keywords list

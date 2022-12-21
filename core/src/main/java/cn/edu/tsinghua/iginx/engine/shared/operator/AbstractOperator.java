@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
+
 public abstract class AbstractOperator implements Operator {
 
     private final OperatorType type;

@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
@@ -69,6 +70,12 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
         switch (operator.getType()) {
             case Join:
                 return executeJoin((Join) operator, streamA, streamB);
+            case CrossJoin:
+                return executeCrossJoin((CrossJoin) operator, streamA, streamB);
+            case InnerJoin:
+                return executeInnerJoin((InnerJoin) operator, streamA, streamB);
+            case OuterJoin:
+                return executeOuterJoin((OuterJoin) operator, streamA, streamB);
             case Union:
                 return executeUnion((Union) operator, streamA, streamB);
             default:
@@ -127,6 +134,60 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
             throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
         }
         return new JoinLazyStream(join, streamA, streamB);
+    }
+
+    private RowStream executeCrossJoin(CrossJoin crossJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new CrossJoinLazyStream(crossJoin, streamA, streamB);
+    }
+
+    private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        switch (innerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopInnerJoin(innerJoin, streamA, streamB);
+            case HashJoin:
+                return executeHashInnerJoin(innerJoin, streamA, streamB);
+            case SortedMergeJoin:
+                return executeSortedMergeInnerJoin(innerJoin, streamA, streamB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + innerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new NestedLoopInnerJoinLazyStream(innerJoin, streamA, streamB);
+    }
+
+    private RowStream executeHashInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new HashInnerJoinLazyStream(innerJoin, streamA, streamB);
+    }
+
+    private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new SortedMergeInnerJoinLazyStream(innerJoin, streamA, streamB);
+    }
+
+    private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        switch (outerJoin.getJoinAlgType()) {
+            case NestedLoopJoin:
+                return executeNestedLoopOuterJoin(outerJoin, streamA, streamB);
+            case HashJoin:
+                return executeHashOuterJoin(outerJoin, streamA, streamB);
+            case SortedMergeJoin:
+                return executeSortedMergeOuterJoin(outerJoin, streamA, streamB);
+            default:
+                throw new PhysicalException("Unknown join algorithm type: " + outerJoin.getJoinAlgType());
+        }
+    }
+
+    private RowStream executeNestedLoopOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new NestedLoopOuterJoinLazyStream(outerJoin, streamA, streamB);
+    }
+
+    private RowStream executeHashOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new HashOuterJoinLazyStream(outerJoin, streamA, streamB);
+    }
+
+    private RowStream executeSortedMergeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        return new SortedMergeOuterJoinLazyStream(outerJoin, streamA, streamB);
     }
 
     private RowStream executeUnion(Union union, RowStream streamA, RowStream streamB) {

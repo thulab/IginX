@@ -11,6 +11,10 @@ import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionUtils;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.JoinAlgType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
@@ -23,6 +27,7 @@ import cn.edu.tsinghua.iginx.sql.expression.Expression;
 import cn.edu.tsinghua.iginx.sql.expression.Expression.ExpressionType;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.join.JoinPart;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.Arrays;
@@ -71,7 +76,12 @@ public class QueryGenerator extends AbstractGenerator {
         if (selectStatement.getSubStatement() != null) {
             root = generateRoot(selectStatement.getSubStatement());
         } else {
-            root = filterAndMergeFragments(selectStatement);
+            policy.notify(selectStatement);
+            if (selectStatement.hasJoinParts()) {
+                root = filterAndMergeFragmentsWithJoin(selectStatement);
+            } else {
+                root = filterAndMergeFragments(selectStatement);
+            }
         }
 
         TagFilter tagFilter = selectStatement.getTagFilter();
@@ -227,25 +237,86 @@ public class QueryGenerator extends AbstractGenerator {
     }
 
     private Operator filterAndMergeFragments(SelectStatement selectStatement) {
-        policy.notify(selectStatement);
-
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
         TagFilter tagFilter = selectStatement.getTagFilter();
 
-        TimeSeriesRange interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+        TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesRange, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
-        if (!metaManager.hasFragment()) {
-            //on startup
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
-            metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
-        }
-
-        Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
+        Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = getFragmentsByTSInterval(selectStatement, interval);
         Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
         List<FragmentMeta> dummyFragments = pair.v;
 
+        return mergeRawData(fragments, dummyFragments, pathList, tagFilter);
+    }
+
+    private Operator filterAndMergeFragmentsWithJoin(SelectStatement selectStatement) {
+        List<String> prefixList = new ArrayList<>();
+        prefixList.add(selectStatement.getFromPath() + ALL_PATH_SUFFIX);
+        selectStatement.getJoinParts().forEach(joinPart -> prefixList.add(joinPart.getPathPrefix() + ALL_PATH_SUFFIX));
+
+        TagFilter tagFilter = selectStatement.getTagFilter();
+
+        List<Operator> joinList = new ArrayList<>();
+        // 1. get all data of single prefix like a.* or b.*
+        prefixList.forEach(prefix -> {
+            Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> pair = getFragmentsByTSInterval(selectStatement, new TimeSeriesInterval(prefix, prefix));
+            Map<TimeInterval, List<FragmentMeta>> fragments = pair.k;
+            List<FragmentMeta> dummyFragments = pair.v;
+            joinList.add(mergeRawData(fragments, dummyFragments, Collections.singletonList(prefix), tagFilter));
+        });
+        // 2. merge by declare
+        Operator left = joinList.get(0);
+        String prefixA = selectStatement.getFromPath();
+        for (int i = 1; i < joinList.size(); i++) {
+            JoinPart joinPart = selectStatement.getJoinParts().get(i - 1);
+            Operator right = joinList.get(i);
+
+            String prefixB = joinPart.getPathPrefix();
+
+            JoinAlgType joinAlgType = JoinAlgType.NestedLoopJoin;
+            Filter filter = joinPart.getFilter();
+            if (filter != null && filter.getType().equals(FilterType.Path)) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
+
+            List<String> joinColumns = joinPart.getJoinColumns();
+            if (joinColumns != null && joinColumns.size() == 1) {
+                joinAlgType = JoinAlgType.HashJoin;
+            }
+
+            switch (joinPart.getJoinType()) {
+                case CrossJoin:
+                    left = new CrossJoin(new OperatorSource(left), new OperatorSource(right));
+                    break;
+                case InnerJoin:
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, filter, joinColumns, false, joinAlgType);
+                    break;
+                case InnerNatualJoin:
+                    left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, filter, joinColumns, true, joinAlgType);
+                    break;
+                case LeftNatualJoin:
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.LEFT, filter, joinColumns, true, joinAlgType);
+                    break;
+                case RightNatualJoin:
+                    new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.RIGHT, filter, joinColumns, true, joinAlgType);
+                    break;
+                case FullOuterJoin:
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.FULL, filter, joinColumns, false, joinAlgType);
+                    break;
+                case LeftOuterJoin:
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.LEFT, filter, joinColumns, false, joinAlgType);
+                    break;
+                case RightOuterJoin:
+                    left = new OuterJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, OuterJoinType.RIGHT, filter, joinColumns, false, joinAlgType);
+                    break;
+            }
+
+            prefixA = prefixB;
+        }
+        return left;
+    }
+
+    private Operator mergeRawData(Map<TimeInterval, List<FragmentMeta>> fragments, List<FragmentMeta> dummyFragments, List<String> pathList, TagFilter tagFilter) {
         List<Operator> unionList = new ArrayList<>();
         fragments.forEach((k, v) -> {
             List<Operator> joinList = new ArrayList<>();
@@ -262,6 +333,17 @@ public class QueryGenerator extends AbstractGenerator {
             operator = OperatorUtils.joinOperatorsByTime(joinList);
         }
         return operator;
+    }
+
+    private Pair<Map<TimeInterval, List<FragmentMeta>>, List<FragmentMeta>> getFragmentsByTSInterval(SelectStatement selectStatement, TimeSeriesInterval interval) {
+        Map<TimeSeriesRange, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
+        if (!metaManager.hasFragment()) {
+            //on startup
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
+            metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
+            fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        }
+        return keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
     }
 
     private List<String> pathMatchPrefix(List<String> pathList, String prefix) {

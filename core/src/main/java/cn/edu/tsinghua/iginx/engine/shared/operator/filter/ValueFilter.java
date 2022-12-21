@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import java.util.Objects;
 
 public class ValueFilter implements Filter {
 
@@ -72,5 +73,23 @@ public class ValueFilter implements Filter {
             "\"" + value.getBinaryVAsString() + "\"" :
             value.getValue();
         return path + " " + Op.op2Str(op) + " " + valueObj;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ValueFilter that = (ValueFilter) o;
+        return type == that.type && Objects.equals(path, that.path) && Objects
+            .equals(value, that.value) && op == that.op;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, path, value, op);
     }
 }
