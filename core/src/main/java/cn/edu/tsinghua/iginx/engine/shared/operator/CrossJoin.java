@@ -3,16 +3,14 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
-import java.util.List;
+public class CrossJoin extends AbstractBinaryOperator {
 
-public class CombineNonQuery extends AbstractMultipleOperator {
-
-    public CombineNonQuery(List<Source> sources) {
-        super(OperatorType.CombineNonQuery, sources);
+    public CrossJoin(Source sourceA, Source sourceB) {
+        super(OperatorType.CrossJoin, sourceA, sourceB);
     }
 
     @Override
     public Operator copy() {
-        return new CombineNonQuery(getSources());
+        return new CrossJoin(getSourceA().copy(), getSourceB().copy());
     }
 }

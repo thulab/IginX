@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

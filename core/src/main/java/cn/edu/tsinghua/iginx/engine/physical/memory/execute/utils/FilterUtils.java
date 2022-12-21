@@ -24,6 +24,9 @@ import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class FilterUtils {
@@ -151,5 +154,26 @@ public class FilterUtils {
                 return ValueUtils.regexCompare(valueA, valueB);
         }
         return false;
+    }
+    
+    public static List<Pair<String, String>> getJoinColumnsFromFilter(Filter filter) {
+        List<Pair<String, String>> l = new ArrayList<>();
+        switch (filter.getType()) {
+            case And:
+                AndFilter andFilter = (AndFilter) filter;
+                for (Filter childFilter : andFilter.getChildren()) {
+                    l.addAll(getJoinColumnsFromFilter(childFilter));
+                }
+            case Path:
+                l.add(getJoinColumnFromPathFilter((PathFilter) filter));
+        }
+        return l;
+    }
+    
+    public static Pair<String, String> getJoinColumnFromPathFilter(PathFilter pathFilter) {
+        if (pathFilter.getOp().equals(Op.E)) {
+            return new Pair<>(pathFilter.getPathA(), pathFilter.getPathB());
+        }
+        return null;
     }
 }
