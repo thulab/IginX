@@ -39,6 +39,10 @@ public final class StorageUnitMeta {
 
     private boolean dummy = false;
 
+    private StorageUnitState state = StorageUnitState.NORMAL;
+
+    private String migrationTo = null;
+
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
@@ -73,6 +77,19 @@ public final class StorageUnitMeta {
         this.createdBy = createdBy;
         this.initialStorageUnit = initialStorageUnit;
         this.dummy = dummy;
+        this.replicas = replicas;
+    }
+
+    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, long createdBy, boolean initialStorageUnit, boolean dummy, StorageUnitState state, String migrationTo, List<StorageUnitMeta> replicas) {
+        this.id = id;
+        this.storageEngineId = storageEngineId;
+        this.masterId = masterId;
+        this.isMaster = isMaster;
+        this.createdBy = createdBy;
+        this.initialStorageUnit = initialStorageUnit;
+        this.dummy = dummy;
+        this.state = state;
+        this.migrationTo = migrationTo;
         this.replicas = replicas;
     }
 
@@ -188,5 +205,21 @@ public final class StorageUnitMeta {
 
     public boolean isDummy() {
         return dummy;
+    }
+
+    public StorageUnitState getState() {
+        return state;
+    }
+
+    public void setState(StorageUnitState state) {
+        this.state = state;
+    }
+
+    public String getMigrationTo() {
+        return migrationTo;
+    }
+
+    public void setMigrationTo(String migrationTo) {
+        this.migrationTo = migrationTo;
     }
 }

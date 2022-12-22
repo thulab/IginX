@@ -42,6 +42,8 @@ public interface IMetaManager {
      */
     boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas);
 
+    boolean migrationStorageUnits(Map<String, Integer> migrationMap);
+
     /**
      * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
      */

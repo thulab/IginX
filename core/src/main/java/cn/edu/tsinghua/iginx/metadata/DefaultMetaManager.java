@@ -35,6 +35,7 @@ import cn.edu.tsinghua.iginx.protocol.NetworkException;
 import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.StorageUnit;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -331,6 +332,27 @@ public class DefaultMetaManager implements IMetaManager {
             return true;
         } catch (MetaStorageException e) {
             logger.error("add storage engines error:", e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean migrationStorageUnits(Map<String, Integer> migrationMap) {
+        try {
+            storage.lockStorageUnit();
+            for (String storageUnitId: migrationMap.keySet()) {
+                String newStorageUnitId = storage.addStorageUnit();
+                StorageUnitMeta newStorageUnit = new StorageUnitMeta(newStorageUnitId, );
+            }
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("migration storage unit error: ", e);
+        } finally {
+            try {
+                storage.releaseStorageUnit();
+            } catch (MetaStorageException e) {
+                logger.error("release storage unit lock error: ", e);
+            }
         }
         return false;
     }
