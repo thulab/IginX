@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public final class StorageUnitMeta {
+public final class StorageUnitMeta implements Cloneable {
 
     private String id;
 
@@ -146,6 +146,22 @@ public final class StorageUnitMeta {
         return storageUnitMeta;
     }
 
+    public StorageUnitMeta migrationStorageUnitMeta(String id, long migrationBy, long storageEngineId) {
+        String masterId = getMasterId();
+        if (isMaster) {
+            masterId = id;
+        }
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+        storageUnitMeta.setCreatedBy(migrationBy);
+        storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
+        storageUnitMeta.setState(StorageUnitState.CREATING);
+        storageUnitMeta.setReplicas(replicas);
+
+        this.setMigrationTo(id);
+        this.setState(StorageUnitState.MIGRATION);
+        return storageUnitMeta;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -222,4 +238,14 @@ public final class StorageUnitMeta {
     public void setMigrationTo(String migrationTo) {
         this.migrationTo = migrationTo;
     }
+
+    @Override
+    public StorageUnitMeta clone() {
+        try {
+            return (StorageUnitMeta) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
 }

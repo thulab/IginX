@@ -25,8 +25,6 @@ import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.proposal.SyncProposal;
 import cn.edu.tsinghua.iginx.protocol.NetworkException;
 import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 
@@ -42,7 +40,9 @@ public interface IMetaManager {
      */
     boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas);
 
-    boolean migrationStorageUnits(Map<String, Integer> migrationMap);
+    Map<String, String> startMigrationStorageUnits(Map<String, Long> migrationMap);
+
+    boolean finishMigrationStorageUnit(String storageUnitId);
 
     /**
      * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
@@ -83,6 +83,8 @@ public interface IMetaManager {
      * 获取所有的分片，用于 debug
      */
     List<FragmentMeta> getFragments();
+
+    List<FragmentMeta> getFragmentsByStorageUnit(String storageUnitId);
 
     /**
      * 获取某个du的时空范围

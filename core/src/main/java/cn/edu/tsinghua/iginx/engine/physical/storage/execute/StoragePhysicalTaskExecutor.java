@@ -39,6 +39,7 @@ import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitState;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -131,12 +132,15 @@ public class StoragePhysicalTaskExecutor {
                                         logger.error("task " + task + " will not broadcasting to replicas for the sake of exception: " + result.getException());
                                         task.setResult(new TaskExecuteResult(result.getException()));
                                     } else {
-                                        StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
+                                        StorageUnitMeta masterStorageUnit = metaManager.getStorageUnit(id);
                                         List<String> replicaIds = masterStorageUnit.getReplicas()
                                                 .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
                                         replicaIds.add(masterStorageUnit.getId());
+                                        if (masterStorageUnit.getState() == StorageUnitState.MIGRATION) { // 迁移过程需要双写
+                                            replicaIds.add(masterStorageUnit.getMigrationTo());
+                                        }
                                         for (String replicaId : replicaIds) {
-                                            if (replicaId.equals(task.getStorageUnit())) {
+                                            if (replicaId.equals(id)) {
                                                 continue;
                                             }
                                             StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
@@ -255,7 +259,12 @@ public class StoragePhysicalTaskExecutor {
     public void commit(List<StoragePhysicalTask> tasks) {
         for (StoragePhysicalTask task : tasks) {
             if (replicaDispatcher == null) {
-                storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task); // 默认情况下，异步写备，查询只查主
+                String masterStorageUnitId = task.getTargetFragment().getMasterStorageUnitId();
+                StorageUnitMeta masterStorageUnit = DefaultMetaManager.getInstance().getStorageUnit(masterStorageUnitId);
+                if (masterStorageUnit.getState() == StorageUnitState.DISCARD) {
+                    masterStorageUnitId = masterStorageUnit.getMigrationTo();
+                }
+                storageTaskQueues.get(masterStorageUnitId).addTask(task); // 默认情况下，异步写备，查询只查主
             } else {
                 storageTaskQueues.get(replicaDispatcher.chooseReplica(task)).addTask(task); // 在优化策略提供了选择器的情况下，利用选择器提供的结果
             }

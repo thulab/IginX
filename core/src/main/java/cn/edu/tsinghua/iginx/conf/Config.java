@@ -207,6 +207,8 @@ public class Config {
      */
     private double storageRestoreHeartbeatProbability = 0.05;
 
+    private int migrationThreadPoolSize = 20;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -793,5 +795,13 @@ public class Config {
 
     public void setStorageRestoreHeartbeatProbability(double storageRestoreHeartbeatProbability) {
         this.storageRestoreHeartbeatProbability = storageRestoreHeartbeatProbability;
+    }
+
+    public int getMigrationThreadPoolSize() {
+        return migrationThreadPoolSize;
+    }
+
+    public void setMigrationThreadPoolSize(int migrationThreadPoolSize) {
+        this.migrationThreadPoolSize = migrationThreadPoolSize;
     }
 }

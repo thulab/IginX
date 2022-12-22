@@ -149,6 +149,7 @@ public class ConfigDescriptor {
             config.setStorageRetryConnectInterval(ConfigUtils.parseTime(properties.getProperty("storage_retry_connect_interval", "50s")));
             config.setStorageHeartbeatThresholdPoolSize(Integer.parseInt(properties.getProperty("storage_heartbeat_threshold_pool_size", "10")));
             config.setStorageRestoreHeartbeatProbability(Double.parseDouble(properties.getProperty("storage_restore_heartbeat_probability", "0.05")));
+            config.setMigrationThreadPoolSize(Integer.parseInt(properties.getProperty("migration_thread_pool_size", "20")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

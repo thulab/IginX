@@ -35,7 +35,6 @@ import cn.edu.tsinghua.iginx.protocol.NetworkException;
 import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.StorageUnit;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -337,13 +336,66 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean migrationStorageUnits(Map<String, Integer> migrationMap) {
+    public Map<String, String> startMigrationStorageUnits(Map<String, Long> migrationMap) {
         try {
+            Map<String, String> migrationStorageUnitMap = new HashMap<>();
             storage.lockStorageUnit();
             for (String storageUnitId: migrationMap.keySet()) {
                 String newStorageUnitId = storage.addStorageUnit();
-                StorageUnitMeta newStorageUnit = new StorageUnitMeta(newStorageUnitId, );
+                StorageUnitMeta storageUnit = getStorageUnit(storageUnitId);
+                StorageUnitMeta clonedStorageUnit = storageUnit.clone();
+                StorageUnitMeta newStorageUnit = clonedStorageUnit.migrationStorageUnitMeta(newStorageUnitId, id, migrationMap.get(storageUnitId));
+                // 更新新的 storage unit
+                cache.updateStorageUnit(newStorageUnit);
+                for (StorageUnitHook hook : storageUnitHooks) {
+                    hook.onChange(null, newStorageUnit);
+                }
+                storage.updateStorageUnit(newStorageUnit);
+                // 更新旧的 storage unit
+                cache.updateStorageUnit(clonedStorageUnit);
+                for (StorageUnitHook hook : storageUnitHooks) {
+                    hook.onChange(storageUnit, clonedStorageUnit);
+                }
+                storage.updateStorageUnit(clonedStorageUnit);
+                migrationStorageUnitMap.put(storageUnitId, newStorageUnitId);
             }
+            return migrationStorageUnitMap;
+        } catch (MetaStorageException e) {
+            logger.error("migration storage unit error: ", e);
+        } finally {
+            try {
+                storage.releaseStorageUnit();
+            } catch (MetaStorageException e) {
+                logger.error("release storage unit lock error: ", e);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean finishMigrationStorageUnit(String storageUnitId) {
+        try {
+            storage.lockStorageUnit();
+            StorageUnitMeta sourceStorageUnit = getStorageUnit(storageUnitId);
+            StorageUnitMeta clonedSourceStorageUnit = sourceStorageUnit.clone();
+            clonedSourceStorageUnit.setState(StorageUnitState.DISCARD);
+
+            StorageUnitMeta targetStorageUnit = getStorageUnit(sourceStorageUnit.getMigrationTo());
+            StorageUnitMeta clonedTargetStorageUnit = targetStorageUnit.clone();
+            clonedTargetStorageUnit.setState(StorageUnitState.NORMAL);
+
+            cache.updateStorageUnit(clonedTargetStorageUnit);
+            for (StorageUnitHook hook : storageUnitHooks) {
+                hook.onChange(targetStorageUnit, clonedTargetStorageUnit);
+            }
+            storage.updateStorageUnit(clonedTargetStorageUnit);
+            // 更新旧的 storage unit
+            cache.updateStorageUnit(clonedSourceStorageUnit);
+            for (StorageUnitHook hook : storageUnitHooks) {
+                hook.onChange(sourceStorageUnit, clonedSourceStorageUnit);
+            }
+            storage.updateStorageUnit(clonedSourceStorageUnit);
+
             return true;
         } catch (MetaStorageException e) {
             logger.error("migration storage unit error: ", e);
@@ -410,6 +462,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<FragmentMeta> getFragments() {
         return cache.getFragments();
+    }
+
+    @Override
+    public List<FragmentMeta> getFragmentsByStorageUnit(String storageUnitId) {
+        return cache.getFragmentListByStorageUnitId(storageUnitId);
     }
 
     @Override

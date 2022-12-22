@@ -450,6 +450,39 @@ public abstract class MigrationPolicy {
     }
   }
 
+  public boolean migrationData(String sourceStorageUnitId, String targetStorageUnitId) {
+    try {
+      List<FragmentMeta> fragmentMetas = DefaultMetaManager.getInstance().getFragmentsByStorageUnit(sourceStorageUnitId);
+      Set<String> pathRegexSet = new HashSet<>();
+      pathRegexSet.add(sourceStorageUnitId);
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(), pathRegexSet, null,
+              Integer.MAX_VALUE, 0);
+      RowStream rowStream = physicalEngine.execute(showTimeSeries);
+      SortedSet<String> pathSet = new TreeSet<>();
+      rowStream.getHeader().getFields().forEach(field -> {
+        String timeSeries = field.getName();
+        for (FragmentMeta fragmentMeta: fragmentMetas) {
+          if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
+            pathSet.add(timeSeries);
+          }
+        }
+      });
+      StorageUnitMeta sourceStorageUnit = DefaultMetaManager.getInstance().getStorageUnit(sourceStorageUnitId);
+      StorageUnitMeta targetStorageUnit = DefaultMetaManager.getInstance().getStorageUnit(targetStorageUnitId);
+      // 开始迁移数据
+      for (FragmentMeta fragmentMeta: fragmentMetas) {
+        Migration migration = new Migration(new GlobalSource(), sourceStorageUnit.getStorageEngineId(), targetStorageUnit.getStorageEngineId(),
+                fragmentMeta, new ArrayList<>(pathSet), targetStorageUnit);
+        physicalEngine.execute(migration);
+      }
+      return true;
+    } catch (Exception e) {
+      logger.error("encounter error when migrate data from {} to {} ", sourceStorageUnitId,
+              targetStorageUnitId, e);
+    }
+    return false;
+  }
+
   private FragmentMeta reshardFragment(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
     try {
