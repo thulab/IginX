@@ -50,7 +50,7 @@ public class Config {
 
     private TimePrecision timePrecision = TimePrecision.NS;
 
-    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor,parquet=cn.edu.tsinghua.iginx.parquet.parquetStorage";
+    private String databaseClassNames = "iotdb11=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,iotdb12=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBStorage,parquet=cn.edu.tsinghua.iginx.parquet.ParquetStorage";
     //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
