@@ -38,7 +38,7 @@ public class ParquetHistoryDataGeneratorTest {
         }
 
         String tableName = "tmp";
-        stmt.execute(String.format("CREATE TABLE %s (time BIGINT, test$sg$cpu_usage DOUBLE, test$sg$engine INTEGER, test$sg$desc VARCHAR);", tableName));
+        stmt.execute(String.format("CREATE TABLE %s (time BIGINT, cpu_usage DOUBLE, engine INTEGER, status VARCHAR);", tableName));
         stmt.execute(String.format(
             "INSERT INTO %s VALUES "
                 + "(1, 12.3, 1, 'normal'), "

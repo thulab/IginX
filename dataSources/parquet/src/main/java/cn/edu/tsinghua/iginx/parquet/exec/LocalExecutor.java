@@ -55,6 +55,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import org.duckdb.DuckDBConnection;
 import org.slf4j.Logger;
@@ -111,11 +113,15 @@ public class LocalExecutor implements Executor {
 
     @Override
     public TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, boolean isDummyStorageUnit) {
+        String filter, String storageUnit, boolean isDummyStorageUnit, String schemaPrefix) {
         try {
             createDUDirectoryIfNotExists(storageUnit);
         } catch (PhysicalException e) {
             return new TaskExecuteResult(e);
+        }
+
+        if (isDummyStorageUnit) {
+            return executeDummyProjectTask(paths, tagFilter, filter, storageUnit, schemaPrefix);
         }
 
         try {
@@ -132,9 +138,6 @@ public class LocalExecutor implements Executor {
             }
             pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
             Path path = Paths.get(dataDir, storageUnit, "*", "*.parquet");
-            if (isDummyStorageUnit) {
-                path = Paths.get(dataDir, "*.parquet");
-            }
 
             ResultSet rs = stmt.executeQuery(
                 String.format(SELECT_STMT,
@@ -146,6 +149,53 @@ public class LocalExecutor implements Executor {
 
             RowStream rowStream = new ClearEmptyRowStreamWrapper(
                 new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter)));
+            return new TaskExecuteResult(rowStream);
+        } catch (SQLException | PhysicalException e) {
+            logger.error(e.getMessage());
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in parquet failure", e));
+        }
+    }
+
+    private TaskExecuteResult executeDummyProjectTask(List<String> paths, TagFilter tagFilter,
+        String filter, String storageUnit, String schemaPrefix) {
+        try {
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+
+            // trim prefix
+            List<String> pathList = new ArrayList<>();
+            if (schemaPrefix != null && !schemaPrefix.equals("")) {
+                for (String path : paths) {
+                    if (path.contains(schemaPrefix)) {
+                        pathList.add(path.substring(path.indexOf(schemaPrefix) + schemaPrefix.length() + 1));
+                    } else if (path.equals("*")) {
+                        pathList.add(path);
+                    }
+                }
+            }
+
+            pathList = determinePathListWithTagFilter(storageUnit, pathList, tagFilter, true);
+            if (pathList.isEmpty()) {
+                RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                    ParquetQueryRowStream.EMPTY_PARQUET_ROW_STREAM
+                );
+                return new TaskExecuteResult(rowStream);
+            }
+
+            StringBuilder builder = new StringBuilder();
+            pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
+            Path path = Paths.get(dataDir, "*.parquet");
+
+            ResultSet rs = stmt.executeQuery(
+                String.format(SELECT_STMT,
+                    builder.toString(),
+                    path.toString(),
+                    filter));
+            stmt.close();
+            conn.close();
+
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter, schemaPrefix)));
             return new TaskExecuteResult(rowStream);
         } catch (SQLException | PhysicalException e) {
             logger.error(e.getMessage());

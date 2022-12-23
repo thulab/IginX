@@ -138,7 +138,8 @@ public class ParquetStorage implements IStorage {
                 project.getTagFilter(),
                 FilterTransformer.toString(filter),
                 storageUnit,
-                isDummyStorageUnit);
+                isDummyStorageUnit,
+                task.getTargetFragment().getTsInterval().getSchemaPrefix());
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executor.executeInsertTask(
