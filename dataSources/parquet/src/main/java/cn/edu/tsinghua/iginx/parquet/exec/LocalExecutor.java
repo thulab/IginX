@@ -281,12 +281,11 @@ public class LocalExecutor implements Executor {
         DataViewWrapper data = new DataViewWrapper(dataView);
         List<WritePlan> writePlans = getWritePlans(data, storageUnit);
         for (WritePlan writePlan : writePlans) {
-            ReentrantReadWriteLock lock;
-            if (lockMap.containsKey(writePlan.getFilePath().toString())) {
-                lock = lockMap.get(writePlan.getFilePath().toString());
-            } else {
+            ReentrantReadWriteLock lock = lockMap.get(writePlan.getFilePath().toString());
+            if (lock == null) {
                 lock = new ReentrantReadWriteLock();
-                lockMap.put(writePlan.getFilePath().toString(), lock);
+                lockMap.putIfAbsent(writePlan.getFilePath().toString(), lock);
+                lock = lockMap.get(writePlan.getFilePath().toString());
             }
 
             try {
