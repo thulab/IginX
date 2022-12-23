@@ -49,12 +49,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
@@ -98,6 +100,8 @@ public class LocalExecutor implements Executor {
     private static final String DELETE_DATA_STMT = "UPDATE %s SET %s=NULL WHERE time >= %s AND time <= %s";
 
     private static final String DROP_COLUMN_STMT = "ALTER TABLE %s DROP %s";
+
+    private static final Map<String, ReentrantReadWriteLock> lockMap = new ConcurrentHashMap<>();
 
     private final ParquetStoragePolicy policy;
 
@@ -277,11 +281,22 @@ public class LocalExecutor implements Executor {
         DataViewWrapper data = new DataViewWrapper(dataView);
         List<WritePlan> writePlans = getWritePlans(data, storageUnit);
         for (WritePlan writePlan : writePlans) {
+            ReentrantReadWriteLock lock;
+            if (lockMap.containsKey(writePlan.getFilePath().toString())) {
+                lock = lockMap.get(writePlan.getFilePath().toString());
+            } else {
+                lock = new ReentrantReadWriteLock();
+                lockMap.put(writePlan.getFilePath().toString(), lock);
+            }
+
             try {
+                lock.writeLock().lock();
                 executeWritePlan(data, writePlan);
             } catch (SQLException e) {
                 logger.error("execute row write plan error", e);
                 return new TaskExecuteResult(null, new PhysicalException("execute insert task in parquet failure", e));
+            } finally {
+                lock.writeLock().unlock();
             }
         }
         return new TaskExecuteResult(null, null);
@@ -292,7 +307,7 @@ public class LocalExecutor implements Executor {
         Statement stmt = conn.createStatement();
         Path path = writePlan.getFilePath();
         String filename = writePlan.getFilePath().getFileName().toString();
-        String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+        String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR) + System.currentTimeMillis();
 
         // prepare to write data.
         if (!Files.exists(path)) {
