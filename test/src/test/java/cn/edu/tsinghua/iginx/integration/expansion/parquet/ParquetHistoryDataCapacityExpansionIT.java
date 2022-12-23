@@ -77,7 +77,7 @@ public class ParquetHistoryDataCapacityExpansionIT {
     }
 
     private void testCapacityExpansion() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6610, \"parquet\", \"dir:parquetData2, has_data:true, is_read_only:true, schema_prefix:test\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6610, \"parquet\", \"dir:test, has_data:true, is_read_only:true\");");
 
         String statement = "select * from test.us";
         String expect =

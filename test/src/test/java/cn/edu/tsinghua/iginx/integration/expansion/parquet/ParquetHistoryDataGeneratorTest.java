@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ParquetHistoryDataGeneratorTest {
 
-    private static final String DATA_DIR = "../parquetData2";
+    private static final String DATA_DIR = "../test";
 
     private static final String FILENAME = "data.parquet";
 
