@@ -19,7 +19,9 @@
 package cn.edu.tsinghua.iginx.mqtt;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import com.google.gson.*;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +33,6 @@ import java.util.List;
 public class JsonPayloadFormatter implements IPayloadFormatter {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonPayloadFormatter.class);
-
-    private static final Gson gson = new GsonBuilder().create();
 
     private static final String JSON_KEY_PATH = "path";
     private static final String JSON_KEY_TIMESTAMP = "timestamp";
@@ -50,39 +50,38 @@ public class JsonPayloadFormatter implements IPayloadFormatter {
         }
         String txt = payload.toString(StandardCharsets.UTF_8);
         logger.info("receive message: " + txt);
-        JsonArray jsonArray = gson.fromJson(txt, JsonArray.class);
+        JSONArray jsonArray = JSON.parseArray(txt);
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
-            JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
-            String path = jsonObject.get(JSON_KEY_PATH).getAsString();
-            long timestamp = jsonObject.get(JSON_KEY_TIMESTAMP).getAsLong();
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            String path = jsonObject.getString(JSON_KEY_PATH);
+            long timestamp = jsonObject.getLong(JSON_KEY_TIMESTAMP);
             DataType dataType = null;
             Object value = null;
-            JsonElement jsonValue = jsonObject.get(JSON_KEY_VALUE);
-            switch (jsonObject.get(JSON_KEY_DATATYPE).getAsString()) {
+            switch (jsonObject.getString(JSON_KEY_DATATYPE)) {
                 case "int":
                     dataType = DataType.INTEGER;
-                    value = jsonValue.getAsInt();
+                    value = jsonObject.getInteger(JSON_KEY_VALUE);
                     break;
                 case "long":
                     dataType = DataType.LONG;
-                    value = jsonValue.getAsLong();
+                    value = jsonObject.getLong(JSON_KEY_VALUE);
                     break;
                 case "boolean":
                     dataType = DataType.BOOLEAN;
-                    value = jsonValue.getAsBoolean();
+                    value = jsonObject.getBoolean(JSON_KEY_VALUE);
                     break;
                 case "float":
                     dataType = DataType.FLOAT;
-                    value = jsonValue.getAsFloat();
+                    value = jsonObject.getFloat(JSON_KEY_VALUE);
                     break;
                 case "double":
                     dataType = DataType.DOUBLE;
-                    value = jsonValue.getAsDouble();
+                    value = jsonObject.getDouble(JSON_KEY_VALUE);
                     break;
                 case "text":
                     dataType = DataType.BINARY;
-                    value = jsonValue.getAsString().getBytes(StandardCharsets.UTF_8);
+                    value = jsonObject.getString(JSON_KEY_VALUE).getBytes(StandardCharsets.UTF_8);
                     break;
             }
             if (value != null) {
