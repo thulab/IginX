@@ -68,10 +68,10 @@
             <artifactId>javax.inject</artifactId>
             <version>1</version>
         </dependency>
-        <!--dependency>
+        <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-grizzly2-http</artifactId>
-        </dependency-->
+        </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
