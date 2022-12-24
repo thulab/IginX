@@ -18,15 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.resource.system;
 
-import cn.hutool.system.oshi.CpuInfo;
 import cn.hutool.system.oshi.OshiUtil;
 import com.google.common.util.concurrent.AtomicDouble;
 import oshi.hardware.GlobalMemory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class DefaultSystemMetricsService implements SystemMetricsService {
 

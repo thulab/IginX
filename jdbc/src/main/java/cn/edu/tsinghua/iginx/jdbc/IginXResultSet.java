@@ -2,9 +2,9 @@ package cn.edu.tsinghua.iginx.jdbc;
 
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import com.google.common.primitives.Shorts;
+//import com.google.common.primitives.Ints;
+//import com.google.common.primitives.Longs;
+//import com.google.common.primitives.Shorts;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
@@ -280,11 +280,11 @@ public class IginXResultSet implements ResultSet {
         if (value instanceof String)
             return ((String) value).getBytes();
         if (value instanceof Long)
-            return Longs.toByteArray((long) value);
+            return Utils.LongToByteArray((long) value);
         if (value instanceof Integer)
-            return Ints.toByteArray((int) value);
+            return Utils.IntToByteArray((int) value);
         if (value instanceof Short)
-            return Shorts.toByteArray((short) value);
+            return Utils.ShortToByteArray((short) value);
         if (value instanceof Byte)
             return new byte[]{(byte) value};
         if (value instanceof Timestamp) {
