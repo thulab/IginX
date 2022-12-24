@@ -96,6 +96,7 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
 
     public void setClosed(boolean closed);
 
+    //Strange function: it should not work on the implementation of TimeSeriesPrefixRange
     public static TimeSeriesRange fromString(String str) {
         String[] parts = str.split("-");
         assert parts.length == 2;
