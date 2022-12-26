@@ -106,4 +106,23 @@ public class Utils {
             return timestamp.toLocalDateTime().format(microSecFormatter);
         return timestamp.toLocalDateTime().format(milliSecFormatter);
     }
+
+    public static byte[] IntToByteArray(int value) {
+        return new byte[]{(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value};
+    }
+
+    public static byte[] ShortToByteArray(short value) {
+        return new byte[]{(byte)(value >> 8), (byte)value};
+    }
+
+    public static byte[] LongToByteArray(long value) {
+        byte[] result = new byte[8];
+
+        for(int i = 7; i >= 0; --i) {
+            result[i] = (byte)((int)(value & 255L));
+            value >>= 8;
+        }
+
+        return result;
+    }
 }
