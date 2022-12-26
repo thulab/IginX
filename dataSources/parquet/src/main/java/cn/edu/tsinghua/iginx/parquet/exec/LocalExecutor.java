@@ -403,15 +403,15 @@ public class LocalExecutor implements Executor {
                 if (bitmapView.get(j)) {
                     if (startTimeIdx <= j && j <= endTimeIdx) {
                         if (data.getDataType(i) == DataType.BINARY) {
-                            rowValueArray[j - startPathIdx] += "'" + new String((byte[]) data.getValue(i, index)) + "', ";
+                            rowValueArray[j - startTimeIdx] += "'" + new String((byte[]) data.getValue(i, index)) + "', ";
                         } else {
-                            rowValueArray[j - startPathIdx] += data.getValue(i, index) + ", ";
+                            rowValueArray[j - startTimeIdx] += data.getValue(i, index) + ", ";
                         }
                     }
                     index++;
                 } else {
                     if (startTimeIdx <= j && j <= endTimeIdx) {
-                        rowValueArray[j - startPathIdx] += "NULL, ";
+                        rowValueArray[j - startTimeIdx] += "NULL, ";
                     }
                 }
             }

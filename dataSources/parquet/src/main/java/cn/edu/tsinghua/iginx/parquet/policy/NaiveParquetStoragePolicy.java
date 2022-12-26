@@ -99,7 +99,7 @@ public class NaiveParquetStoragePolicy implements ParquetStoragePolicy {
     private boolean needCreateNewDataPartition(File file) {
         long fileSize = FileUtils.sizeOf(file);
         boolean needCreateNewDataPartition = fileSize > FILE_SIZE_LIMIT_10MB;
-        logger.info("current data file '{}' size: {} mb", file.getAbsolutePath(), fileSize / 1024 / 1024);
+//        logger.info("current data file '{}' size: {} mb", file.getAbsolutePath(), fileSize / 1024 / 1024);
         if (needCreateNewDataPartition) {
             logger.info("current data file '{}', size: {} mb, create a new data partition",
                 file.getAbsolutePath(), fileSize / 1024 / 1024);
