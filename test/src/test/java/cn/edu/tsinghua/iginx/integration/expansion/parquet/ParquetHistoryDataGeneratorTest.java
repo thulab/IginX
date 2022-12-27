@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ParquetHistoryDataGeneratorTest {
 
-    private static final String DATA_DIR = "../parquetData2";
+    private static final String DATA_DIR = "../test";
 
     private static final String FILENAME = "data.parquet";
 
@@ -38,7 +38,7 @@ public class ParquetHistoryDataGeneratorTest {
         }
 
         String tableName = "tmp";
-        stmt.execute(String.format("CREATE TABLE %s (time BIGINT, test$sg$cpu_usage DOUBLE, test$sg$engine INTEGER, test$sg$desc VARCHAR);", tableName));
+        stmt.execute(String.format("CREATE TABLE %s (time BIGINT, cpu_usage DOUBLE, engine INTEGER, status VARCHAR);", tableName));
         stmt.execute(String.format(
             "INSERT INTO %s VALUES "
                 + "(1, 12.3, 1, 'normal'), "

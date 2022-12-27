@@ -83,7 +83,8 @@ public class ParquetWorker implements ParquetService.Iface {
             tagFilter,
             req.getFilter(),
             req.getStorageUnit(),
-            req.isDummyStorageUnit);
+            req.isDummyStorageUnit,
+            req.getSchemaPrefix());
 
         if (result.getException() != null || result.getRowStream() == null) {
             return new ProjectResp(EXEC_PROJECT_FAIL);
