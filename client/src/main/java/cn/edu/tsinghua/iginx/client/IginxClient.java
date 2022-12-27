@@ -299,6 +299,7 @@ public class IginxClient {
             List<List<String>> cache = cacheResult(res);
             System.out.print(FormatUtils.formatResult(cache));
 
+            boolean isCanceled = false;
             int total = cache.size() - 1;
 
             while (res.hasMore()) {
@@ -312,14 +313,18 @@ public class IginxClient {
                         System.out.print(FormatUtils.formatResult(cache));
                         total += cache.size() - 1;
                     } else {
+                        isCanceled = true;
                         break;
                     }
                 } catch (IOException e) {
                     System.out.println("IO Error: " + e.getMessage());
+                    isCanceled = true;
                     break;
                 }
             }
-            System.out.print(FormatUtils.formatCount(total));
+            if (!isCanceled) {
+                System.out.print(FormatUtils.formatCount(total));
+            }
         } catch (SessionException | ExecutionException e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {
@@ -329,6 +334,7 @@ public class IginxClient {
     }
 
     private static List<List<String>> cacheResult(QueryDataSet queryDataSet) throws ExecutionException, SessionException {
+        boolean hasTime = queryDataSet.getColumnList().get(0).equals("time");
         List<List<String>> cache = new ArrayList<>();
         cache.add(new ArrayList<>(queryDataSet.getColumnList()));
 
@@ -337,7 +343,14 @@ public class IginxClient {
             List<String> strRow = new ArrayList<>();
             Object[] nextRow = queryDataSet.nextRow();
             if (nextRow != null) {
-                Arrays.stream(nextRow).forEach(val -> strRow.add(FormatUtils.valueToString(val)));
+                if (hasTime) {
+                    strRow.add(FormatUtils.formatTime((Long) nextRow[0], FormatUtils.DEFAULT_TIME_FORMAT, timestampPrecision));
+                    for (int i = 1; i < nextRow.length; i++) {
+                        strRow.add(FormatUtils.valueToString(nextRow[i]));
+                    }
+                } else {
+                    Arrays.stream(nextRow).forEach(val -> strRow.add(FormatUtils.valueToString(val)));
+                }
                 cache.add(strRow);
                 rowIndex++;
             }
