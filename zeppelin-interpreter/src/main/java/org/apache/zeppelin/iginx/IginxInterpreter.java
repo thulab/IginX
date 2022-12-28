@@ -3,6 +3,7 @@ package org.apache.zeppelin.iginx;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import cn.edu.tsinghua.iginx.utils.FormatUtils;
 import org.apache.zeppelin.interpreter.AbstractInterpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterException;
@@ -106,7 +107,7 @@ public class IginxInterpreter extends AbstractInterpreter {
             }
 
             String msg = buildResult(sqlResult.getResultInList(
-                    true, SessionExecuteSqlResult.DEFAULT_TIME_FORMAT, timePrecision));
+                    true, FormatUtils.DEFAULT_TIME_FORMAT, timePrecision));
             InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
             interpreterResult.add(InterpreterResult.Type.TABLE, msg);
             return interpreterResult;
