@@ -49,12 +49,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import org.duckdb.DuckDBConnection;
 import org.slf4j.Logger;
@@ -97,6 +101,8 @@ public class LocalExecutor implements Executor {
 
     private static final String DROP_COLUMN_STMT = "ALTER TABLE %s DROP %s";
 
+    private static final Map<String, ReentrantReadWriteLock> lockMap = new ConcurrentHashMap<>();
+
     private final ParquetStoragePolicy policy;
 
     private final Connection connection;
@@ -111,11 +117,15 @@ public class LocalExecutor implements Executor {
 
     @Override
     public TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, boolean isDummyStorageUnit) {
+        String filter, String storageUnit, boolean isDummyStorageUnit, String schemaPrefix) {
         try {
             createDUDirectoryIfNotExists(storageUnit);
         } catch (PhysicalException e) {
             return new TaskExecuteResult(e);
+        }
+
+        if (isDummyStorageUnit) {
+            return executeDummyProjectTask(paths, tagFilter, filter, storageUnit, schemaPrefix);
         }
 
         try {
@@ -132,9 +142,6 @@ public class LocalExecutor implements Executor {
             }
             pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
             Path path = Paths.get(dataDir, storageUnit, "*", "*.parquet");
-            if (isDummyStorageUnit) {
-                path = Paths.get(dataDir, "*.parquet");
-            }
 
             ResultSet rs = stmt.executeQuery(
                 String.format(SELECT_STMT,
@@ -146,6 +153,53 @@ public class LocalExecutor implements Executor {
 
             RowStream rowStream = new ClearEmptyRowStreamWrapper(
                 new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter)));
+            return new TaskExecuteResult(rowStream);
+        } catch (SQLException | PhysicalException e) {
+            logger.error(e.getMessage());
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in parquet failure", e));
+        }
+    }
+
+    private TaskExecuteResult executeDummyProjectTask(List<String> paths, TagFilter tagFilter,
+        String filter, String storageUnit, String schemaPrefix) {
+        try {
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+
+            // trim prefix
+            List<String> pathList = new ArrayList<>();
+            if (schemaPrefix != null && !schemaPrefix.equals("")) {
+                for (String path : paths) {
+                    if (path.contains(schemaPrefix)) {
+                        pathList.add(path.substring(path.indexOf(schemaPrefix) + schemaPrefix.length() + 1));
+                    } else if (path.equals("*")) {
+                        pathList.add(path);
+                    }
+                }
+            }
+
+            pathList = determinePathListWithTagFilter(storageUnit, pathList, tagFilter, true);
+            if (pathList.isEmpty()) {
+                RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                    ParquetQueryRowStream.EMPTY_PARQUET_ROW_STREAM
+                );
+                return new TaskExecuteResult(rowStream);
+            }
+
+            StringBuilder builder = new StringBuilder();
+            pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
+            Path path = Paths.get(dataDir, "*.parquet");
+
+            ResultSet rs = stmt.executeQuery(
+                String.format(SELECT_STMT,
+                    builder.toString(),
+                    path.toString(),
+                    filter));
+            stmt.close();
+            conn.close();
+
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter, schemaPrefix)));
             return new TaskExecuteResult(rowStream);
         } catch (SQLException | PhysicalException e) {
             logger.error(e.getMessage());
@@ -227,11 +281,21 @@ public class LocalExecutor implements Executor {
         DataViewWrapper data = new DataViewWrapper(dataView);
         List<WritePlan> writePlans = getWritePlans(data, storageUnit);
         for (WritePlan writePlan : writePlans) {
+            ReentrantReadWriteLock lock = lockMap.get(writePlan.getFilePath().toString());
+            if (lock == null) {
+                lock = new ReentrantReadWriteLock();
+                lockMap.putIfAbsent(writePlan.getFilePath().toString(), lock);
+                lock = lockMap.get(writePlan.getFilePath().toString());
+            }
+
             try {
+                lock.writeLock().lock();
                 executeWritePlan(data, writePlan);
             } catch (SQLException e) {
                 logger.error("execute row write plan error", e);
                 return new TaskExecuteResult(null, new PhysicalException("execute insert task in parquet failure", e));
+            } finally {
+                lock.writeLock().unlock();
             }
         }
         return new TaskExecuteResult(null, null);
@@ -242,7 +306,7 @@ public class LocalExecutor implements Executor {
         Statement stmt = conn.createStatement();
         Path path = writePlan.getFilePath();
         String filename = writePlan.getFilePath().getFileName().toString();
-        String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+        String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR) + System.currentTimeMillis();
 
         // prepare to write data.
         if (!Files.exists(path)) {
@@ -339,15 +403,15 @@ public class LocalExecutor implements Executor {
                 if (bitmapView.get(j)) {
                     if (startTimeIdx <= j && j <= endTimeIdx) {
                         if (data.getDataType(i) == DataType.BINARY) {
-                            rowValueArray[j - startPathIdx] += "'" + new String((byte[]) data.getValue(i, index)) + "', ";
+                            rowValueArray[j - startTimeIdx] += "'" + new String((byte[]) data.getValue(i, index)) + "', ";
                         } else {
-                            rowValueArray[j - startPathIdx] += data.getValue(i, index) + ", ";
+                            rowValueArray[j - startTimeIdx] += data.getValue(i, index) + ", ";
                         }
                     }
                     index++;
                 } else {
                     if (startTimeIdx <= j && j <= endTimeIdx) {
-                        rowValueArray[j - startPathIdx] += "NULL, ";
+                        rowValueArray[j - startTimeIdx] += "NULL, ";
                     }
                 }
             }

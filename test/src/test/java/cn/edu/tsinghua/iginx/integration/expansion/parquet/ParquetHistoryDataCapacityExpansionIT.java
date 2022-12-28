@@ -77,32 +77,33 @@ public class ParquetHistoryDataCapacityExpansionIT {
     }
 
     private void testCapacityExpansion() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"0\", 1, \"parquet\", \"dir:parquetData2, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6610, \"parquet\", \"dir:test, has_data:true, is_read_only:true\");");
 
-        String statement = "select * from test.sg";
+        String statement = "select * from test.us";
         String expect =
             "ResultSets:\n"
                 + "+----+-----------------+------------+--------------+\n"
-                + "|Time|test.sg.cpu_usage|test.sg.desc|test.sg.engine|\n"
+                + "|Time|test.us.cpu_usage|test.us.desc|test.us.engine|\n"
                 + "+----+-----------------+------------+--------------+\n"
-                + "|   1|             12.3|      normal|             1|\n"
-                + "|   2|             23.1|      normal|             2|\n"
+                + "|  10|             12.1|      normal|             1|\n"
+                + "|  11|             32.2|      normal|             2|\n"
+                + "|  12|             66.8|        high|             3|\n"
                 + "+----+-----------------+------------+--------------+\n"
-                + "Total line number = 2\n";
+                + "Total line number = 3\n";;
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from test";
         expect =
             "ResultSets:\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
-                + "|Time|test.sg.cpu_usage|test.sg.desc|test.sg.engine|test.us.cpu_usage|test.us.desc|test.us.engine|\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
-                + "|   1|             12.3|      normal|             1|             null|        null|          null|\n"
-                + "|   2|             23.1|      normal|             2|             null|        null|          null|\n"
-                + "|  10|             null|        null|          null|             12.1|      normal|             1|\n"
-                + "|  11|             null|        null|          null|             32.2|      normal|             2|\n"
-                + "|  12|             null|        null|          null|             66.8|        high|             3|\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
+                + "|Time|test.cpu_usage|test.engine|test.status|test.us.cpu_usage|test.us.desc|test.us.engine|\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
+                + "|   1|          12.3|          1|     normal|             null|        null|          null|\n"
+                + "|   2|          23.1|          2|     normal|             null|        null|          null|\n"
+                + "|  10|          null|       null|       null|             12.1|      normal|             1|\n"
+                + "|  11|          null|       null|       null|             32.2|      normal|             2|\n"
+                + "|  12|          null|       null|       null|             66.8|        high|             3|\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
                 + "Total line number = 5\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -117,16 +118,16 @@ public class ParquetHistoryDataCapacityExpansionIT {
         String statement = "select * from test";
         String expect =
             "ResultSets:\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
-                + "|Time|test.sg.cpu_usage|test.sg.desc|test.sg.engine|test.us.cpu_usage|test.us.desc|test.us.engine|\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
-                + "|   1|             12.3|      normal|             1|             null|        null|          null|\n"
-                + "|   2|             23.1|      normal|             2|             null|        null|          null|\n"
-                + "|  10|             null|        null|          null|             12.1|      normal|             1|\n"
-                + "|  11|             null|        null|          null|             32.2|      normal|             2|\n"
-                + "|  12|             null|        null|          null|             66.8|        high|             3|\n"
-                + "|  13|             null|        null|          null|             88.8|        high|             2|\n"
-                + "+----+-----------------+------------+--------------+-----------------+------------+--------------+\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
+                + "|Time|test.cpu_usage|test.engine|test.status|test.us.cpu_usage|test.us.desc|test.us.engine|\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
+                + "|   1|          12.3|          1|     normal|             null|        null|          null|\n"
+                + "|   2|          23.1|          2|     normal|             null|        null|          null|\n"
+                + "|  10|          null|       null|       null|             12.1|      normal|             1|\n"
+                + "|  11|          null|       null|       null|             32.2|      normal|             2|\n"
+                + "|  12|          null|       null|       null|             66.8|        high|             3|\n"
+                + "|  13|          null|       null|       null|             88.8|        high|             2|\n"
+                + "+----+--------------+-----------+-----------+-----------------+------------+--------------+\n"
                 + "Total line number = 6\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 

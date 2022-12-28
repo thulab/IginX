@@ -49,6 +49,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import static cn.edu.tsinghua.iginx.conf.Constants.SCHEMA_PREFIX;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 
 public class IginxWorker implements IService.Iface {
@@ -195,6 +196,17 @@ public class IginxWorker implements IService.Iface {
             String type = storageEngine.getType();
             Map<String, String> extraParams = storageEngine.getExtraParams();
             boolean hasData = Boolean.parseBoolean(extraParams.getOrDefault(Constants.HAS_DATA, "false"));
+            if (type.equals("parquet")) {
+                String dir = extraParams.get("dir");
+                if (dir == null || dir.equals("")) {
+                    return RpcUtils.FAILURE;
+                }
+                if (extraParams.containsKey(SCHEMA_PREFIX)) {
+                    extraParams.put(SCHEMA_PREFIX, extraParams.get(SCHEMA_PREFIX) + "." + dir);
+                } else {
+                    extraParams.put(SCHEMA_PREFIX, dir);
+                }
+            }
             String dataPrefix = null;
             if (hasData && extraParams.containsKey(Constants.DATA_PREFIX)) {
                 dataPrefix = extraParams.get(Constants.DATA_PREFIX);
@@ -203,8 +215,7 @@ public class IginxWorker implements IService.Iface {
             StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
-            schemaPrefix.add(extraParams.get(Constants.SCHEMA_PREFIX)); // get the user defined schema prefix
-
+            schemaPrefix.add(extraParams.get(SCHEMA_PREFIX)); // get the user defined schema prefix
         }
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突
