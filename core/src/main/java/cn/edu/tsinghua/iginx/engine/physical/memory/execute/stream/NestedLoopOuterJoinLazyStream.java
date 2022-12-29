@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
@@ -10,7 +11,9 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OuterJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -30,9 +33,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
 
     private List<String> joinColumns;
 
-    private int[] indexOfJoinColumnInTableA;
-
-    private int[] indexOfJoinColumnInTableB;
+    private int[] indexOfJoinColumnsInTable;
 
     private Header header;
 
@@ -63,65 +64,32 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
 
     private void initialize() throws PhysicalException {
         Filter filter = outerJoin.getFilter();
+
+        Header headerA = streamA.getHeader();
+        Header headerB = streamB.getHeader();
+
         joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
-        List<Field> fieldsA = new ArrayList<>(streamA.getHeader().getFields());
-        List<Field> fieldsB = new ArrayList<>(streamB.getHeader().getFields());
         if (outerJoin.isNaturalJoin()) {
-            if (!joinColumns.isEmpty()) {
-                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
-            }
-            for (Field fieldA : fieldsA) {
-                for (Field fieldB : fieldsB) {
-                    String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
-                    String joinColumnB = fieldB.getName().replaceFirst(outerJoin.getPrefixB() + '.', "");
-                    if (joinColumnA.equals(joinColumnB)) {
-                        joinColumns.add(joinColumnA);
-                    }
-                }
-            }
-            if (joinColumns.isEmpty()) {
-                throw new PhysicalException("natural join has no matching columns");
-            }
+            RowUtils.fillNaturalJoinColumns(joinColumns, headerA, headerB,
+                outerJoin.getPrefixA(), outerJoin.getPrefixB());
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
 
         if (filter != null) {  // Join condition: on
-            fieldsA.addAll(fieldsB);
-            this.header = new Header(fieldsA);
+            this.header = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(), outerJoin.getPrefixB());
         } else {               // Join condition: natural or using
-            List<Field> newFields = new ArrayList<>();
-            this.indexOfJoinColumnInTableA = new int[joinColumns.size()];
-            this.indexOfJoinColumnInTableB = new int[joinColumns.size()];
-            OuterJoinType outerType = outerJoin.getOuterJoinType();
-            int i = 0, j = 0;
-            if (outerType == OuterJoinType.RIGHT) {
-                flag1:
-                for (Field fieldA : fieldsA) {
-                    for (String joinColumn : joinColumns) {
-                        if (Objects.equals(fieldA.getName(), outerJoin.getPrefixA() + '.' + joinColumn)) {
-                            indexOfJoinColumnInTableA[j++] = streamA.getHeader().indexOf(fieldA);
-                            continue flag1;
-                        }
-                    }
-                    newFields.add(fieldA);
-                }
-                newFields.addAll(fieldsB);
+            Pair<int[], Header> pair;
+            if (outerJoin.getOuterJoinType() == OuterJoinType.RIGHT) {
+                pair = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(),
+                    outerJoin.getPrefixB(), joinColumns, false);
             } else {
-                newFields.addAll(fieldsA);
-                flag2:
-                for (Field fieldB : fieldsB) {
-                    for (String joinColumn : joinColumns) {
-                        if (Objects.equals(fieldB.getName(), outerJoin.getPrefixB() + '.' + joinColumn)) {
-                            indexOfJoinColumnInTableB[i++] = streamB.getHeader().indexOf(fieldB);
-                            continue flag2;
-                        }
-                    }
-                    newFields.add(fieldB);
-                }
+                pair = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(),
+                    outerJoin.getPrefixB(), joinColumns, true);
             }
-            this.header = new Header(newFields);
+            this.indexOfJoinColumnsInTable = pair.getK();
+            this.header = pair.getV();
         }
         this.hasInitialized = true;
     }
@@ -137,7 +105,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
                 anotherRowSize -= joinColumns.size();
             }
             for (Row halfRow : unmatchedStreamARows) {
-                Row unmatchedRow = buildUnmatchedRow(halfRow, anotherRowSize, true);
+                Row unmatchedRow = RowUtils.constructUnmatchedRow(header, halfRow, anotherRowSize, true);
                 lastPart.add(unmatchedRow);
             }
         }
@@ -148,7 +116,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
             }
             for (int i = 0; i < streamBCache.size(); i++) {
                 if (!matchedStreamBRowIndexSet.contains(i)) {
-                    Row unmatchedRow = buildUnmatchedRow(streamBCache.get(i), anotherRowSize, false);
+                    Row unmatchedRow = RowUtils.constructUnmatchedRow(header, streamBCache.get(i), anotherRowSize, false);
                     lastPart.add(unmatchedRow);
                 }
             }
@@ -228,7 +196,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
         }
 
         if (outerJoin.getFilter() != null) {  // Join condition: on
-            Row row = buildRow(nextA, nextB);
+            Row row = RowUtils.constructNewRow(header, nextA, nextB);
             nextB = null;
             if (FilterUtils.validate(outerJoin.getFilter(), row)) {  // matched
                 this.curNextAHasMatched = true;
@@ -247,63 +215,15 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
             // matched
             this.curNextAHasMatched = true;
             this.matchedStreamBRowIndexSet.add(curStreamBIndex - 1);
-            Row row = buildRowWithUsingColumns(nextA, nextB);
+            Row row;
+            if (outerJoin.getOuterJoinType() == OuterJoinType.RIGHT) {
+                row = RowUtils.constructNewRow(header, nextA, nextB, indexOfJoinColumnsInTable, false);
+            } else {
+                row = RowUtils.constructNewRow(header, nextA, nextB, indexOfJoinColumnsInTable, true);
+            }
             nextB = null;
             return row;
         }
-    }
-
-    private Row buildRow(Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-        System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-        System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
-        return new Row(this.header, valuesJoin);
-    }
-
-    private Row buildRowWithUsingColumns(Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin;
-        if (outerJoin.getOuterJoinType() == OuterJoinType.RIGHT) {
-            valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableA.length];
-            System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - indexOfJoinColumnInTableA.length, valuesB.length);
-            int k = 0;
-            flag1:
-            for (int m = 0; m < valuesA.length; m++) {
-                for (int index : indexOfJoinColumnInTableA) {
-                    if (m == index) {
-                        continue flag1;
-                    }
-                }
-                valuesJoin[k++] = valuesA[m];
-            }
-        } else {
-            valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnInTableB.length];
-            System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-            int k = valuesA.length;
-            flag2:
-            for (int m = 0; m < valuesB.length; m++) {
-                for (int index : indexOfJoinColumnInTableB) {
-                    if (m == index) {
-                        continue flag2;
-                    }
-                }
-                valuesJoin[k++] = valuesB[m];
-            }
-        }
-        return new Row(this.header, valuesJoin);
-    }
-
-    private Row buildUnmatchedRow(Row halfRow, int anotherRowSize, boolean putLeft) {
-        Object[] valuesJoin = new Object[halfRow.getValues().length + anotherRowSize];
-        if (putLeft) {
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, 0, halfRow.getValues().length);
-        } else {
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize, halfRow.getValues().length);
-        }
-        return new Row(this.header, valuesJoin);
     }
 
     @Override

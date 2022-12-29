@@ -137,10 +137,16 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeCrossJoin(CrossJoin crossJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        if (!streamA.getHeader().hasTimestamp() || !streamB.getHeader().hasTimestamp()) {
+            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
+        }
         return new CrossJoinLazyStream(crossJoin, streamA, streamB);
     }
 
     private RowStream executeInnerJoin(InnerJoin innerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        if (!streamA.getHeader().hasTimestamp() || !streamB.getHeader().hasTimestamp()) {
+            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
+        }
         switch (innerJoin.getJoinAlgType()) {
             case NestedLoopJoin:
                 return executeNestedLoopInnerJoin(innerJoin, streamA, streamB);
@@ -166,6 +172,9 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeOuterJoin(OuterJoin outerJoin, RowStream streamA, RowStream streamB) throws PhysicalException {
+        if (!streamA.getHeader().hasTimestamp() || !streamB.getHeader().hasTimestamp()) {
+            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
+        }
         switch (outerJoin.getJoinAlgType()) {
             case NestedLoopJoin:
                 return executeNestedLoopOuterJoin(outerJoin, streamA, streamB);

@@ -286,7 +286,7 @@ public class QueryGenerator extends AbstractGenerator {
 
             switch (joinPart.getJoinType()) {
                 case CrossJoin:
-                    left = new CrossJoin(new OperatorSource(left), new OperatorSource(right));
+                    left = new CrossJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB);
                     break;
                 case InnerJoin:
                     left = new InnerJoin(new OperatorSource(left), new OperatorSource(right), prefixA, prefixB, filter, joinColumns, false, joinAlgType);

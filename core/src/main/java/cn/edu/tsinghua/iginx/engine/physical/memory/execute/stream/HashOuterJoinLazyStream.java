@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
@@ -14,6 +15,8 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,9 +38,9 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
 
     private final Deque<Row> cache;
 
-    private List<String> joinColumns;
-
     private Header header;
+
+    private int index;
 
     private boolean hasInitialized = false;
 
@@ -59,32 +62,19 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
 
     private void initialize() throws PhysicalException {
         Filter filter = outerJoin.getFilter();
-        joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
-        List<Field> fieldsA = new ArrayList<>(streamA.getHeader().getFields());
-        List<Field> fieldsB = new ArrayList<>(streamB.getHeader().getFields());
+        OuterJoinType outerJoinType = outerJoin.getOuterJoinType();
+
+        Header headerA = streamA.getHeader();
+        Header headerB = streamB.getHeader();
+
+        List<String> joinColumns = new ArrayList<>(outerJoin.getJoinColumns());
         if (outerJoin.isNaturalJoin()) {
-            if (!joinColumns.isEmpty()) {
-                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
-            }
-            for (Field fieldA : fieldsA) {
-                for (Field fieldB : fieldsB) {
-                    String joinColumnA = fieldA.getName().replaceFirst(outerJoin.getPrefixA() + '.', "");
-                    String joinColumnB = fieldB.getName().replaceFirst(outerJoin.getPrefixB() + '.', "");
-                    if (joinColumnA.equals(joinColumnB)) {
-                        joinColumns.add(joinColumnA);
-                    }
-                }
-            }
-            if (joinColumns.isEmpty()) {
-                throw new PhysicalException("natural join has no matching columns");
-            }
+            RowUtils.fillNaturalJoinColumns(joinColumns, headerA, headerB,
+                outerJoin.getPrefixA(), outerJoin.getPrefixB());
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
-
-        Header headerA = streamA.getHeader();
-        Header headerB = streamB.getHeader();
 
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
@@ -114,9 +104,22 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
             }
         }
 
+        if (outerJoinType == OuterJoinType.RIGHT) {
+            this.index = headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumnA);
+        } else {
+            this.index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
+        }
+
+
         while (streamB.hasNext()) {
             Row rowB = streamB.next();
-            int hash = rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumnB).hashCode();
+            Object value = rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumnB);
+            int hash;
+            if (value instanceof byte[]) {
+                hash = Arrays.hashCode((byte[]) value);
+            } else {
+                hash = value.hashCode();
+            }
             List<Row> rows = streamBHashMap.getOrDefault(hash, new ArrayList<>());
             rows.add(rowB);
             streamBHashMap.putIfAbsent(hash, rows);
@@ -125,29 +128,17 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
             }
         }
 
-        List<Field> newFields = new ArrayList<>();
         if (filter != null) {  // Join condition: on
-            newFields.addAll(fieldsA);
-            newFields.addAll(fieldsB);
+            this.header = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(), outerJoin.getPrefixB());
         } else {               // Join condition: natural or using
-            OuterJoinType outerJoinType = outerJoin.getOuterJoinType();
             if (outerJoinType == OuterJoinType.RIGHT) {
-                for (Field fieldA : fieldsA) {
-                    if (!fieldA.getName().equals(outerJoin.getPrefixA() + '.' + joinColumnA)) {
-                        newFields.add(fieldA);
-                    }
-                }
-                newFields.addAll(fieldsB);
+                this.header = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(),
+                    outerJoin.getPrefixB(), Collections.singletonList(joinColumnA), false).getV();
             } else {
-                newFields.addAll(fieldsA);
-                for (Field fieldB : fieldsB) {
-                    if (!fieldB.getName().equals(outerJoin.getPrefixB() + '.' + joinColumnB)) {
-                        newFields.add(fieldB);
-                    }
-                }
+                this.header = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(),
+                    outerJoin.getPrefixB(), Collections.singletonList(joinColumnB), true).getV();
             }
         }
-        this.header = new Header(newFields);
 
         this.hasInitialized = true;
     }
@@ -160,23 +151,23 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
             int anotherRowSize = streamB.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
-                anotherRowSize -= joinColumns.size();
+                anotherRowSize -= 1;
             }
             for (Row halfRow : unmatchedStreamARows) {
-                Row unmatchedRow = buildUnmatchedRow(halfRow, anotherRowSize, true);
+                Row unmatchedRow = RowUtils.constructUnmatchedRow(header, halfRow, anotherRowSize, true);
                 cache.add(unmatchedRow);
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
             int anotherRowSize = streamA.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
-                anotherRowSize -= joinColumns.size();
+                anotherRowSize -= 1;
             }
             for (int hash : streamBHashPutOrder) {
                 if (!matchedStreamBRowHashSet.contains(hash)) {
                     List<Row> unmatchedRows = streamBHashMap.get(hash);
                     for (Row halfRow : unmatchedRows) {
-                        Row unmatchedRow = buildUnmatchedRow(halfRow, anotherRowSize, false);
+                        Row unmatchedRow = RowUtils.constructUnmatchedRow(header, halfRow, anotherRowSize, false);
                         cache.add(unmatchedRow);
                     }
                 }
@@ -209,17 +200,30 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
 
     private void tryMatch() throws PhysicalException {
         Row rowA = streamA.next();
-        int hash = rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumnA).hashCode();
+
+        Object value = rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumnA);
+        int hash;
+        if (value instanceof byte[]) {
+            hash = Arrays.hashCode((byte[]) value);
+        } else {
+            hash = value.hashCode();
+        }
+
         if (streamBHashMap.containsKey(hash)) {
             List<Row> rowsB = streamBHashMap.get(hash);
             for (Row rowB : rowsB) {
                 if (outerJoin.getFilter() != null) {
-                    Row row = buildRow(rowA, rowB);
+                    Row row = RowUtils.constructNewRow(header, rowA, rowB);
                     if (FilterUtils.validate(outerJoin.getFilter(), row)) {
                         cache.addLast(row);
                     }
                 } else {
-                    Row row = buildRowWithUsingColumns(rowA, rowB);
+                    Row row;
+                    if (outerJoin.getOuterJoinType() == OuterJoinType.RIGHT) {
+                        row = RowUtils.constructNewRow(header, rowA, rowB, new int[]{index}, false);
+                    } else {
+                        row = RowUtils.constructNewRow(header, rowA, rowB, new int[]{index}, true);
+                    }
                     cache.addLast(row);
                 }
             }
@@ -227,52 +231,6 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
         } else {
             unmatchedStreamARows.add(rowA);
         }
-    }
-
-    private Row buildRow(Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-        System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-        System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
-        return new Row(this.header, valuesJoin);
-    }
-
-    private Row buildRowWithUsingColumns(Row rowA, Row rowB) throws PhysicalException {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
-        OuterJoinType outerType = outerJoin.getOuterJoinType();
-        if (outerType == OuterJoinType.RIGHT) {
-            System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - 1, valuesB.length);
-            int k = 0;
-            int index = streamA.getHeader().indexOf(outerJoin.getPrefixA() + '.' + joinColumnA);
-            for (int j = 0; j < valuesA.length; j++) {
-                if (j != index) {
-                    valuesJoin[k++] = valuesA[j];
-                }
-            }
-        } else {
-            System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-            int k = valuesA.length;
-            int index = streamB.getHeader().indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
-            for (int j = 0; j < valuesB.length; j++) {
-                if (j != index) {
-                    valuesJoin[k++] = valuesB[j];
-                }
-            }
-        }
-        return new Row(this.header, valuesJoin);
-    }
-
-    private Row buildUnmatchedRow(Row halfRow, int anotherRowSize, boolean putLeft) {
-        Object[] valuesJoin = new Object[halfRow.getValues().length + anotherRowSize];
-        if (putLeft) {
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, 0, halfRow.getValues().length);
-        } else {
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize, halfRow.getValues().length);
-        }
-        return new Row(this.header, valuesJoin);
     }
 
     @Override

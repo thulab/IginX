@@ -15,6 +15,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,8 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
 
     private Row nextB;
 
+    private int index;
+
     private Object curJoinColumnBValue;  // 当前StreamB中join列的值，用于同值join
 
     private final List<Row> sameValueStreamBRows;  // StreamB中join列的值相同的列缓存
@@ -56,32 +59,18 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
 
     private void initialize() throws PhysicalException {
         Filter filter = innerJoin.getFilter();
+
+        Header headerA = streamA.getHeader();
+        Header headerB = streamB.getHeader();
+
         List<String> joinColumns = new ArrayList<>(innerJoin.getJoinColumns());
-        List<Field> fieldsA = new ArrayList<>(streamA.getHeader().getFields());
-        List<Field> fieldsB = new ArrayList<>(streamB.getHeader().getFields());
         if (innerJoin.isNaturalJoin()) {
-            if (!joinColumns.isEmpty()) {
-                throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
-            }
-            for (Field fieldA : fieldsA) {
-                for (Field fieldB : fieldsB) {
-                    String joinColumnA = fieldA.getName().replaceFirst(innerJoin.getPrefixA() + '.', "");
-                    String joinColumnB = fieldB.getName().replaceFirst(innerJoin.getPrefixB() + '.', "");
-                    if (joinColumnA.equals(joinColumnB)) {
-                        joinColumns.add(joinColumnA);
-                    }
-                }
-            }
-            if (joinColumns.isEmpty()) {
-                throw new PhysicalException("natural join has no matching columns");
-            }
+            RowUtils.fillNaturalJoinColumns(joinColumns, headerA, headerB,
+                innerJoin.getPrefixA(), innerJoin.getPrefixB());
         }
         if ((filter == null && joinColumns.isEmpty()) || (filter != null && !joinColumns.isEmpty())) {
             throw new InvalidOperatorParameterException("using(or natural) and on operator cannot be used at the same time");
         }
-
-        Header headerA = streamA.getHeader();
-        Header headerB = streamB.getHeader();
 
         if (filter != null) {
             if (!filter.getType().equals(FilterType.Path)) {
@@ -110,6 +99,7 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
                 throw new InvalidOperatorParameterException("invalid sorted merge join column input.");
             }
         }
+        this.index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
 
         DataType dataTypeA = headerA.getField(headerA.indexOf(innerJoin.getPrefixA() + "." + joinColumnA)).getType();
         DataType dataTypeB = headerA.getField(headerA.indexOf(innerJoin.getPrefixA() + "." + joinColumnA)).getType();
@@ -119,15 +109,11 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
         joinColumnDataType = dataTypeA;
 
         if (filter != null) {  // Join condition: on
-            fieldsA.addAll(fieldsB);
+            this.header = RowUtils.constructNewHead(headerA, headerB, innerJoin.getPrefixA(), innerJoin.getPrefixB());
         } else {               // Join condition: natural or using
-            for (Field fieldB : fieldsB) {
-                if (!fieldB.getName().equals(innerJoin.getPrefixB() + '.' + joinColumnB)) {
-                    fieldsA.add(fieldB);
-                }
-            }
+            this.header = RowUtils.constructNewHead(headerA, headerB, innerJoin.getPrefixA(), innerJoin.getPrefixB(),
+                Collections.singletonList(joinColumnB), true).getV();
         }
-        this.header = new Header(fieldsA);
 
         this.hasInitialized = true;
     }
@@ -158,41 +144,17 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
         } else {
             for (Row rowB : sameValueStreamBRows) {
                 if (innerJoin.getFilter() != null) {
-                    Row row = buildRow(nextA, rowB);
+                    Row row = RowUtils.constructNewRow(header, nextA, rowB);
                     if (FilterUtils.validate(innerJoin.getFilter(), row)) {
                         cache.addLast(row);
                     }
                 } else {
-                    Row row = buildRowWithUsingColumns(nextA, rowB);
+                    Row row = RowUtils.constructNewRow(header, nextA, rowB, new int[]{index}, true);
                     cache.addLast(row);
                 }
             }
             nextA = null;
         }
-    }
-
-    private Row buildRow(Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-        System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-        System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
-        return new Row(this.header, valuesJoin);
-    }
-
-    private Row buildRowWithUsingColumns(Row rowA, Row rowB) throws PhysicalException {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length - 1];
-        System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-        int k = valuesA.length;
-        int index = streamB.getHeader().indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
-        for (int j = 0; j < valuesB.length; j++) {
-            if (j != index) {
-                valuesJoin[k++] = valuesB[j];
-            }
-        }
-        return new Row(this.header, valuesJoin);
     }
 
     private boolean hasMoreRows() throws PhysicalException {
