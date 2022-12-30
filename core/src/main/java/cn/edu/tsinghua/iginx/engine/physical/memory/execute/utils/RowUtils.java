@@ -20,11 +20,9 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
-
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
@@ -50,15 +48,17 @@ public class RowUtils {
 
     /**
      * @return <tt>-1</tt>: not sorted
-     *         <tt>0</tt>: all rows equal
-     *         <tt>1</tt>: ascending sorted
-     *         <tt>2</tt>: descending sorted
+     * <tt>0</tt>: all rows equal
+     * <tt>1</tt>: ascending sorted
+     * <tt>2</tt>: descending sorted
      */
-    public static int checkRowsSortedByColumns(List<Row> rows, String prefix, List<String> columns) {
+    public static int checkRowsSortedByColumns(List<Row> rows, String prefix,
+        List<String> columns) {
         int res = 0;
         int index = 0;
         while (index < rows.size() - 1) {
-            int mark = compareRowsSortedByColumns(rows.get(index), rows.get(index + 1), prefix, prefix, columns);
+            int mark = compareRowsSortedByColumns(rows.get(index), rows.get(index + 1), prefix,
+                prefix, columns);
             if (mark == -1) {
                 if (res == 0) {
                     res = 1;
@@ -79,10 +79,11 @@ public class RowUtils {
 
     /**
      * @return <tt>-1</tt>: row1 < row2
-     *         <tt>0</tt>: row1 = row2
-     *         <tt>1</tt>: row1 > row2
+     * <tt>0</tt>: row1 = row2
+     * <tt>1</tt>: row1 > row2
      */
-    public static int compareRowsSortedByColumns(Row row1, Row row2, String prefix1, String prefix2, List<String> columns) {
+    public static int compareRowsSortedByColumns(Row row1, Row row2, String prefix1, String prefix2,
+        List<String> columns) {
         for (String column : columns) {
             Object value1 = row1.getValue(prefix1 + '.' + column);
             Object value2 = row2.getValue(prefix2 + '.' + column);
@@ -93,7 +94,8 @@ public class RowUtils {
             } else if (value2 == null) {
                 return 1;
             }
-            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column)).getType();
+            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column))
+                .getType();
             int cmp = compareObjects(dataType, value1, value2);
             if (cmp != 0) {
                 return cmp;
@@ -133,29 +135,156 @@ public class RowUtils {
         }
     }
 
-    public static Row constructNewRow(Header header, Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length + 2];
+    public static Header constructNewHead(Header headerA, Header headerB, String prefixA,
+        String prefixB) {
+        List<Field> fields = new ArrayList<>();
+        if (headerA.hasTimestamp()) {
+            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        }
+        fields.addAll(headerA.getFields());
+        if (headerB.hasTimestamp()) {
+            fields.add(new Field(prefixB + ".key", DataType.LONG));
+        }
+        fields.addAll(headerB.getFields());
+        return new Header(fields);
+    }
 
-        valuesJoin[0] = rowA.getTimestamp();
-        valuesJoin[valuesA.length + 1] = rowB.getTimestamp();
-        System.arraycopy(valuesA, 0, valuesJoin, 1, valuesA.length);
-        System.arraycopy(valuesB, 0, valuesJoin, valuesA.length + 2, valuesB.length);
+    public static Pair<int[], Header> constructNewHead(Header headerA, Header headerB,
+        String prefixA, String prefixB, List<String> joinColumns, boolean cutRight) {
+        List<Field> fieldsA = headerA.getFields();
+        List<Field> fieldsB = headerB.getFields();
+        int[] indexOfJoinColumnsInTable = new int[joinColumns.size()];
+
+        List<Field> fields = new ArrayList<>();
+        if (headerA.hasTimestamp()) {
+            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        }
+        if (cutRight) {
+            fields.addAll(fieldsA);
+            if (headerB.hasTimestamp()) {
+                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            }
+            int i = 0;
+            flag:
+            for (Field fieldB : fieldsB) {
+                for (String joinColumn : joinColumns) {
+                    if (Objects.equals(fieldB.getName(), prefixB + '.' + joinColumn)) {
+                        indexOfJoinColumnsInTable[i++] = headerB.indexOf(fieldB);
+                        continue flag;
+                    }
+                }
+                fields.add(fieldB);
+            }
+        } else {
+            int i = 0;
+            flag:
+            for (Field fieldA : fieldsA) {
+                for (String joinColumn : joinColumns) {
+                    if (Objects.equals(fieldA.getName(), prefixA + '.' + joinColumn)) {
+                        indexOfJoinColumnsInTable[i++] = headerA.indexOf(fieldA);
+                        continue flag;
+                    }
+                }
+                fields.add(fieldA);
+            }
+            if (headerB.hasTimestamp()) {
+                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            }
+            fields.addAll(fieldsB);
+        }
+        return new Pair<>(indexOfJoinColumnsInTable, new Header(fields));
+    }
+
+    public static Row constructUnmatchedRow(Header header, Row halfRow, int anotherRowSize,
+        boolean putLeft) {
+
+        int size = halfRow.getValues().length + anotherRowSize;
+        if (halfRow.getHeader().hasTimestamp()) {
+            size++;
+        }
+        Object[] valuesJoin = new Object[size];
+
+        if (putLeft) {
+            if (halfRow.getHeader().hasTimestamp()) {
+                valuesJoin[0] = halfRow.getTimestamp();
+                System.arraycopy(halfRow.getValues(), 0, valuesJoin, 1, halfRow.getValues().length);
+            } else {
+                System.arraycopy(halfRow.getValues(), 0, valuesJoin, 0, halfRow.getValues().length);
+            }
+        } else {
+            if (halfRow.getHeader().hasTimestamp()) {
+                valuesJoin[anotherRowSize] = halfRow.getTimestamp();
+                System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize + 1, halfRow.getValues().length);
+            } else {
+                System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize, halfRow.getValues().length);
+            }
+        }
         return new Row(header, valuesJoin);
     }
 
-    public static Row constructNewRow(Header header, Row rowA, Row rowB, int[] indexOfJoinColumnsInTable, boolean cutRight) {
+    public static Row constructNewRow(Header header, Row rowA, Row rowB) {
         Object[] valuesA = rowA.getValues();
         Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length - indexOfJoinColumnsInTable.length + 2];
 
-        valuesJoin[0] = rowA.getTimestamp();
+        int size = valuesA.length + valuesB.length;
+        int rowAStartIndex = 0, rowBStartIndex = valuesA.length;
+        if (rowA.getHeader().hasTimestamp()) {
+            size++;
+            rowAStartIndex++;
+            rowBStartIndex++;
+        }
+        if (rowB.getHeader().hasTimestamp()) {
+            size++;
+            rowBStartIndex++;
+        }
+
+        Object[] valuesJoin = new Object[size];
+
+        if (rowA.getHeader().hasTimestamp()) {
+            valuesJoin[0] = rowA.getTimestamp();
+        }
+        if (rowB.getHeader().hasTimestamp()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        }
+        System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);
+        System.arraycopy(valuesB, 0, valuesJoin, rowBStartIndex, valuesB.length);
+        return new Row(header, valuesJoin);
+    }
+
+    public static Row constructNewRow(Header header, Row rowA, Row rowB,
+        int[] indexOfJoinColumnsInTable, boolean cutRight) {
+        Object[] valuesA = rowA.getValues();
+        Object[] valuesB = rowB.getValues();
+
+        int size = valuesA.length + valuesB.length - indexOfJoinColumnsInTable.length;
+        int rowAStartIndex = 0, rowBStartIndex;
         if (cutRight) {
-            valuesJoin[valuesA.length + 1] = rowB.getTimestamp();
-            System.arraycopy(valuesA, 0, valuesJoin, 1, valuesA.length);
+            rowBStartIndex = valuesA.length;
+        } else {
+            rowBStartIndex = valuesA.length - indexOfJoinColumnsInTable.length;
+        }
 
-            int k = valuesA.length + 2;
+        if (rowA.getHeader().hasTimestamp()) {
+            size++;
+            rowAStartIndex++;
+            rowBStartIndex++;
+        }
+        if (rowB.getHeader().hasTimestamp()) {
+            size++;
+            rowBStartIndex++;
+        }
+
+        Object[] valuesJoin = new Object[size];
+
+        if (rowA.getHeader().hasTimestamp()) {
+            valuesJoin[0] = rowA.getTimestamp();
+        }
+        if (rowB.getHeader().hasTimestamp()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        }
+        if (cutRight) {
+            System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);
+            int k = rowBStartIndex;
             flag:
             for (int i = 0; i < valuesB.length; i++) {
                 for (int index : indexOfJoinColumnsInTable) {
@@ -166,10 +295,8 @@ public class RowUtils {
                 valuesJoin[k++] = valuesB[i];
             }
         } else {
-            valuesJoin[valuesA.length - indexOfJoinColumnsInTable.length + 1] = rowB.getTimestamp();
-            System.arraycopy(valuesB, 0, valuesJoin, valuesA.length - indexOfJoinColumnsInTable.length + 2, valuesB.length);
-
-            int k = 1;
+            System.arraycopy(valuesB, 0, valuesJoin, rowBStartIndex, valuesB.length);
+            int k = rowAStartIndex;
             flag:
             for (int i = 0; i < valuesA.length; i++) {
                 for (int index : indexOfJoinColumnsInTable) {
@@ -184,70 +311,11 @@ public class RowUtils {
         return new Row(header, valuesJoin);
     }
 
-    public static Header constructNewHead(Header headerA, Header headerB, String prefixA, String prefixB) {
-        List<Field> fields = new ArrayList<>();
-        fields.add(new Field(prefixA + ".key", DataType.LONG));
-        fields.addAll(headerA.getFields());
-        fields.add(new Field(prefixB + ".key", DataType.LONG));
-        fields.addAll(headerB.getFields());
-        return new Header(fields);
-    }
-
-    public static Pair<int[], Header> constructNewHead(Header headerA, Header headerB, String prefixA, String prefixB, List<String> joinColumns, boolean cutRight) {
-        List<Field> fieldsA = headerA.getFields();
-        List<Field> fieldsB = headerB.getFields();
-        int[] indexOfJoinColumnsInTable = new int[joinColumns.size()];
-
-        List<Field> fields = new ArrayList<>();
-        if (cutRight) {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
-            fields.addAll(fieldsA);
-            fields.add(new Field(prefixB + ".key", DataType.LONG));
-            int i = 0;
-            flag:
-            for (Field fieldB : fieldsB) {
-                for (String joinColumn : joinColumns) {
-                    if (Objects.equals(fieldB.getName(), prefixB + '.' + joinColumn)) {
-                        indexOfJoinColumnsInTable[i++] = headerB.indexOf(fieldB);
-                        continue flag;
-                    }
-                }
-                fields.add(fieldB);
-            }
-        } else {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
-            int i = 0;
-            flag:
-            for (Field fieldA : fieldsA) {
-                for (String joinColumn : joinColumns) {
-                    if (Objects.equals(fieldA.getName(), prefixA + '.' + joinColumn)) {
-                        indexOfJoinColumnsInTable[i++] = headerA.indexOf(fieldA);
-                        continue flag;
-                    }
-                }
-                fields.add(fieldA);
-            }
-            fields.add(new Field(prefixB + ".key", DataType.LONG));
-            fields.addAll(fieldsB);
-        }
-        return new Pair<>(indexOfJoinColumnsInTable, new Header(fields));
-    }
-
-    public static Row constructUnmatchedRow(Header header, Row halfRow, int anotherRowSize, boolean putLeft) {
-        Object[] valuesJoin = new Object[halfRow.getValues().length + anotherRowSize + 2];
-        if (putLeft) {
-            valuesJoin[0] = halfRow.getTimestamp();
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, 1, halfRow.getValues().length);
-        } else {
-            valuesJoin[anotherRowSize + 1] = halfRow.getTimestamp();
-            System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize + 2, halfRow.getValues().length);
-        }
-        return new Row(header, valuesJoin);
-    }
-
-    public static void fillNaturalJoinColumns(List<String> joinColumns, Header headerA, Header headerB, String prefixA, String prefixB) throws PhysicalException {
+    public static void fillNaturalJoinColumns(List<String> joinColumns, Header headerA,
+        Header headerB, String prefixA, String prefixB) throws PhysicalException {
         if (!joinColumns.isEmpty()) {
-            throw new InvalidOperatorParameterException("natural inner join operator should not have using operator");
+            throw new InvalidOperatorParameterException(
+                "natural inner join operator should not have using operator");
         }
         for (Field fieldA : headerA.getFields()) {
             for (Field fieldB : headerB.getFields()) {

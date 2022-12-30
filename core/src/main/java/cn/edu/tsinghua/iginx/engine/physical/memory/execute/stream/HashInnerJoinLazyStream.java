@@ -93,6 +93,9 @@ public class HashInnerJoinLazyStream extends BinaryLazyStream {
         while (streamB.hasNext()) {
             Row rowB = streamB.next();
             Object value = rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumnB);
+            if (value == null) {
+                continue;
+            }
             int hash;
             if (value instanceof byte[]) {
                 hash = Arrays.hashCode((byte[]) value);
@@ -137,6 +140,10 @@ public class HashInnerJoinLazyStream extends BinaryLazyStream {
         Row rowA = streamA.next();
 
         Object value = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA);
+        if (value == null) {
+            return;
+        }
+
         int hash;
         if (value instanceof byte[]) {
             hash = Arrays.hashCode((byte[]) value);

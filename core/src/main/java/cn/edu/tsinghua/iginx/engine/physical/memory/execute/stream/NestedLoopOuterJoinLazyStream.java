@@ -100,7 +100,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
         }
         OuterJoinType outerType = outerJoin.getOuterJoinType();
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = streamB.getHeader().getFieldSize();
+            int anotherRowSize = streamB.getHeader().hasTimestamp() ? streamB.getHeader().getFieldSize() + 1 : streamB.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -110,7 +110,7 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = streamA.getHeader().getFieldSize();
+            int anotherRowSize = streamA.getHeader().hasTimestamp() ? streamA.getHeader().getFieldSize() + 1 : streamA.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
                 anotherRowSize -= joinColumns.size();
             }

@@ -483,10 +483,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeCrossJoin(CrossJoin crossJoin, Table tableA, Table tableB) throws PhysicalException {
-        if (!tableA.getHeader().hasTimestamp() || !tableB.getHeader().hasTimestamp()) {
-            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
-        }
-
         Header newHeader = RowUtils.constructNewHead(tableA.getHeader(), tableB.getHeader(), crossJoin.getPrefixA(), crossJoin.getPrefixB());
 
         List<Row> rowsA = tableA.getRows();
@@ -503,9 +499,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
-        if (!tableA.getHeader().hasTimestamp() || !tableB.getHeader().hasTimestamp()) {
-            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
-        }
         switch (innerJoin.getJoinAlgType()) {
             case NestedLoopJoin:
                 return executeNestedLoopInnerJoin(innerJoin, tableA, tableB);
@@ -614,6 +607,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         HashMap<Integer, List<Row>> rowsBHashMap = new HashMap<>();
         for (Row rowB: rowsB) {
             Object value = rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumnB);
+            if (value == null) {
+                continue;
+            }
             int hash;
             if (value instanceof byte[]) {
                 hash = Arrays.hashCode((byte[]) value);
@@ -630,6 +626,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             newHeader = RowUtils.constructNewHead(headerA, headerB, innerJoin.getPrefixA(), innerJoin.getPrefixB());
             for (Row rowA : rowsA) {
                 Object value = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA);
+                if (value == null) {
+                    continue;
+                }
                 int hash;
                 if (value instanceof byte[]) {
                     hash = Arrays.hashCode((byte[]) value);
@@ -652,6 +651,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             int index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
             for (Row rowA : rowsA) {
                 Object value = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA);
+                if (value == null) {
+                    continue;
+                }
                 int hash;
                 if (value instanceof byte[]) {
                     hash = Arrays.hashCode((byte[]) value);
@@ -847,9 +849,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeOuterJoin(OuterJoin outerJoin, Table tableA, Table tableB) throws PhysicalException {
-        if (!tableA.getHeader().hasTimestamp() || !tableB.getHeader().hasTimestamp()) {
-            throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
-        }
         switch (outerJoin.getJoinAlgType()) {
             case NestedLoopJoin:
                 return executeNestedLoopOuterJoin(outerJoin, tableA, tableB);
@@ -943,7 +942,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -955,7 +954,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1023,6 +1022,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         HashMap<Integer, List<Integer>> indexOfRowBHashMap = new HashMap<>();
         for (int indexB = 0; indexB < rowsB.size(); indexB++) {
             Object value = rowsB.get(indexB).getValue(outerJoin.getPrefixB() + '.' + joinColumnB);
+            if (value == null) {
+                continue;
+            }
             int hash;
             if (value instanceof byte[]) {
                 hash = Arrays.hashCode((byte[]) value);
@@ -1044,6 +1046,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             for (int indexA = 0; indexA < rowsA.size(); indexA++) {
                 Row rowA = rowsA.get(indexA);
                 Object value = rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumnA);
+                if (value == null) {
+                    continue;
+                }
                 int hash;
                 if (value instanceof byte[]) {
                     hash = Arrays.hashCode((byte[]) value);
@@ -1081,6 +1086,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             for (int indexA = 0; indexA < rowsA.size(); indexA++) {
                 Row rowA = rowsA.get(indexA);
                 Object value = rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumnA);
+                if (value == null) {
+                    continue;
+                }
                 int hash;
                 if (value instanceof byte[]) {
                     hash = Arrays.hashCode((byte[]) value);
@@ -1112,7 +1120,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1124,7 +1132,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1377,7 +1385,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
 
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1389,7 +1397,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
