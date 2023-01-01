@@ -17,11 +17,4 @@ public interface ProposalListener {
      */
     void onUpdate(String key, SyncProposal beforeSyncProposal, SyncProposal afterSyncProposal);
 
-    /**
-     * when proposal deleted, this method will be called.
-     * @param key proposal key
-     * @param syncProposal proposal content
-     */
-    void onDelete(String key, SyncProposal syncProposal);
-
 }
