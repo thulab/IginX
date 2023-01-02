@@ -143,6 +143,7 @@ public class ConfigDescriptor {
             config.setLocalParquetStorage(Boolean.parseBoolean(properties.getProperty("isLocalParquetStorage", "true")));
 
             // 容错相关
+            config.setEnableStorageHeartbeat(Boolean.parseBoolean(properties.getProperty("enable_storage_heartbeat", "false")));
             config.setStorageHeartbeatInterval(ConfigUtils.parseTime(properties.getProperty("storage_heartbeat_interval", "10s")));
             config.setStorageHeartbeatMaxRetryTimes(Integer.parseInt(properties.getProperty("storage_heartbeat_max_retry_times", "5")));
             config.setStorageHeartbeatTimeout(ConfigUtils.parseTime(properties.getProperty("storage_heartbeat_timeout", "1s")));
@@ -216,6 +217,7 @@ public class ConfigDescriptor {
         config.setLocalParquetStorage(EnvUtils.loadEnv("isLocalParquetStorage", config.isLocalParquetStorage()));
 
         // 容错相关
+        config.setEnableStorageHeartbeat(EnvUtils.loadEnv("enable_storage_heartbeat", config.isEnableStorageHeartbeat()));
         config.setStorageHeartbeatInterval(ConfigUtils.parseTime(EnvUtils.loadEnv("storage_heartbeat_interval", ConfigUtils.toTimeString(config.getStorageHeartbeatInterval()))));
         config.setStorageHeartbeatMaxRetryTimes(EnvUtils.loadEnv("storage_heartbeat_max_retry_times", config.getStorageHeartbeatMaxRetryTimes()));
         config.setStorageHeartbeatTimeout(ConfigUtils.parseTime(EnvUtils.loadEnv("storage_heartbeat_timeout", ConfigUtils.toTimeString(config.getStorageHeartbeatTimeout()))));

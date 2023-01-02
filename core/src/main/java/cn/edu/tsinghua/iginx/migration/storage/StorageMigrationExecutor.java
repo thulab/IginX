@@ -56,6 +56,9 @@ public class StorageMigrationExecutor {
                 e.printStackTrace();
                 return false;
             }
+            for (String storageUnitId: migrationMap.keySet()) {
+                metaManager.finishMigrationStorageUnit(storageUnitId);
+            }
             return true;
         }
 

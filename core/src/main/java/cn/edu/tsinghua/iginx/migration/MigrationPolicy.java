@@ -453,20 +453,26 @@ public abstract class MigrationPolicy {
   public boolean migrationData(String sourceStorageUnitId, String targetStorageUnitId) {
     try {
       List<FragmentMeta> fragmentMetas = DefaultMetaManager.getInstance().getFragmentsByStorageUnit(sourceStorageUnitId);
+
       Set<String> pathRegexSet = new HashSet<>();
-      pathRegexSet.add(sourceStorageUnitId);
-      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(), pathRegexSet, null,
-              Integer.MAX_VALUE, 0);
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
+              pathRegexSet, null, Integer.MAX_VALUE, 0);
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
       SortedSet<String> pathSet = new TreeSet<>();
-      rowStream.getHeader().getFields().forEach(field -> {
-        String timeSeries = field.getName();
+      while (rowStream.hasNext()) {
+        Row row = rowStream.next();
+        String timeSeries = new String((byte[]) row.getValue(0));
+        if (timeSeries.contains("{") && timeSeries.contains("}")) {
+          timeSeries = timeSeries.split("\\{")[0];
+        }
+        logger.info("[migrationData] need migration path: {}", timeSeries);
         for (FragmentMeta fragmentMeta: fragmentMetas) {
           if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
             pathSet.add(timeSeries);
+            logger.info("[migrationData] path {} belong to {}", timeSeries, fragmentMeta);
           }
         }
-      });
+      }
       StorageUnitMeta sourceStorageUnit = DefaultMetaManager.getInstance().getStorageUnit(sourceStorageUnitId);
       StorageUnitMeta targetStorageUnit = DefaultMetaManager.getInstance().getStorageUnit(targetStorageUnitId);
       // 开始迁移数据

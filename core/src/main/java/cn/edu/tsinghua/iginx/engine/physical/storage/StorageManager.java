@@ -112,7 +112,9 @@ public class StorageManager {
                         Integer.MAX_VALUE,
                         60L, TimeUnit.SECONDS, new SynchronousQueue<>());
                 storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
-                connectionManager.registerConnector(id, storage.getConnector());
+                if (ConfigDescriptor.getInstance().getConfig().isEnableStorageHeartbeat()) {
+                    connectionManager.registerConnector(id, storage.getConnector());
+                }
             }
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);

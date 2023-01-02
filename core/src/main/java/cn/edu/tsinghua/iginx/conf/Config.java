@@ -178,6 +178,11 @@ public class Config {
     ////////////////////
 
     /**
+     * 是否开启存储活性检测
+     */
+    private boolean enableStorageHeartbeat = false;
+
+    /**
      * 存储节点心跳包间隔，单位是 ms，如果为 0 表示不检测存储节点活性，默认为 10s
      */
     private long storageHeartbeatInterval = 10000;
@@ -747,6 +752,14 @@ public class Config {
 
     public void setLocalParquetStorage(boolean localParquetStorage) {
         isLocalParquetStorage = localParquetStorage;
+    }
+
+    public boolean isEnableStorageHeartbeat() {
+        return enableStorageHeartbeat;
+    }
+
+    public void setEnableStorageHeartbeat(boolean enableStorageHeartbeat) {
+        this.enableStorageHeartbeat = enableStorageHeartbeat;
     }
 
     public long getStorageHeartbeatInterval() {

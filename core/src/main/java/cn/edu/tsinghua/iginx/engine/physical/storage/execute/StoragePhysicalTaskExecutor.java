@@ -117,6 +117,7 @@ public class StoragePhysicalTaskExecutor {
                                     result = pair.k.execute(task);
                                 } catch (Exception e) {
                                     logger.error("execute task error: " + e);
+                                    e.printStackTrace();
                                     result = new TaskExecuteResult(new PhysicalException(e));
                                 }
                                 task.setResult(result);
