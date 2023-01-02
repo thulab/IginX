@@ -232,7 +232,7 @@ jobs:
 
       - name: schema prefix IT
         run: |
-          mvn test -q -Dtest=InfluxDBHistoryDataCapacityExpansionIT#schemaPrefix -DfailIfNoTests=false
+          mvn test -q -Dtest=InfluxDBHistoryDataCapacityExpansionIT#testSchemaPrefix -DfailIfNoTests=false
 
   DataPrefixWithMultiSchemaPrefix-Test-InfluxDB:
     timeout-minutes: 20
@@ -292,7 +292,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 
-      - name: schema prefix IT
+      - name: Add Same DataPrefix With DiffSchemaPrefix IT
         run: |
           mvn test -q -Dtest=InfluxDBHistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix -DfailIfNoTests=false
 

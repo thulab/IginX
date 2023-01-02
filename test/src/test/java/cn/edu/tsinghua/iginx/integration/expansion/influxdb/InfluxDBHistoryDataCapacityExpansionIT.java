@@ -17,8 +17,7 @@ public class InfluxDBHistoryDataCapacityExpansionIT {
 
     private String ENGINE_TYPE = "influxdb";
 
-    public InfluxDBHistoryDataCapacityExpansionIT(String engineType) {
-        this.ENGINE_TYPE = engineType;
+    public InfluxDBHistoryDataCapacityExpansionIT() {
     }
 
     @BeforeClass
