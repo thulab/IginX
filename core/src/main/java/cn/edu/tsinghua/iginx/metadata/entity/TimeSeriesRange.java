@@ -98,9 +98,13 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
 
     //Strange function: it should not work on the implementation of TimeSeriesPrefixRange
     public static TimeSeriesRange fromString(String str) {
-        String[] parts = str.split("-");
-        assert parts.length == 2;
-        return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
+        if (str.contains("-")) {
+            String[] parts = str.split("-");
+            assert parts.length == 2;
+            return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
+        } else {
+            return new TimeSeriesPrefixRange(str);
+        }
     }
 
     public boolean isContain(String tsName);
