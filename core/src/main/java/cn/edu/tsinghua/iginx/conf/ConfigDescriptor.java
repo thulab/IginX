@@ -59,9 +59,9 @@ public class ConfigDescriptor {
             config.setUsername(properties.getProperty("username", "root"));
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
-                "127.0.0.1:2181"));
+                    "127.0.0.1:2181"));
             config.setStorageEngineList(properties.getProperty("storageEngineList",
-                "127.0.0.1#6667#iotdb11#username=root#password=root#sessionPoolSize=20#dataDir=/path/to/your/data/"));
+                    "127.0.0.1#6667#iotdb11#username=root#password=root#sessionPoolSize=20#dataDir=/path/to/your/data/"));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
@@ -71,6 +71,11 @@ public class ConfigDescriptor {
             //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
 
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
+            config.setEnableMonitor(Boolean.parseBoolean(properties.getProperty("enableMonitor", "true")));
+            config.setLoadBalanceCheckInterval(Integer.parseInt(properties.getProperty("loadBalanceCheckInterval", "10")));
+            config.setFragmentCompactionWriteThreshold(Long.parseLong(properties.getProperty("fragmentCompactionWriteThreshold", "1000")));
+            config.setFragmentCompactionReadThreshold(Long.parseLong(properties.getProperty("fragmentCompactionReadThreshold", "1000")));
+            config.setFragmentCompactionReadRatioThreshold(Long.parseLong(properties.getProperty("fragmentCompactionReadRatioThreshold", "0.1")));
             config.setMigrationBatchSize(Integer.parseInt(properties.getProperty("migrationBatchSize", "100")));
             config.setReshardFragmentTimeMargin(Long.parseLong(properties.getProperty("reshardFragmentTimeMargin", "60")));
             config.setMaxReshardFragmentsNum(Integer.parseInt(properties.getProperty("maxReshardFragmentsNum", "3")));
@@ -217,9 +222,9 @@ public class ConfigDescriptor {
             while ((line = bufferedReader.readLine()) != null) {
                 line = line.trim();
                 if (line.toLowerCase().startsWith(Constants.UDAF) ||
-                    line.toLowerCase().startsWith(Constants.UDTF) ||
-                    line.toLowerCase().startsWith(Constants.UDSF) ||
-                    line.toLowerCase().startsWith(Constants.TRANSFORM)) {
+                        line.toLowerCase().startsWith(Constants.UDTF) ||
+                        line.toLowerCase().startsWith(Constants.UDSF) ||
+                        line.toLowerCase().startsWith(Constants.TRANSFORM)) {
                     config.getUdfList().add(line);
                 }
             }

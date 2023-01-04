@@ -54,6 +54,16 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
+    private boolean enableMonitor = true;
+
+    private int loadBalanceCheckInterval = 3;
+
+    private long fragmentCompactionWriteThreshold = 1000;
+
+    private long fragmentCompactionReadThreshold = 1000;
+
+    private double fragmentCompactionReadRatioThreshold = 0.1;
+
     private long reshardFragmentTimeMargin = 60;
 
     private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
@@ -296,6 +306,46 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public boolean isEnableMonitor() {
+        return enableMonitor;
+    }
+
+    public void setEnableMonitor(boolean enableMonitor) {
+        this.enableMonitor = enableMonitor;
+    }
+
+    public int getLoadBalanceCheckInterval() {
+        return loadBalanceCheckInterval;
+    }
+
+    public void setLoadBalanceCheckInterval(int loadBalanceCheckInterval) {
+        this.loadBalanceCheckInterval = loadBalanceCheckInterval;
+    }
+
+    public long getFragmentCompactionWriteThreshold() {
+        return fragmentCompactionWriteThreshold;
+    }
+
+    public void setFragmentCompactionWriteThreshold(long fragmentCompactionWriteThreshold) {
+        this.fragmentCompactionWriteThreshold = fragmentCompactionWriteThreshold;
+    }
+
+    public long getFragmentCompactionReadThreshold() {
+        return fragmentCompactionReadThreshold;
+    }
+
+    public void setFragmentCompactionReadThreshold(long fragmentCompactionReadThreshold) {
+        this.fragmentCompactionReadThreshold = fragmentCompactionReadThreshold;
+    }
+
+    public double getFragmentCompactionReadRatioThreshold() {
+        return fragmentCompactionReadRatioThreshold;
+    }
+
+    public void setFragmentCompactionReadRatioThreshold(double fragmentCompactionReadRatioThreshold) {
+        this.fragmentCompactionReadRatioThreshold = fragmentCompactionReadRatioThreshold;
     }
 
     public long getMigrationBatchSize() {
