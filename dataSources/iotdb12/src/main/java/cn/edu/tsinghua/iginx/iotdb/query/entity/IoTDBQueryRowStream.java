@@ -85,7 +85,7 @@ public class IoTDBQueryRowStream implements RowStream {
             String name = names.get(i);
             String type = types.get(i);
             if (i == 0 && name.equals("Time")) {
-                time = Field.TIME;
+                time = Field.KEY;
                 continue;
             }
             name = transformColumnName(name);

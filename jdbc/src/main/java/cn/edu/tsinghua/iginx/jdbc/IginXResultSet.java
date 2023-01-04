@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.jdbc;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 //import com.google.common.primitives.Ints;
@@ -61,16 +62,16 @@ public class IginXResultSet implements ResultSet {
 
         columnNames = result.getPaths();
 
-        long[] timestamps = result.getTimestamps();
-        if (timestamps != null) {
-            if (timestamps.length != values.size()) {
-                log.error("timestamps and values size did not match.");
+        long[] keys = result.getKeys();
+        if (keys != null) {
+            if (keys.length != values.size()) {
+                log.error("keys and values size did not match.");
                 return;
             }
-            columnNames.add(0, "time");
+            columnNames.add(0, GlobalConstant.KEY_NAME);
             columnTypes.add(0, DataType.LONG);
-            for (int i = 0; i < timestamps.length; i++) {
-                values.get(i).add(0, timestamps[i]);
+            for (int i = 0; i < keys.length; i++) {
+                values.get(i).add(0, keys[i]);
             }
             hasTime = true;
         } else {

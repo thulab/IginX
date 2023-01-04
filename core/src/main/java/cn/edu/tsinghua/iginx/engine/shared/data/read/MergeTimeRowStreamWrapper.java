@@ -53,17 +53,17 @@ public class MergeTimeRowStreamWrapper implements RowStream {
         List<Row> sameTimeRows = new ArrayList<>();
         long currentTime = -1;
         if (lookAhead != null) {
-            currentTime = lookAhead.getTimestamp();
+            currentTime = lookAhead.getKey();
             sameTimeRows.add(lookAhead);
             lookAhead = null;
         }
         while (rowStream.hasNext()) {
             lookAhead = rowStream.next();
             if (currentTime == -1) {
-                currentTime = lookAhead.getTimestamp();
+                currentTime = lookAhead.getKey();
                 sameTimeRows.add(lookAhead);
                 lookAhead = null;
-            } else if (currentTime == lookAhead.getTimestamp()) {
+            } else if (currentTime == lookAhead.getKey()) {
                 sameTimeRows.add(lookAhead);
                 lookAhead = null;
             } else {
@@ -95,6 +95,6 @@ public class MergeTimeRowStreamWrapper implements RowStream {
                 values[i] = row1.getValue(i);
             }
         }
-        return new Row(row1.getHeader(), row1.getTimestamp(), values);
+        return new Row(row1.getHeader(), row1.getKey(), values);
     }
 }

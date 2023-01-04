@@ -151,7 +151,7 @@ public class ParseTest {
 
         String orderBy = "SELECT a FROM test ORDER BY timestamp";
         statement = (SelectStatement) TestUtils.buildStatement(orderBy);
-        assertEquals(SQLConstant.TIME, statement.getOrderByPath());
+        assertEquals(SQLConstant.KEY, statement.getOrderByPath());
         assertTrue(statement.isAscending());
 
         String orderByAndLimit = "SELECT a FROM test ORDER BY test.a DESC LIMIT 10 OFFSET 5;";

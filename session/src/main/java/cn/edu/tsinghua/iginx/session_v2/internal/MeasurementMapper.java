@@ -73,7 +73,7 @@ public class MeasurementMapper {
 
             Class<?> fieldType = field.getType();
             if (fieldAnnotation.timestamp()) {
-                recordBuilder.timestamp((Long) value);
+                recordBuilder.key((Long) value);
             } else if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
                 recordBuilder.addBooleanField(name, (Boolean) value);
             } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {

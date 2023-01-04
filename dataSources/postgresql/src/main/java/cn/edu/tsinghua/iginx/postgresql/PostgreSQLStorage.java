@@ -382,7 +382,7 @@ public class PostgreSQLStorage implements IStorage {
             Map<String, String> tags = data.getTags(i);
             createTimeSeriesIfNotExists(table, field, tags, dataType);
 
-            long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            long time = data.getKey(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value;
             if (data.getDataType(j) == DataType.BINARY) {
               value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
@@ -436,7 +436,7 @@ public class PostgreSQLStorage implements IStorage {
         int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
           if (bitmapView.get(j)) {
-            long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            long time = data.getKey(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value;
             if (data.getDataType(i) == DataType.BINARY) {
               value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)

@@ -39,7 +39,7 @@ public class QueryAggregatorDiv extends QueryAggregator {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
-            int n = sessionQueryDataSet.getTimestamps().length;
+            int n = sessionQueryDataSet.getKeys().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             switch (type) {
@@ -55,7 +55,7 @@ public class QueryAggregatorDiv extends QueryAggregator {
                                 datapoints += 1;
                             }
                         }
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], nowd / getDivisor());
+                        queryResultDataset.add(sessionQueryDataSet.getKeys()[i], nowd / getDivisor());
                         nowd = null;
                     }
                     queryResultDataset.setSampleSize(datapoints);

@@ -26,7 +26,7 @@ public final class Header {
 
     public static final Header EMPTY_HEADER = new Header(Collections.emptyList());
 
-    private final Field time;
+    private final Field key;
 
     private final List<Field> fields;
 
@@ -38,8 +38,8 @@ public final class Header {
         this(null, fields);
     }
 
-    public Header(Field time, List<Field> fields) {
-        this.time = time;
+    public Header(Field key, List<Field> fields) {
+        this.key = key;
         this.fields = fields;
         this.indexMap = new HashMap<>();
         for (int i = 0; i < fields.size(); i++) {
@@ -48,8 +48,8 @@ public final class Header {
         this.patternIndexCache = new HashMap<>();
     }
 
-    public Field getTime() {
-        return time;
+    public Field getKey() {
+        return key;
     }
 
     public List<Field> getFields() {
@@ -64,8 +64,8 @@ public final class Header {
         return fields.size();
     }
 
-    public boolean hasTimestamp() {
-        return time != null;
+    public boolean hasKey() {
+        return key != null;
     }
 
     public int indexOf(Field field) {
@@ -104,7 +104,7 @@ public final class Header {
     @Override
     public String toString() {
         return "Header{" +
-            "time=" + time +
+            "time=" + key +
             ", fields=" + fields +
             '}';
     }
@@ -114,11 +114,11 @@ public final class Header {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Header header = (Header) o;
-        return Objects.equals(time, header.time) && Objects.equals(fields, header.fields) && Objects.equals(indexMap, header.indexMap);
+        return Objects.equals(key, header.key) && Objects.equals(fields, header.fields) && Objects.equals(indexMap, header.indexMap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(time, fields, indexMap);
+        return Objects.hash(key, fields, indexMap);
     }
 }

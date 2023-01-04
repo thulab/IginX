@@ -64,7 +64,7 @@ public class InfluxDBHistoryQueryRowStream implements RowStream {
             }
         }
 
-        header = new Header(Field.TIME, fields);
+        header = new Header(Field.KEY, fields);
     }
 
     @Override

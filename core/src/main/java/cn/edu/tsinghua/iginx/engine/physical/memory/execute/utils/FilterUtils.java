@@ -20,10 +20,8 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
-import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class FilterUtils {
                 return !validate(notFilter.getChild(), row);
             case Time:
                 TimeFilter timeFilter = (TimeFilter) filter;
-                if (row.getTimestamp() == Row.NON_EXISTED_TIMESTAMP) {
+                if (row.getKey() == Row.NON_EXISTED_KEY) {
                     return false;
                 }
                 return validateTimeFilter(timeFilter, row);
@@ -73,7 +71,7 @@ public class FilterUtils {
     }
 
     private static boolean validateTimeFilter(TimeFilter timeFilter, Row row) {
-        long timestamp = row.getTimestamp();
+        long timestamp = row.getKey();
         switch (timeFilter.getOp()) {
             case E:
                 return timestamp == timeFilter.getValue();

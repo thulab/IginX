@@ -670,7 +670,7 @@ public class DefaultMetaCache implements IMetaCache {
         RawData data = statement.getRawData();
         List<String> paths = data.getPaths();
         if (data.isColumnData()) {
-            DataView view = new ColumnDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
+            DataView view = new ColumnDataView(data, 0, data.getPaths().size(), 0, data.getKeys().size());
             for (int i = 0; i < view.getPathNum(); i++) {
                 long minn = Long.MAX_VALUE;
                 long maxx = Long.MIN_VALUE;
@@ -679,8 +679,8 @@ public class DefaultMetaCache implements IMetaCache {
                 BitmapView bitmapView = view.getBitmapView(i);
                 for (int j = 0; j < view.getTimeSize(); j++) {
                     if (bitmapView.get(j)) {
-                        minn = Math.min(minn, view.getTimestamp(j));
-                        maxx = Math.max(maxx, view.getTimestamp(j));
+                        minn = Math.min(minn, view.getKey(j));
+                        maxx = Math.max(maxx, view.getKey(j));
                         if (view.getDataType(i) == DataType.BINARY) {
                             totalByte += ((byte[]) view.getValue(i, j)).length;
                         } else {
@@ -694,7 +694,7 @@ public class DefaultMetaCache implements IMetaCache {
                 }
             }
         } else {
-            DataView view = new RowDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
+            DataView view = new RowDataView(data, 0, data.getPaths().size(), 0, data.getKeys().size());
             long[] totalByte = new long[view.getPathNum()];
             int[] count = new int[view.getPathNum()];
             long[] minn = new long[view.getPathNum()];
@@ -707,8 +707,8 @@ public class DefaultMetaCache implements IMetaCache {
                 int index = 0;
                 for (int j = 0; j < view.getPathNum(); j++) {
                     if (bitmapView.get(j)) {
-                        minn[j] = Math.min(minn[j], view.getTimestamp(i));
-                        maxx[j] = Math.max(maxx[j], view.getTimestamp(i));
+                        minn[j] = Math.min(minn[j], view.getKey(i));
+                        maxx[j] = Math.max(maxx[j], view.getKey(i));
                         if (view.getDataType(j) == DataType.BINARY) {
                             totalByte[j] += ((byte[]) view.getValue(i, index)).length;
                         } else {

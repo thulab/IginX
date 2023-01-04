@@ -41,7 +41,7 @@ public class QueryAggregatorPercentile extends QueryAggregator {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
-            int n = sessionQueryDataSet.getTimestamps().length;
+            int n = sessionQueryDataSet.getKeys().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             switch (type) {
@@ -54,10 +54,10 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                                 tmp.add((long) sessionQueryDataSet.getValues().get(i).get(j));
                             }
                         }
-                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()) !=
+                            RestUtils.getInterval(sessionQueryDataSet.getKeys()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmp);
-                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()),
                                 tmp.get((int) Math.floor(getPercentile() * (tmp.size() - 1))));
                             tmp = new ArrayList<>();
                         }
@@ -72,10 +72,10 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                                 tmpd.add((double) sessionQueryDataSet.getValues().get(i).get(j));
                             }
                         }
-                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()) !=
+                            RestUtils.getInterval(sessionQueryDataSet.getKeys()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmpd);
-                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()),
                                 tmpd.get((int) Math.floor(getPercentile() * (tmpd.size() - 1))));
                             tmpd = new ArrayList<>();
                         }

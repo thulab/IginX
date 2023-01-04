@@ -29,7 +29,7 @@ public class Sort extends AbstractUnaryOperator {
     private final SortType sortType;
 
     public Sort(Source source) {
-        this(source, Constants.TIMESTAMP, SortType.ASC);
+        this(source, Constants.KEY, SortType.ASC);
     }
 
     public Sort(Source source, String sortBy, SortType sortType) {

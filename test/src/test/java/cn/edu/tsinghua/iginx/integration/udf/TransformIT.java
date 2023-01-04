@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.integration.udf;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
@@ -265,7 +266,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("us.d1.s2", parts[1]);
 
         int index = 0;
@@ -335,7 +336,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         int index = 0;
@@ -425,13 +426,13 @@ public class TransformIT {
             verifyJobState(jobId);
 
             SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
-            int timeIndex = queryResult.getPaths().indexOf("transform.time");
+            int timeIndex = queryResult.getPaths().indexOf("transform.key");
             int sumIndex = queryResult.getPaths().indexOf("transform.sum");
             assertNotEquals(-1, timeIndex);
             assertNotEquals(-1, sumIndex);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-            writer.write("time,sum\n");
+            writer.write("key,sum\n");
             for (List<Object> row : queryResult.getValues()) {
                 writer.write(row.get(timeIndex) + "," + row.get(sumIndex) + "\n");
             }
@@ -449,7 +450,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         int index = 0;
@@ -553,7 +554,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         line = reader.readLine();

@@ -39,7 +39,7 @@ public class QueryAggregatorDev extends QueryAggregator {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
-            int n = sessionQueryDataSet.getTimestamps().length;
+            int n = sessionQueryDataSet.getKeys().length;
             int m = sessionQueryDataSet.getPaths().size();
             switch (type) {
                 case LONG:
@@ -56,9 +56,9 @@ public class QueryAggregatorDev extends QueryAggregator {
                                 datapoints += 1;
                             }
                         }
-                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
-                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()) !=
+                            RestUtils.getInterval(sessionQueryDataSet.getKeys()[i + 1], startTimestamp, getDur())) {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getKeys()[i], startTimestamp, getDur()),
                                 sum2 / cnt - Math.pow(sum / cnt, 2));
                             sum = 0;
                             sum2 = 0;

@@ -126,7 +126,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
                 List<Bitmap> bitmapList = new ArrayList<>();
                 List<ByteBuffer> bitmapBufferList = new ArrayList<>();
 
-                boolean hasTimestamp = selectRowStream.getHeader().hasTimestamp();
+                boolean hasTimestamp = selectRowStream.getHeader().hasKey();
                 while (selectRowStream.hasNext()) {
                     Row row = selectRowStream.next();
                     Object[] rowValues = row.getValues();
@@ -140,7 +140,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
                     bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
                     bitmapList.add(bitmap);
                     if (hasTimestamp) {
-                        timestampList.add(row.getTimestamp());
+                        timestampList.add(row.getKey());
                     }
 
                     // 按行批量插入数据

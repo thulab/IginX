@@ -44,7 +44,7 @@ public class NewSessionExample {
         );
         writeClient.writePoint(
                 Point.builder()
-                        .timestamp(System.currentTimeMillis() - 1000L)
+                        .key(System.currentTimeMillis() - 1000L)
                         .measurement("a.b.b")
                         .doubleValue(2333.2)
                         .build()
@@ -52,12 +52,12 @@ public class NewSessionExample {
 
         long timestamp = System.currentTimeMillis();
         Point point1 = Point.builder()
-                .timestamp(timestamp)
+                .key(timestamp)
                 .measurement("a.a.a")
                 .intValue(666)
                 .build();
         Point point2 = Point.builder()
-                .timestamp(timestamp)
+                .key(timestamp)
                 .measurement("a.b.b")
                 .doubleValue(666.0)
                 .build();

@@ -39,7 +39,7 @@ public class QueryAggregatorFilter extends QueryAggregator {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
-            int n = sessionQueryDataSet.getTimestamps().length;
+            int n = sessionQueryDataSet.getKeys().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             switch (type) {
@@ -55,7 +55,7 @@ public class QueryAggregatorFilter extends QueryAggregator {
                             }
                         }
                         if (now != null) {
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], now);
+                            queryResultDataset.add(sessionQueryDataSet.getKeys()[i], now);
                         }
                     }
                     queryResultDataset.setSampleSize(datapoints);
@@ -72,7 +72,7 @@ public class QueryAggregatorFilter extends QueryAggregator {
                             }
                         }
                         if (nowd != null) {
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], nowd);
+                            queryResultDataset.add(sessionQueryDataSet.getKeys()[i], nowd);
                         }
                     }
                     queryResultDataset.setSampleSize(datapoints);

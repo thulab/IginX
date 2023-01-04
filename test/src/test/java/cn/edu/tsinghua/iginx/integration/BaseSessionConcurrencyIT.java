@@ -127,13 +127,13 @@ public abstract class BaseSessionConcurrencyIT {
         try {
             for (int i = 0; i < queryTaskNum; i++) {
                 SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
-                int len = dataSet.getTimestamps().length;
+                int len = dataSet.getKeys().length;
                 List<String> resPaths = dataSet.getPaths();
                 assertEquals(mulStQueryLen, resPaths.size());
                 assertEquals(TIME_PERIOD, len);
                 assertEquals(TIME_PERIOD, dataSet.getValues().size());
                 for (int j = 0; j < len; j++) {
-                    long timestamp = dataSet.getTimestamps()[j];
+                    long timestamp = dataSet.getKeys()[j];
                     assertEquals(j + START_TIME, timestamp);
                     List<Object> result = dataSet.getValues().get(j);
                     for (int k = 0; k < mulStQueryLen; k++) {
@@ -184,13 +184,13 @@ public abstract class BaseSessionConcurrencyIT {
         //query
         // TODO change the simple query and one of the avg query to multithread
         SessionQueryDataSet mulTimeQueryDataSet = session.queryData(mulTimePaths, START_TIME, END_TIME + 1);
-        int mulTimeResLen = mulTimeQueryDataSet.getTimestamps().length;
+        int mulTimeResLen = mulTimeQueryDataSet.getKeys().length;
         List<String> mulTimeQueryResPaths = mulTimeQueryDataSet.getPaths();
         assertEquals(mulTimeQueryLen, mulTimeQueryResPaths.size());
         assertEquals(TIME_PERIOD, mulTimeResLen);
         assertEquals(TIME_PERIOD, mulTimeQueryDataSet.getValues().size());
         for (int i = 0; i < mulTimeResLen; i++) {
-            long timestamp = mulTimeQueryDataSet.getTimestamps()[i];
+            long timestamp = mulTimeQueryDataSet.getKeys()[i];
             assertEquals(i + START_TIME, timestamp);
             List<Object> result = mulTimeQueryDataSet.getValues().get(i);
             for (int j = 0; j < mulTimeQueryLen; j++) {
@@ -248,13 +248,13 @@ public abstract class BaseSessionConcurrencyIT {
 
             //query
             SessionQueryDataSet delPSDataSet = session.queryData(mulDelPSPaths, START_TIME, END_TIME + 1);
-            int delPSQueryLen = delPSDataSet.getTimestamps().length;
+            int delPSQueryLen = delPSDataSet.getKeys().length;
             List<String> delPSResPaths = delPSDataSet.getPaths();
             assertEquals(mulDelPSLen, delPSResPaths.size());
             assertEquals(TIME_PERIOD, delPSQueryLen);
             assertEquals(TIME_PERIOD, delPSDataSet.getValues().size());
             for (int i = 0; i < delPSQueryLen; i++) {
-                long timestamp = delPSDataSet.getTimestamps()[i];
+                long timestamp = delPSDataSet.getKeys()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delPSDataSet.getValues().get(i);
                 for (int j = 0; j < mulDelPSLen; j++) {
@@ -296,7 +296,7 @@ public abstract class BaseSessionConcurrencyIT {
             insertNumRecords(mulDelPTPaths);
             Thread.sleep(1000);
             SessionQueryDataSet beforePTDataSet = session.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
-            int beforePTLen = beforePTDataSet.getTimestamps().length;
+            int beforePTLen = beforePTDataSet.getKeys().length;
             List<String> beforePTPaths = beforePTDataSet.getPaths();
             assertEquals(mulDelPTLen, beforePTPaths.size());
             assertEquals(TIME_PERIOD, beforePTLen);
@@ -326,13 +326,13 @@ public abstract class BaseSessionConcurrencyIT {
 
             //query
             SessionQueryDataSet delPTDataSet = session.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
-            int delPTQueryLen = delPTDataSet.getTimestamps().length;
+            int delPTQueryLen = delPTDataSet.getKeys().length;
             List<String> delPTResPaths = delPTDataSet.getPaths();
             assertEquals(mulDelPTLen, delPTResPaths.size());
             assertEquals(TIME_PERIOD, delPTQueryLen);
             assertEquals(TIME_PERIOD, delPTDataSet.getValues().size());
             for (int i = 0; i < delPTQueryLen; i++) {
-                long timestamp = delPTDataSet.getTimestamps()[i];
+                long timestamp = delPTDataSet.getKeys()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delPTDataSet.getValues().get(i);
                 for (int j = 0; j < mulDelPTLen; j++) {
@@ -389,14 +389,14 @@ public abstract class BaseSessionConcurrencyIT {
             Thread.sleep(1000);
             //query
             SessionQueryDataSet delASDataSet = session.queryData(mulDelASPaths, START_TIME, END_TIME + 1);
-            int delASLen = delASDataSet.getTimestamps().length;
+            int delASLen = delASDataSet.getKeys().length;
             List<String> delASResPaths = delASDataSet.getPaths();
             assertEquals(mulDelASLen, delASResPaths.size());
             assertEquals(TIME_PERIOD, delASLen);
             assertEquals(TIME_PERIOD, delASDataSet.getValues().size());
 
             for (int i = 0; i < delASLen; i++) {
-                long timestamp = delASDataSet.getTimestamps()[i];
+                long timestamp = delASDataSet.getKeys()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delASDataSet.getValues().get(i);
                 for (int j = 0; j < mulDelASLen; j++) {
@@ -453,13 +453,13 @@ public abstract class BaseSessionConcurrencyIT {
             Thread.sleep(1000);
             //query
             SessionQueryDataSet delATDataSet = session.queryData(mulDelATPaths, START_TIME, END_TIME + 1);
-            int delATLen = delATDataSet.getTimestamps().length;
+            int delATLen = delATDataSet.getKeys().length;
             List<String> delATResPaths = delATDataSet.getPaths();
             assertEquals(mulDelATLen, delATResPaths.size());
             assertEquals(TIME_PERIOD, delATLen);
             assertEquals(TIME_PERIOD, delATDataSet.getValues().size());
             for (int i = 0; i < delATLen; i++) {
-                long timestamp = delATDataSet.getTimestamps()[i];
+                long timestamp = delATDataSet.getKeys()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delATDataSet.getValues().get(i);
                 for (int j = 0; j < mulDelATLen; j++) {

@@ -567,7 +567,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             }
             selectStatement.setOrderByPath(orderByPath);
         } else {
-            selectStatement.setOrderByPath(SQLConstant.TIME);
+            selectStatement.setOrderByPath(SQLConstant.KEY);
         }
         if (ctx.DESC() != null) {
             selectStatement.setAscending(false);

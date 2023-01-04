@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.engine.shared;
 
 public class Constants {
 
-    public static final String TIMESTAMP = "time";
+    public static final String KEY = "key";
 
     public static final String ORDINAL = "ordinal";
 
