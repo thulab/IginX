@@ -49,6 +49,19 @@ public class StringUtils {
         }
     }
 
+    /**
+     * @return        返回值为 0 表示包含，>0 表示在这个序列在 border 前，<0 表示 ts 在 border 后
+     * @param ts      时间序列(可能等于/含有*，不可能为null)
+     * @param border  前缀式时间范围
+     */
+    public static int compare(String ts, String border) {
+        if (ts.indexOf(border) == 0) {
+            return 0;
+        }
+        else
+            return ts.compareTo(border);
+    }
+
     public static String nextString(String str) {
         return str.substring(0, str.length() - 1) + (char)(str.charAt(str.length() - 1) + 1);
     }

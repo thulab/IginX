@@ -94,6 +94,24 @@ public final class StorageEngineMeta {
         this.needReAllocate = needReAllocate;
     }
 
+
+
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment, Map<String, String> extraParams, String storageEngine, List<StorageUnitMeta> storageUnitList, long createdBy, boolean needReAllocate) {
+        this.id = id;
+        this.ip = ip;
+        this.port = port;
+        this.hasData = hasData;
+        this.dataPrefix = dataPrefix;
+        this.readOnly = readOnly;
+        this.dummyStorageUnit = dummyStorageUnit;
+        this.dummyFragment = dummyFragment;
+        this.extraParams = extraParams;
+        this.storageEngine = storageEngine;
+        this.storageUnitList = storageUnitList;
+        this.createdBy = createdBy;
+        this.needReAllocate = needReAllocate;
+    }
+
     public long getId() {
         return id;
     }

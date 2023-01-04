@@ -31,7 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
@@ -49,6 +49,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import static cn.edu.tsinghua.iginx.conf.Constants.SCHEMA_PREFIX;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 
 public class IginxWorker implements IService.Iface {
@@ -195,6 +196,17 @@ public class IginxWorker implements IService.Iface {
             String type = storageEngine.getType();
             Map<String, String> extraParams = storageEngine.getExtraParams();
             boolean hasData = Boolean.parseBoolean(extraParams.getOrDefault(Constants.HAS_DATA, "false"));
+            if (type.equals("parquet")) {
+                String dir = extraParams.get("dir");
+                if (dir == null || dir.equals("")) {
+                    return RpcUtils.FAILURE;
+                }
+                if (extraParams.containsKey(SCHEMA_PREFIX)) {
+                    extraParams.put(SCHEMA_PREFIX, extraParams.get(SCHEMA_PREFIX) + "." + dir);
+                } else {
+                    extraParams.put(SCHEMA_PREFIX, dir);
+                }
+            }
             String dataPrefix = null;
             if (hasData && extraParams.containsKey(Constants.DATA_PREFIX)) {
                 dataPrefix = extraParams.get(Constants.DATA_PREFIX);
@@ -203,8 +215,7 @@ public class IginxWorker implements IService.Iface {
             StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
-            schemaPrefix.add(extraParams.get(Constants.SCHEMA_PREFIX)); // get the user defined schema prefix
-
+            schemaPrefix.add(extraParams.get(SCHEMA_PREFIX)); // get the user defined schema prefix
         }
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突
@@ -235,14 +246,14 @@ public class IginxWorker implements IService.Iface {
             if (meta.isHasData()) {
                 String dataPrefix = meta.getDataPrefix();
                 StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
-                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
+                Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta, dataPrefix);
                 FragmentMeta dummyFragment;
                 if (index < schemaPrefix.size() && schemaPrefix.get(index) != null) //set the virtual schema prefix
                     boundary.k.setSchemaPrefix(schemaPrefix.get(index));
                 if (dataPrefix == null) {
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
-                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                    dummyFragment = new FragmentMeta(new TimeSeriesPrefixRange(dataPrefix), boundary.v, dummyStorageUnit);
                 }
                 dummyFragment.setDummyFragment(true);
                 meta.setDummyStorageUnit(dummyStorageUnit);
@@ -434,20 +445,14 @@ public class IginxWorker implements IService.Iface {
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
-            case Constants.FILE_META:
-            case "":
             default:
-                localMetaStorageInfo = new LocalMetaStorageInfo(
-                    Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
-                );
+                logger.error("unexpected meta storage: " + config.getMetaStorage());
         }
 
-        if (metaStorageInfos != null) {
+        if (metaStorageInfos != null && !metaStorageInfos.isEmpty()) {
             resp.setMetaStorageInfos(metaStorageInfos);
         }
-        if (localMetaStorageInfo != null) {
-            resp.setLocalMetaStorageInfo(localMetaStorageInfo);
-        }
+        resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }

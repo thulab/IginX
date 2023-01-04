@@ -57,17 +57,17 @@ public interface IMetaStorage {
 
     void registerStorageUnitChangeHook(StorageUnitChangeHook hook);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
+    Map<TimeSeriesRange, List<FragmentMeta>> loadFragment() throws MetaStorageException;
 
     void lockFragment() throws MetaStorageException;
 
     List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+    Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval);
 
     void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
-    void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) throws MetaStorageException;
+    void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta) throws MetaStorageException;
 
     void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 

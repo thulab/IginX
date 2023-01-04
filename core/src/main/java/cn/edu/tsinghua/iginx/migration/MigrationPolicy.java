@@ -15,10 +15,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteTask;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteType;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationLogger;
@@ -461,7 +458,7 @@ public abstract class MigrationPolicy {
               sourceStorageId, targetStorageId,
               MigrationExecuteType.RESHARD_TIME));
       // [startTime, +∞) & (startPath, endPath)
-      TimeSeriesInterval tsInterval = fragmentMeta.getTsInterval();
+      TimeSeriesRange tsInterval = fragmentMeta.getTsInterval();
       TimeInterval timeInterval = fragmentMeta.getTimeInterval();
       List<Long> storageEngineList = new ArrayList<>();
       storageEngineList.add(targetStorageId);

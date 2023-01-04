@@ -164,7 +164,7 @@ public class RestSession {
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) throws ExecutionException {
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision timePrecision) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -233,7 +233,7 @@ public class RestSession {
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) throws ExecutionException {
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, TimePrecision timePrecision) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -336,7 +336,7 @@ public class RestSession {
         deleteDataInColumns(paths, tagList, startTime, endTime, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
     }
 
-    public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, String timePrecision) {
+    public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, TimePrecision timePrecision) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
         if (!tagList.isEmpty())//LHZ这里要全部将size改为这个empty的判断
             req.setTagsList(tagList);
@@ -357,7 +357,7 @@ public class RestSession {
         return queryData(paths, startTime, endTime, tagList);
     }
 
-    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, String timePrecision) {
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, TimePrecision timePrecision) {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
@@ -381,7 +381,7 @@ public class RestSession {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType, String timePrecision) {
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType, TimePrecision timePrecision) {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
         req.setTagsList(tagList);
         req.setTimePrecision(timePrecision);
@@ -399,7 +399,7 @@ public class RestSession {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
-    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision, String timePrecision) {
+    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision, TimePrecision timePrecision) {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime, aggregateType, precision);
         req.setTagsList(tagList);
         req.setTimePrecision(timePrecision);

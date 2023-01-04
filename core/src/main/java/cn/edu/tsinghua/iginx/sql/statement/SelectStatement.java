@@ -9,6 +9,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.expression.BaseExpression;
 import cn.edu.tsinghua.iginx.sql.expression.Expression;
+import cn.edu.tsinghua.iginx.sql.statement.join.JoinPart;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.*;
@@ -22,12 +23,14 @@ public class SelectStatement extends DataStatement {
     private boolean hasGroupByTime;
     private boolean hasSlideWindow;
     private boolean ascending;
+    private boolean hasJoinParts;
 
     private final List<Expression> expressions;
     private final Map<String, List<BaseExpression>> baseExpressionMap;
     private final Set<FuncType> funcTypeSet;
     private final Set<String> pathSet;
-    private final List<String> fromPaths;
+    private String fromPath;
+    private final List<JoinPart> joinParts;
     private String orderByPath;
     private Filter filter;
     private TagFilter tagFilter;
@@ -46,11 +49,12 @@ public class SelectStatement extends DataStatement {
         this.statementType = StatementType.SELECT;
         this.queryType = QueryType.Unknown;
         this.ascending = true;
+        this.hasJoinParts = false;
         this.expressions = new ArrayList<>();
         this.baseExpressionMap = new HashMap<>();
         this.funcTypeSet = new HashSet<>();
         this.pathSet = new HashSet<>();
-        this.fromPaths = new ArrayList<>();
+        this.joinParts = new ArrayList<>();
         this.orderByPath = "";
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
@@ -65,7 +69,7 @@ public class SelectStatement extends DataStatement {
         this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
         this.baseExpressionMap = new HashMap<>();
-        this.fromPaths = new ArrayList<>();
+        this.joinParts = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
 
         paths.forEach(path -> {
@@ -89,7 +93,7 @@ public class SelectStatement extends DataStatement {
         this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
         this.baseExpressionMap = new HashMap<>();
-        this.fromPaths = new ArrayList<>();
+        this.joinParts = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
 
         String func = aggregateType.toString().toLowerCase();
@@ -110,7 +114,7 @@ public class SelectStatement extends DataStatement {
         this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
         this.baseExpressionMap = new HashMap<>();
-        this.fromPaths = new ArrayList<>();
+        this.joinParts = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
 
         String func = aggregateType.toString().toLowerCase();
@@ -137,7 +141,7 @@ public class SelectStatement extends DataStatement {
         this.pathSet = new HashSet<>();
         this.expressions = new ArrayList<>();
         this.baseExpressionMap = new HashMap<>();
-        this.fromPaths = new ArrayList<>();
+        this.joinParts = new ArrayList<>();
         this.funcTypeSet = new HashSet<>();
         
         String func = aggregateType.toString().toLowerCase();
@@ -162,6 +166,7 @@ public class SelectStatement extends DataStatement {
         this.statementType = StatementType.SELECT;
 
         this.ascending = true;
+        this.hasJoinParts = false;
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
         this.orderByPath = "";
@@ -251,6 +256,14 @@ public class SelectStatement extends DataStatement {
         this.ascending = ascending;
     }
 
+    public boolean hasJoinParts() {
+        return hasJoinParts;
+    }
+
+    public void setHasJoinParts(boolean hasJoinParts) {
+        this.hasJoinParts = hasJoinParts;
+    }
+
     public List<String> getSelectedPaths() {
         List<String> paths = new ArrayList<>();
         baseExpressionMap.forEach((k, v) -> {
@@ -295,12 +308,20 @@ public class SelectStatement extends DataStatement {
         this.pathSet.add(path);
     }
 
-    public List<String> getFromPaths() {
-        return fromPaths;
+    public String getFromPath() {
+        return fromPath;
     }
 
     public void setFromPath(String fromPath) {
-        this.fromPaths.add(fromPath);
+        this.fromPath = fromPath;
+    }
+
+    public List<JoinPart> getJoinParts() {
+        return joinParts;
+    }
+
+    public void setJoinPart(JoinPart joinPart) {
+        this.joinParts.add(joinPart);
     }
 
     public String getOrderByPath() {

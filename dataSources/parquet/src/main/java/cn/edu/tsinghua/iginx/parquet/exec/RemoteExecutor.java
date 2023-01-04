@@ -20,6 +20,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.tag.PreciseTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 import cn.edu.tsinghua.iginx.parquet.thrift.DeleteReq;
 import cn.edu.tsinghua.iginx.parquet.thrift.GetStorageBoundryResp;
 import cn.edu.tsinghua.iginx.parquet.thrift.GetTimeSeriesOfStorageUnitResp;
@@ -73,13 +74,16 @@ public class RemoteExecutor implements Executor {
 
     @Override
     public TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, boolean isDummyStorageUnit) {
+        String filter, String storageUnit, boolean isDummyStorageUnit, String schemaPrefix) {
         ProjectReq req = new ProjectReq(storageUnit, isDummyStorageUnit, paths);
         if (tagFilter != null) {
             req.setTagFilter(constructRawTagFilter(tagFilter));
         }
         if (filter != null && !filter.equals("")) {
             req.setFilter(filter);
+        }
+        if (schemaPrefix != null && !schemaPrefix.equals("")) {
+            req.setSchemaPrefix(schemaPrefix);
         }
 
         try {
@@ -324,7 +328,7 @@ public class RemoteExecutor implements Executor {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
         try {
             GetStorageBoundryResp resp = client.getBoundaryOfStorage();
             return new Pair<>(

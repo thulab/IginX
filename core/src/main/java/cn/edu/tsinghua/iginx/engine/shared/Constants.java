@@ -25,6 +25,7 @@ public class Constants {
     public static final String ORDINAL = "ordinal";
 
     public static final String ALL_PATH = "*";
+    public static final String ALL_PATH_SUFFIX = ".*";
 
     public static final String PARAM_PATHS = "param_paths";
     public static final String PARAM_LEVELS = "param_levels";

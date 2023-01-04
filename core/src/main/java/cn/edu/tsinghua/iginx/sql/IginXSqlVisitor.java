@@ -17,6 +17,8 @@ import cn.edu.tsinghua.iginx.sql.expression.Expression.ExpressionType;
 import cn.edu.tsinghua.iginx.sql.expression.Operator;
 import cn.edu.tsinghua.iginx.sql.expression.UnaryExpression;
 import cn.edu.tsinghua.iginx.sql.statement.*;
+import cn.edu.tsinghua.iginx.sql.statement.join.JoinPart;
+import cn.edu.tsinghua.iginx.sql.statement.join.JoinType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.JobState;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
@@ -230,10 +232,54 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             parseQueryClause(ctx.queryClause(), subStatement);
             selectStatement.setSubStatement(subStatement);
         } else {
-            List<PathContext> fromPaths = ctx.path();
-            for (PathContext fromPath : fromPaths) {
-                selectStatement.setFromPath(fromPath.getText());
+            String fromPath = ctx.path().getText();
+            selectStatement.setFromPath(fromPath);
+            if (ctx.joinPart() != null && !ctx.joinPart().isEmpty()) {
+
+                selectStatement.setHasJoinParts(true);
+
+                for (JoinPartContext joinPartContext : ctx.joinPart()) {
+                    String pathPrefix = joinPartContext.path().getText();
+                    if (joinPartContext.join() == null) {  // cross join
+                        selectStatement.setJoinPart(new JoinPart(pathPrefix));
+                        continue;
+                    }
+
+                    JoinType joinType = parseJoinType(joinPartContext.join());
+
+                    Filter filter = null;
+                    if (joinPartContext.orExpression() != null) {
+                        filter = parseOrExpression(joinPartContext.orExpression(), selectStatement);
+                    }
+
+                    List<String> columns = new ArrayList<>();
+                    if (joinPartContext.colList() != null && !joinPartContext.colList().isEmpty()) {
+                        joinPartContext.colList().path().forEach(pathContext -> columns.add(pathContext.getText()));
+                    }
+
+                    selectStatement.setJoinPart(new JoinPart(pathPrefix, joinType, filter, columns));
+                }
             }
+        }
+    }
+
+    private JoinType parseJoinType(JoinContext joinContext) {
+        if (joinContext.NATURAL() != null) {
+            if (joinContext.LEFT() != null) {
+                return JoinType.LeftNatualJoin;
+            } else if (joinContext.RIGHT() != null) {
+                return JoinType.RightNatualJoin;
+            } else {
+                return JoinType.InnerNatualJoin;
+            }
+        } else if (joinContext.LEFT() != null) {
+            return JoinType.LeftOuterJoin;
+        } else if (joinContext.RIGHT() != null) {
+            return JoinType.RightOuterJoin;
+        } else if (joinContext.FULL() != null) {
+            return JoinType.FullOuterJoin;
+        } else {
+            return JoinType.InnerJoin;
         }
     }
 
@@ -320,8 +366,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                 if (expression.getType().equals(ExpressionType.Constant)) {
                     // 当select一个不包含在表达式的常量时，这个常量会被看成selectedPath
                     String selectedPath = ((ConstantExpression) expression).getValue().toString();
-                    List<Expression> newRet = parseBaseExpression(selectedPath, selectStatement);
-                    newRet.forEach(selectStatement::setExpression);
+                    selectStatement.setExpression(parseBaseExpression(selectedPath, selectStatement));
                 } else {
                     selectStatement.setExpression(expression);
                 }
@@ -335,7 +380,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private List<Expression> parseExpression(ExpressionContext ctx, SelectStatement selectStatement) {
         if (ctx.path() != null) {
-            return parseBaseExpression(ctx, selectStatement);
+            return Collections.singletonList(parseBaseExpression(ctx, selectStatement));
         }
         if (ctx.constant() != null) {
             return Collections.singletonList(new ConstantExpression(parseValue(ctx.constant())));
@@ -368,9 +413,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return ret;
     }
 
-    private List<Expression> parseBaseExpression(ExpressionContext ctx, SelectStatement selectStatement) {
-        List<Expression> ret = new ArrayList<>();
-
+    private Expression parseBaseExpression(ExpressionContext ctx, SelectStatement selectStatement) {
         String funcName = "";
         if (ctx.functionName() != null) {
             funcName = ctx.functionName().getText();
@@ -382,40 +425,32 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
 
         String selectedPath = ctx.path().getText();
-        List<String> fromPaths = selectStatement.getFromPaths();
-        if (fromPaths.isEmpty()) {
+
+        if (!selectStatement.hasJoinParts() && selectStatement.getSubStatement() == null) {
+            String fromPath = selectStatement.getFromPath();
+            String fullPath = fromPath + SQLConstant.DOT + selectedPath;
+            BaseExpression expression = new BaseExpression(fullPath, funcName, alias);
+            selectStatement.setSelectedFuncsAndPaths(funcName, expression);
+            return expression;
+        } else {
             BaseExpression expression = new BaseExpression(selectedPath, funcName, alias);
             selectStatement.setSelectedFuncsAndPaths(funcName, expression);
-            ret.add(expression);
-        } else {
-            // need to contact from path
-            for (String fromPath : fromPaths) {
-                String fullPath = fromPath + SQLConstant.DOT + selectedPath;
-                BaseExpression expression = new BaseExpression(fullPath, funcName, alias);
-                selectStatement.setSelectedFuncsAndPaths(funcName, expression);
-                ret.add(expression);
-            }
+            return expression;
         }
-        return ret;
     }
 
-    private List<Expression> parseBaseExpression(String selectedPath, SelectStatement selectStatement) {
-        List<Expression> ret = new ArrayList<>();
-        List<String> fromPaths = selectStatement.getFromPaths();
-        if (fromPaths.isEmpty()) {
+    private Expression parseBaseExpression(String selectedPath, SelectStatement selectStatement) {
+        if (!selectStatement.hasJoinParts() && selectStatement.getSubStatement() == null) {
+            String fromPath = selectStatement.getFromPath();
+            String fullPath = fromPath + SQLConstant.DOT + selectedPath;
+            BaseExpression expression = new BaseExpression(fullPath);
+            selectStatement.setSelectedFuncsAndPaths("", expression);
+            return expression;
+        } else {
             BaseExpression expression = new BaseExpression(selectedPath);
             selectStatement.setSelectedFuncsAndPaths("", expression);
-            ret.add(expression);
-        } else {
-            // need to contact from path
-            for (String fromPath : fromPaths) {
-                String fullPath = fromPath + SQLConstant.DOT + selectedPath;
-                BaseExpression expression = new BaseExpression(fullPath);
-                selectStatement.setSelectedFuncsAndPaths("", expression);
-                ret.add(expression);
-            }
+            return expression;
         }
-        return ret;
     }
 
     private Operator parseOperator(ExpressionContext ctx) {
@@ -639,7 +674,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         for (AndExpressionContext andCtx : ctx.andExpression()) {
             children.add(parseAndExpression(andCtx, statement));
         }
-        return new OrFilter(children);
+        return children.size() == 1 ? children.get(0) : new OrFilter(children);
     }
 
     private Filter parseAndExpression(AndExpressionContext ctx, Statement statement) {
@@ -647,7 +682,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         for (PredicateContext predicateCtx : ctx.predicate()) {
             children.add(parsePredicate(predicateCtx, statement));
         }
-        return new AndFilter(children);
+        return children.size() == 1 ? children.get(0) : new AndFilter(children);
     }
 
     private Filter parsePredicate(PredicateContext ctx, Statement statement) {
@@ -655,7 +690,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             Filter filter = parseOrExpression(ctx.orExpression(), statement);
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            if (ctx.predicatePath().size() == 0) {
+            if (ctx.path().size() == 0) {
                 return parseTimeFilter(ctx);
             } else {
                 StatementType type = statement.getType();
@@ -665,7 +700,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                     );
                 }
 
-                if (ctx.predicatePath().size() == 1) {
+                if (ctx.path().size() == 1) {
                     return parseValueFilter(ctx, (SelectStatement) statement);
                 } else {
                     return parsePathFilter(ctx, (SelectStatement) statement);
@@ -685,8 +720,10 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private Filter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
-        PredicatePathContext pathContext = ctx.predicatePath().get(0);
-        List<String> pathList = contactFromPathsIfNeeded(statement, pathContext);
+        String path = ctx.path().get(0).getText();
+        if (!statement.hasJoinParts() && statement.getSubStatement() == null) {
+            path = statement.getFromPath() + SQLConstant.DOT + path;
+        }
 
         Op op;
         if (ctx.OPERATOR_LIKE() != null) {
@@ -707,51 +744,20 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             value = new Value(parseValue(ctx.constant()));
         }
 
-
-        List<Filter> valueFilterList = new ArrayList<>();
-        for (String path: pathList) {
-            valueFilterList.add(new ValueFilter(path, op, value));
-        }
-
-        return valueFilterList.size() == 1 ?
-            valueFilterList.get(0) :
-            new AndFilter(valueFilterList);
+        return new ValueFilter(path, op, value);
     }
 
     private Filter parsePathFilter(PredicateContext ctx, SelectStatement statement) {
-        PredicatePathContext pathContextA = ctx.predicatePath().get(0);
-        PredicatePathContext pathContextB = ctx.predicatePath().get(1);
-
-        List<String> pathAList = contactFromPathsIfNeeded(statement, pathContextA);
-        List<String> pathBList = contactFromPathsIfNeeded(statement, pathContextB);
+        String pathA = ctx.path().get(0).getText();
+        String pathB = ctx.path().get(1).getText();
 
         Op op = Op.str2Op(ctx.comparisonOperator().getText().trim().toLowerCase());
 
-        List<Filter> pathFilterList = new ArrayList<>();
-        for (String pathA : pathAList) {
-            for (String pathB : pathBList) {
-                pathFilterList.add(new PathFilter(pathA, op, pathB));
-            }
+        if (!statement.hasJoinParts() && statement.getSubStatement() == null) {
+            pathA = statement.getFromPath() + SQLConstant.DOT + pathA;
+            pathB = statement.getFromPath() + SQLConstant.DOT + pathB;
         }
-
-        return pathFilterList.size() == 1 ?
-            pathFilterList.get(0) :
-            new AndFilter(pathFilterList);
-    }
-
-    private List<String> contactFromPathsIfNeeded(SelectStatement statement, PredicatePathContext pathContext) {
-        List<String> pathList = new ArrayList<>();
-        if (pathContext.INTACT() == null && statement.getSubStatement() == null) {
-            for (String fromPath : statement.getFromPaths()) {
-                String path = fromPath + SQLConstant.DOT + pathContext.path().getText();
-                statement.setPathSet(path);
-                pathList.add(path);
-            }
-        } else {
-            statement.setPathSet(pathContext.path().getText());
-            pathList.add(pathContext.path().getText());
-        }
-        return pathList;
+        return new PathFilter(pathA, op, pathB);
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

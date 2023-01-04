@@ -23,8 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
-import com.google.gson.reflect.TypeToken;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -196,9 +195,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 List<String> schemas = this.client.getChildren()
                     .forPath(SCHEMA_MAPPING_PREFIX);
                 for (String schema : schemas) {
-                    Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(new String(this.client.getData()
-                        .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {
-                    }.getType());
+                    Map<String, Integer> schemaMapping = JsonUtils.transform(new String(this.client.getData()
+                            .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)));
                     schemaMappings.put(schema, schemaMapping);
                 }
             }
@@ -231,8 +229,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     data = event.getData().getData();
-                    schemaMapping = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<String, Integer>>() {
-                    }.getType());
+                    schemaMapping = JsonUtils.transform(new String(data));
                     break;
                 case NODE_REMOVED:
                 default:
@@ -419,7 +416,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             for (String childName : children) {
                 byte[] data = this.client.getData()
                     .forPath(STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
-                StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", new String(data).contains("timeSeries") ? "TimeSeriesPrefixRange":"TimeSeriesInterval", data), StorageEngineMeta.class);
                 if (storageEngineMeta == null) {
                     logger.error("resolve data from " + STORAGE_ENGINE_NODE_PREFIX + "/" + childName + " error");
                     continue;
@@ -449,8 +446,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 .forPath(STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
             long id = Long.parseLong(nodeName.substring(STORAGE_ENGINE_NODE.length()));
             storageEngine.setId(id);
+            String tmp = new String(JsonUtils.toJson(storageEngine));
             this.client.setData()
-                .forPath(nodeName, JsonUtils.toJson(storageEngine));
+                .forPath(nodeName, tmp.getBytes());
             return id;
         } catch (Exception e) {
             throw new MetaStorageException("get error when add storage engine", e);
@@ -480,7 +478,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     logger.info("storage engine meta updated " + event.getData().getPath());
                     logger.info("storage engine: " + new String(data));
-                    storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                    storageEngineMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", new String(data).contains("timeSeries") ? "TimeSeriesPrefixRange":"TimeSeriesInterval", data), StorageEngineMeta.class);
                     if (storageEngineMeta != null) {
                         logger.info("new storage engine comes to cluster: id = " + storageEngineMeta.getId() + " ,ip = " + storageEngineMeta.getIp() + " , port = " + storageEngineMeta.getPort());
                         storageChangeHook.onChange(storageEngineMeta.getId(), storageEngineMeta);
@@ -498,7 +496,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         System.exit(2);
                         break;
                     }
-                    storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                    storageEngineMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", new String(data).contains("timeSeries") ? "TimeSeriesPrefixRange":"TimeSeriesInterval", data), StorageEngineMeta.class);
                     if (storageEngineMeta != null) {
                         logger.info("storage engine leave from cluster: id = " + storageEngineMeta.getId() + " ,ip = " + storageEngineMeta.getIp() + " , port = " + storageEngineMeta.getPort());
                         storageChangeHook.onChange(storageEngineMeta.getId(), null);
@@ -633,7 +631,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
             for (String tsIntervalName: tsIntervalNames) {
-                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                 if (fragmentTimeSeries.isContain(tsName)) {
                     List<FragmentMeta> fragments = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
@@ -641,8 +639,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         if (Long.parseLong(timeIntervalName) >= timeInterval.getEndTime()) {
                             break;
                         }
-                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", "TimeSeriesInterval", this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName)), FragmentMeta.class);
                         if (fragmentMeta.getTimeInterval().getEndTime() > timeInterval.getStartTime()) {
                             fragments.add(fragmentMeta);
                         }
@@ -657,12 +655,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval) {
         try {
             List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentMap = new HashMap<>();
             for (String tsIntervalName: tsIntervalNames) {
-                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                 if (fragmentTimeSeries.isIntersect(tsInterval)) {
                     List<FragmentMeta> fragments = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
@@ -670,8 +668,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         if (Long.parseLong(timeIntervalName) >= timeInterval.getEndTime()) {
                             break;
                         }
-                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", "TimeSeriesInterval", this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName)), FragmentMeta.class);
                         if (fragmentMeta.getTimeInterval().getEndTime() > timeInterval.getStartTime()) {
                             fragments.add(fragmentMeta);
                         }
@@ -688,21 +686,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
+    public Map<TimeSeriesRange, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentListMap = new HashMap<>();
             if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 this.client.create().withMode(CreateMode.PERSISTENT).forPath(FRAGMENT_NODE_PREFIX);
             } else {
                 List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
                 for (String tsIntervalName : tsIntervalNames) {
-                    TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                    TimeSeriesRange fragmentTimeSeries = TimeSeriesRange.fromString(tsIntervalName);
                     List<FragmentMeta> fragmentMetaList = new ArrayList<>();
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
                     for (String timeIntervalName : timeIntervalNames) {
-                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                            .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", "TimeSeriesInterval", this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName)), FragmentMeta.class);
                         fragmentMetaList.add(fragmentMeta);
                     }
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
@@ -726,7 +724,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             switch (event.getType()) {
                 case NODE_UPDATED:
                     data = event.getData().getData();
-                    fragmentMeta = JsonUtils.fromJson(data, FragmentMeta.class);
+                    fragmentMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", "TimeSeriesInterval", data), FragmentMeta.class);
                     if (fragmentMeta != null) {
                         fragmentChangeHook.onChange(false, fragmentMeta);
                     } else {
@@ -737,7 +735,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     String path = event.getData().getPath();
                     String[] pathParts = path.split("/");
                     if (pathParts.length == 4) {
-                        fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
+                        fragmentMeta = JsonUtils.fromJson(JsonUtils.addType("tsInterval", "TimeSeriesInterval", event.getData().getData()), FragmentMeta.class);
                         if (fragmentMeta != null) {
                             fragmentChangeHook.onChange(true, fragmentMeta);
                         } else {
@@ -785,7 +783,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+    public void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta)
         throws MetaStorageException {
         try {
             this.client.delete()
