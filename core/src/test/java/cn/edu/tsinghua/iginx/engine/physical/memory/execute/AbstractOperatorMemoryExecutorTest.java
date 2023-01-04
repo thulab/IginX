@@ -94,7 +94,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         List<Row> rows = new ArrayList<>();
         for (int i = 0; i < values.size(); i++) {
             if (hasTimestamp) {
-                rows.add(new Row(header, i, values.get(i).toArray()));
+                rows.add(new Row(header, i + 1, values.get(i).toArray()));
             } else {
                 rows.add(new Row(header, values.get(i).toArray()));
             }
@@ -157,24 +157,28 @@ public abstract class AbstractOperatorMemoryExecutorTest {
 
             CrossJoin crossJoin = new CrossJoin(
                 EmptySource.EMPTY_SOURCE,
-                EmptySource.EMPTY_SOURCE
+                EmptySource.EMPTY_SOURCE,
+                "a",
+                "b"
             );
 
             Table target = generateTableFromValues(
                 false,
                 Arrays.asList(
+                    new Field("a.key", DataType.LONG),
                     new Field("a.a", DataType.INTEGER),
                     new Field("a.b", DataType.DOUBLE),
                     new Field("a.c", DataType.BOOLEAN),
+                    new Field("b.key", DataType.LONG),
                     new Field("b.a", DataType.INTEGER),
                     new Field("b.b", DataType.DOUBLE),
                     new Field("b.c", DataType.BOOLEAN)
                 ),
                 Arrays.asList(
-                    Arrays.asList(2, 2.1, true, 1, 1.1, true),
-                    Arrays.asList(2, 2.1, true, 3, 3.1, false),
-                    Arrays.asList(3, 3.1, false, 1, 1.1, true),
-                    Arrays.asList(3, 3.1, false, 3, 3.1, false)
+                    Arrays.asList(1L, 2, 2.1, true, 1L, 1, 1.1, true),
+                    Arrays.asList(1L, 2, 2.1, true, 2L, 3, 3.1, false),
+                    Arrays.asList(2L, 3, 3.1, false, 1L, 1, 1.1, true),
+                    Arrays.asList(2L, 3, 3.1, false, 2L, 3, 3.1, false)
                 ));
 
             RowStream stream = getExecutor().executeBinaryOperator(crossJoin, tableA, tableB);
@@ -219,34 +223,38 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Table target = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.k", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3, 3.1, false),
-                Arrays.asList(3, 3.1, false, 3, 3.2, false),
-                Arrays.asList(3, 3.2, false, 3, 3.1, false),
-                Arrays.asList(3, 3.2, false, 3, 3.2, false),
-                Arrays.asList(5, 5.1, false, 5, 5.1, true)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3, 3.1, false),
+                Arrays.asList(2L, 3, 3.1, false, 3L, 3, 3.2, false),
+                Arrays.asList(3L, 3, 3.2, false, 2L, 3, 3.1, false),
+                Arrays.asList(3L, 3, 3.2, false, 3L, 3, 3.2, false),
+                Arrays.asList(5L, 5, 5.1, false, 4L, 5, 5.1, true)
             ));
 
         Table usingTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.k", DataType.INTEGER),
                 new Field("b.c", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3, false),
-                Arrays.asList(3, 3.2, false, 3, false),
-                Arrays.asList(5, 5.1, false, 5, true)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3, false),
+                Arrays.asList(3L, 3, 3.2, false, 3L, 3, false),
+                Arrays.asList(5L, 5, 5.1, false, 4L, 5, true)
             ));
 
         {
@@ -405,70 +413,76 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Table leftTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.a", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3, 3.1, false),
-                Arrays.asList(5, 5.1, false, 5, 5.1, true),
-                Arrays.asList(2, 2.1, true, null, null, null),
-                Arrays.asList(4, 4.1, true, null, null, null),
-                Arrays.asList(6, 6.1, true, null, null, null),
-                Arrays.asList(11, 11.1, false, null, null, null),
-                Arrays.asList(12, 12.1, true, null, null, null),
-                Arrays.asList(13, 13.1, false, null, null, null)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3, 3.1, false),
+                Arrays.asList(4L, 5, 5.1, false, 3L, 5, 5.1, true),
+                Arrays.asList(1L, 2, 2.1, true, null, null, null, null),
+                Arrays.asList(3L, 4, 4.1, true, null, null, null, null),
+                Arrays.asList(5L, 6, 6.1, true, null, null, null, null),
+                Arrays.asList(6L, 11, 11.1, false, null, null, null, null),
+                Arrays.asList(7L, 12, 12.1, true, null, null, null, null),
+                Arrays.asList(8L, 13, 13.1, false, null, null, null, null)
             ));
 
         Table rightTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.a", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3, 3.1, false),
-                Arrays.asList(5, 5.1, false, 5, 5.1, true),
-                Arrays.asList(null, null, null, 1, 1.1, true),
-                Arrays.asList(null, null, null, 7, 7.1, false),
-                Arrays.asList(null, null, null, 9, 9.1, true),
-                Arrays.asList(null, null, null, 16, 16.1, false),
-                Arrays.asList(null, null, null, 17, 17.1, true),
-                Arrays.asList(null, null, null, 18, 18.1, false)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3, 3.1, false),
+                Arrays.asList(4L, 5, 5.1, false, 3L, 5, 5.1, true),
+                Arrays.asList(null, null, null, null, 1L, 1, 1.1, true),
+                Arrays.asList(null, null, null, null, 4L, 7, 7.1, false),
+                Arrays.asList(null, null, null, null, 5L, 9, 9.1, true),
+                Arrays.asList(null, null, null, null, 6L, 16, 16.1, false),
+                Arrays.asList(null, null, null, null, 7L, 17, 17.1, true),
+                Arrays.asList(null, null, null, null, 8L, 18, 18.1, false)
             ));
 
         Table fullTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.a", DataType.INTEGER),
                 new Field("b.b", DataType.DOUBLE),
                 new Field("b.c", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3, 3.1, false),
-                Arrays.asList(5, 5.1, false, 5, 5.1, true),
-                Arrays.asList(2, 2.1, true, null, null, null),
-                Arrays.asList(4, 4.1, true, null, null, null),
-                Arrays.asList(6, 6.1, true, null, null, null),
-                Arrays.asList(11, 11.1, false, null, null, null),
-                Arrays.asList(12, 12.1, true, null, null, null),
-                Arrays.asList(13, 13.1, false, null, null, null),
-                Arrays.asList(null, null, null, 1, 1.1, true),
-                Arrays.asList(null, null, null, 7, 7.1, false),
-                Arrays.asList(null, null, null, 9, 9.1, true),
-                Arrays.asList(null, null, null, 16, 16.1, false),
-                Arrays.asList(null, null, null, 17, 17.1, true),
-                Arrays.asList(null, null, null, 18, 18.1, false)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3, 3.1, false),
+                Arrays.asList(4L, 5, 5.1, false, 3L, 5, 5.1, true),
+                Arrays.asList(1L, 2, 2.1, true, null, null, null, null),
+                Arrays.asList(3L, 4, 4.1, true, null, null, null, null),
+                Arrays.asList(5L, 6, 6.1, true, null, null, null, null),
+                Arrays.asList(6L, 11, 11.1, false, null, null, null, null),
+                Arrays.asList(7L, 12, 12.1, true, null, null, null, null),
+                Arrays.asList(8L, 13, 13.1, false, null, null, null, null),
+                Arrays.asList(null, null, null, null, 1L, 1, 1.1, true),
+                Arrays.asList(null, null, null, null, 4L, 7, 7.1, false),
+                Arrays.asList(null, null, null, null, 5L, 9, 9.1, true),
+                Arrays.asList(null, null, null, null, 6L, 16, 16.1, false),
+                Arrays.asList(null, null, null, null, 7L, 17, 17.1, true),
+                Arrays.asList(null, null, null, null, 8L, 18, 18.1, false)
             ));
 
         {
@@ -687,49 +701,55 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Table target = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.d", DataType.DOUBLE),
                 new Field("b.e", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3.1, false),
-                Arrays.asList(5, 5.1, false, 5.1, true)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3.1, false),
+                Arrays.asList(4L, 5, 5.1, false, 3L, 5.1, true)
             ));
 
         Table leftTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.a", DataType.INTEGER),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.d", DataType.DOUBLE),
                 new Field("b.e", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3, 3.1, false, 3.1, false),
-                Arrays.asList(5, 5.1, false, 5.1, true),
-                Arrays.asList(2, 2.1, true, null, null),
-                Arrays.asList(4, 4.1, true, null, null),
-                Arrays.asList(6, 6.1, true, null, null)
+                Arrays.asList(2L, 3, 3.1, false, 2L, 3.1, false),
+                Arrays.asList(4L, 5, 5.1, false, 3L, 5.1, true),
+                Arrays.asList(1L, 2, 2.1, true, null, null, null),
+                Arrays.asList(3L, 4, 4.1, true, null, null, null),
+                Arrays.asList(5L, 6, 6.1, true, null, null, null)
             ));
 
         Table rightTarget = generateTableFromValues(
             false,
             Arrays.asList(
+                new Field("a.key", DataType.LONG),
                 new Field("a.b", DataType.DOUBLE),
                 new Field("a.c", DataType.BOOLEAN),
+                new Field("b.key", DataType.LONG),
                 new Field("b.a", DataType.INTEGER),
                 new Field("b.d", DataType.DOUBLE),
                 new Field("b.e", DataType.BOOLEAN)
             ),
             Arrays.asList(
-                Arrays.asList(3.1, false, 3, 3.1, false),
-                Arrays.asList(5.1, false, 5, 5.1, true),
-                Arrays.asList(null, null, 1, 1.1, true),
-                Arrays.asList(null, null, 7, 7.1, false),
-                Arrays.asList(null, null, 9, 9.1, true)
+                Arrays.asList(2L, 3.1, false, 2L, 3, 3.1, false),
+                Arrays.asList(4L, 5.1, false, 3L, 5, 5.1, true),
+                Arrays.asList(null, null, null, 1L, 1, 1.1, true),
+                Arrays.asList(null, null, null, 4L, 7, 7.1, false),
+                Arrays.asList(null, null, null, 5L, 9, 9.1, true)
             ));
 
         {
@@ -908,6 +928,20 @@ public abstract class AbstractOperatorMemoryExecutorTest {
             RowStream stream = getExecutor().executeBinaryOperator(outerJoin, tableA, tableB);
             assertStreamEqual(stream, rightTarget);
         }
+    }
+
+    // for debug
+    private Table transformToTable(RowStream stream) throws PhysicalException {
+        if (stream instanceof Table) {
+            return (Table) stream;
+        }
+        Header header = stream.getHeader();
+        List<Row> rows = new ArrayList<>();
+        while (stream.hasNext()) {
+            rows.add(stream.next());
+        }
+        stream.close();
+        return new Table(header, rows);
     }
 
     @Test

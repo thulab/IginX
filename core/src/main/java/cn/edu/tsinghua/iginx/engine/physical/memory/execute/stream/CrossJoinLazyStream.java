@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
@@ -35,9 +36,8 @@ public class CrossJoinLazyStream extends BinaryLazyStream {
         if (hasInitialized) {
             return;
         }
-        List<Field> fields = new ArrayList<>(streamA.getHeader().getFields());
-        fields.addAll(streamB.getHeader().getFields());
-        this.header = new Header(fields);
+        this.header = RowUtils.constructNewHead(streamA.getHeader(), streamB.getHeader(),
+            crossJoin.getPrefixA(), crossJoin.getPrefixB());
         this.hasInitialized = true;
     }
 
@@ -84,17 +84,8 @@ public class CrossJoinLazyStream extends BinaryLazyStream {
             curStreamBIndex++;
         }
 
-        Row nextRow = buildRow(nextA, nextB);
+        Row nextRow = RowUtils.constructNewRow(header, nextA, nextB);
         nextB = null;
         return nextRow;
-    }
-
-    private Row buildRow(Row rowA, Row rowB) {
-        Object[] valuesA = rowA.getValues();
-        Object[] valuesB = rowB.getValues();
-        Object[] valuesJoin = new Object[valuesA.length + valuesB.length];
-        System.arraycopy(valuesA, 0, valuesJoin, 0, valuesA.length);
-        System.arraycopy(valuesB, 0, valuesJoin, valuesA.length, valuesB.length);
-        return new Row(this.header, valuesJoin);
     }
 }
