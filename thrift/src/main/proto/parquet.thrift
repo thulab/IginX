@@ -28,6 +28,7 @@ struct ProjectReq {
     3: required list<string> paths
     4: optional RawTagFilter tagFilter
     5: optional string filter
+    6: optional string schemaPrefix
 }
 
 struct ParquetHeader {

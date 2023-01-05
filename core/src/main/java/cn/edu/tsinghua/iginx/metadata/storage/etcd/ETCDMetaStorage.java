@@ -24,10 +24,9 @@ import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
-import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
@@ -135,8 +134,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         Map<String, Integer> schemaMapping = null;
                         switch (event.getEventType()) {
                             case PUT:
-                                schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
-                                }.getType());
+                                schemaMapping = JsonUtils.transform(new String(event.getKeyValue().getValue().getBytes()));
                                 break;
                             case DELETE:
                                 break;
@@ -417,8 +415,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                 .get();
             response.getKvs().forEach(e -> {
                 String schema = e.getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
-                Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<String, Integer>>() {
-                }.getType());
+                Map<String, Integer> schemaMapping = JsonUtils.transform(e.getValue().toString(StandardCharsets.UTF_8));
                 schemaMappings.put(schema, schemaMapping);
             });
             return schemaMappings;
@@ -669,9 +666,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
+    public Map<TimeSeriesRange, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                 .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                     GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
@@ -727,9 +724,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval) {
         try {
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            Map<TimeSeriesRange, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                     .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                             GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
@@ -763,7 +760,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+    public void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta)
         throws MetaStorageException {
 
     }

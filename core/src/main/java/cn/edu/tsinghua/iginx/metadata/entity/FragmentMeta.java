@@ -42,7 +42,7 @@ public final class FragmentMeta {
 
     private final TimeInterval timeInterval;
 
-    private final TimeSeriesInterval tsInterval;
+    private final TimeSeriesRange tsInterval;
 
     private long createdBy;
 
@@ -69,7 +69,7 @@ public final class FragmentMeta {
         this.fakeStorageUnitId = fakeStorageUnitId;
     }
 
-    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval, String fakeStorageUnitId) {
+    public FragmentMeta(TimeSeriesRange tsInterval, TimeInterval timeInterval, String fakeStorageUnitId) {
         this.timeInterval = timeInterval;
         this.tsInterval = tsInterval;
         this.fakeStorageUnitId = fakeStorageUnitId;
@@ -82,18 +82,30 @@ public final class FragmentMeta {
         this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
-    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval, StorageUnitMeta masterStorageUnit) {
+    public FragmentMeta(TimeSeriesRange tsInterval, TimeInterval timeInterval, StorageUnitMeta masterStorageUnit) {
         this.timeInterval = timeInterval;
         this.tsInterval = tsInterval;
         this.masterStorageUnit = masterStorageUnit;
         this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
+    public FragmentMeta(TimeInterval timeInterval, TimeSeriesRange tsInterval, long createdBy, long updatedBy, String masterStorageUnitId, StorageUnitMeta masterStorageUnit, String fakeStorageUnitId, boolean initialFragment, boolean dummyFragment) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.masterStorageUnitId = masterStorageUnitId;
+        this.masterStorageUnit = masterStorageUnit;
+        this.fakeStorageUnitId = fakeStorageUnitId;
+        this.initialFragment = initialFragment;
+        this.dummyFragment = dummyFragment;
+    }
+
     public TimeInterval getTimeInterval() {
         return timeInterval;
     }
 
-    public TimeSeriesInterval getTsInterval() {
+    public TimeSeriesRange getTsInterval() {
         return tsInterval;
     }
 

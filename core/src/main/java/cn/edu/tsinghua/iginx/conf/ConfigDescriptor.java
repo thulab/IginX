@@ -96,7 +96,6 @@ public class ConfigDescriptor {
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
-            config.setFileDataDir(properties.getProperty("fileDataDir", ""));
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
 
             config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
@@ -174,7 +173,6 @@ public class ConfigDescriptor {
         config.setAsyncRestThreadPool(EnvUtils.loadEnv("asyncRestThreadPool", config.getAsyncRestThreadPool()));
         config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
-        config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
         config.setEtcdEndpoints(EnvUtils.loadEnv("etcdEndpoints", config.getEtcdEndpoints()));
         config.setEnableMQTT(EnvUtils.loadEnv("enable_mqtt", config.isEnableMQTT()));
         config.setMqttHost(EnvUtils.loadEnv("mqtt_host", config.getMqttHost()));

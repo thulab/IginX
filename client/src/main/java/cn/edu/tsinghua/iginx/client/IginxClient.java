@@ -20,9 +20,14 @@ package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.session.QueryDataSet;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.utils.FormatUtils;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import org.apache.commons.cli.*;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -65,16 +70,23 @@ public class IginxClient {
 
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
 
+    private static final int MAX_FETCH_SIZE = 1000;
+
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
+
     private static final String QUIT_COMMAND = "quit";
     private static final String EXIT_COMMAND = "exit";
+
     static String host = "127.0.0.1";
     static String port = "6888";
     static String username = "root";
     static String password = "root";
+
     static String execute = "";
+
     private static int MAX_GETDATA_NUM = 100;
     private static String timestampPrecision = "ns";
+
     private static CommandLine commandLine;
     private static Session session;
 
@@ -221,8 +233,20 @@ public class IginxClient {
             return OperationResult.STOP;
         }
 
-        processSql(statement);
+        if (isQuery(statement) || isShowTimeSeries(statement)) {
+            processSqlWithStream(statement);
+        } else {
+            processSql(statement);
+        }
         return OperationResult.DO_NOTHING;
+    }
+
+    private static boolean isQuery(String sql) {
+        return sql.startsWith("select");
+    }
+
+    private static boolean isShowTimeSeries(String sql) {
+        return sql.contains("show") && sql.contains("time") && sql.contains("series");
     }
 
     private static void processSql(String sql) {
@@ -231,11 +255,7 @@ public class IginxClient {
 
             String parseErrorMsg = res.getParseErrorMsg();
             if (parseErrorMsg != null && !parseErrorMsg.equals("")) {
-                if (sql.startsWith("show")) {
-                    System.out.println("unsupported command");
-                } else {
-                    System.out.println(res.getParseErrorMsg());
-                }
+                System.out.println(res.getParseErrorMsg());
                 return;
             }
 
@@ -268,6 +288,75 @@ public class IginxClient {
             System.out.println("Execute Error: encounter error(s) when executing sql statement, " +
                 "see server log for more details.");
         }
+    }
+
+    private static void processSqlWithStream(String sql) {
+        try {
+            QueryDataSet res = session.executeQuery(sql, MAX_FETCH_SIZE);
+
+            System.out.println("ResultSets:");
+
+            List<List<String>> cache = cacheResult(res);
+            System.out.print(FormatUtils.formatResult(cache));
+
+            boolean isCanceled = false;
+            int total = cache.size() - 1;
+
+            while (res.hasMore()) {
+                System.out.printf(
+                    "Reach the max_display_num = %s. Press ENTER to show more, input 'q' to quit.",
+                    MAX_FETCH_SIZE);
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                try {
+                    if ("".equals(br.readLine())) {
+                        cache = cacheResult(res);
+                        System.out.print(FormatUtils.formatResult(cache));
+                        total += cache.size() - 1;
+                    } else {
+                        isCanceled = true;
+                        break;
+                    }
+                } catch (IOException e) {
+                    System.out.println("IO Error: " + e.getMessage());
+                    isCanceled = true;
+                    break;
+                }
+            }
+            if (!isCanceled) {
+                System.out.print(FormatUtils.formatCount(total));
+            }
+        } catch (SessionException | ExecutionException e) {
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Execute Error: encounter error(s) when executing sql statement, " +
+                "see server log for more details.");
+        }
+    }
+
+    private static List<List<String>> cacheResult(QueryDataSet queryDataSet) throws ExecutionException, SessionException {
+        boolean hasTime = queryDataSet.getColumnList().get(0).equals("time");
+        List<List<String>> cache = new ArrayList<>();
+        cache.add(new ArrayList<>(queryDataSet.getColumnList()));
+
+        int rowIndex = 0;
+        while (queryDataSet.hasMore() && rowIndex < MAX_FETCH_SIZE) {
+            List<String> strRow = new ArrayList<>();
+            Object[] nextRow = queryDataSet.nextRow();
+            if (nextRow != null) {
+                if (hasTime) {
+                    strRow.add(FormatUtils.formatTime((Long) nextRow[0], FormatUtils.DEFAULT_TIME_FORMAT, timestampPrecision));
+                    for (int i = 1; i < nextRow.length; i++) {
+                        strRow.add(FormatUtils.valueToString(nextRow[i]));
+                    }
+                } else {
+                    Arrays.stream(nextRow).forEach(val -> strRow.add(FormatUtils.valueToString(val)));
+                }
+                cache.add(strRow);
+                rowIndex++;
+            }
+        }
+
+        return cache;
     }
 
     private static String parseExecuteCommand(String[] args) {

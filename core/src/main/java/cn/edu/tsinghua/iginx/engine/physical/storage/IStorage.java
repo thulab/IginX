@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
@@ -34,7 +35,11 @@ public interface IStorage {
 
     List<Timeseries> getTimeSeries() throws PhysicalException;
 
-    Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException;
+    Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage(String prefix) throws PhysicalException;
+
+    default Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        return getBoundaryOfStorage(null);
+    }
 
     void release() throws PhysicalException;
 

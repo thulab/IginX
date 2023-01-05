@@ -16,11 +16,9 @@ import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBRowStream;
 import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBSchema;
 import cn.edu.tsinghua.iginx.opentsdb.tools.DataViewWrapper;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.DATA_TYPE;
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.fromOpenTSDB;
@@ -375,13 +372,13 @@ public class OpenTSDBStorage implements IStorage {
     }
 
     @Override
-    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    public Pair<TimeSeriesRange, TimeInterval> getBoundaryOfStorage(String prefix) throws PhysicalException {
         List<String> paths = getPurePath();
         paths.sort(String::compareTo);
         if (paths.isEmpty()) {
             throw new PhysicalTaskExecuteFailureException("no data!");
         }
-        TimeSeriesInterval tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+        TimeSeriesRange tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
 
         long minTime = 0, maxTime = Long.MAX_VALUE - 1;
         Query.Builder builder = Query.begin(0L).end(Long.MAX_VALUE).msResolution();

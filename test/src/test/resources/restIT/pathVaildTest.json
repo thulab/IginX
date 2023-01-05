@@ -1,0 +1,14 @@
+[
+  {
+    "name": "archive_file_tracked",
+    "datapoints": [
+      [1359788400000, 123.3],
+      [1359788300000, 13.2 ],
+      [1359788410000, 23.1 ]
+    ],
+    "tags": {
+      "host": "server1",
+      "data_center": "DC1"
+    }
+  }
+]

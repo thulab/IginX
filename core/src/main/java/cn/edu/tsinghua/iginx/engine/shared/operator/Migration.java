@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.operator.type.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;

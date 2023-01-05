@@ -31,29 +31,29 @@ public interface IMetaCache {
     boolean enableFragmentCacheControl();
 
     // 分片相关的缓存读写接口
-    void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap);
+    void initFragment(Map<TimeSeriesRange, List<FragmentMeta>> fragmentListMap);
 
     void addFragment(FragmentMeta fragmentMeta);
 
     void updateFragment(FragmentMeta fragmentMeta);
 
-    void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
+    void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta);
 
-    void deleteFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
+    void deleteFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta);
 
-    List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesRange tsInterval);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesRange tsInterval);
 
-    List<FragmentMeta> getDummyFragmentsByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    List<FragmentMeta> getDummyFragmentsByTimeSeriesInterval(TimeSeriesRange tsInterval);
 
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
+    Map<TimeSeriesRange, FragmentMeta> getLatestFragmentMap();
 
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesRange, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesRange tsInterval);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+    Map<TimeSeriesRange, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval);
 
-    List<FragmentMeta> getDummyFragmentsByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+    List<FragmentMeta> getDummyFragmentsByTimeSeriesIntervalAndTimeInterval(TimeSeriesRange tsInterval, TimeInterval timeInterval);
 
     List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
 

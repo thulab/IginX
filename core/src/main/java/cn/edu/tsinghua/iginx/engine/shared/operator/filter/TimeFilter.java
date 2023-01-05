@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
+import java.util.Objects;
+
 public class TimeFilter implements Filter {
 
     private final FilterType type = FilterType.Time;
@@ -60,5 +62,22 @@ public class TimeFilter implements Filter {
     @Override
     public String toString() {
         return "time " + Op.op2Str(op) + " " + value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        TimeFilter that = (TimeFilter) o;
+        return value == that.value && type == that.type && op == that.op;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, value, op);
     }
 }
