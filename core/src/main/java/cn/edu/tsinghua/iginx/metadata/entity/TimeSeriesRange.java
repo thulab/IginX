@@ -22,6 +22,8 @@ import com.alibaba.fastjson2.annotation.JSONType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static cn.edu.tsinghua.iginx.utils.StringUtils.isContainSpecialChar;
+
 @JSONType(seeAlso = {TimeSeriesInterval.class, TimeSeriesPrefixRange.class}, typeKey = "type")
 public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
 
@@ -97,13 +99,20 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
     public void setClosed(boolean closed);
 
     //Strange function: it should not work on the implementation of TimeSeriesPrefixRange
-    public static TimeSeriesRange fromString(String str) {
-        if (str.contains("-")) {
+    public static TimeSeriesRange fromString(String str) throws Exception {
+        if (str.contains("-") && !isContainSpecialChar(str)) {
             String[] parts = str.split("-");
             assert parts.length == 2;
             return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
         } else {
-            return new TimeSeriesPrefixRange(str);
+            if (str.contains(".*") && str.indexOf(".*")==str.length()-2)
+                str = str.substring(0, str.length()-2);
+            if(!isContainSpecialChar(str))
+                return new TimeSeriesPrefixRange(str);
+            else {
+                logger.error("Input invalid string format in TimeSeriesRange");
+                throw new Exception("Input invalid string format in TimeSeriesRange");
+            }
         }
     }
 
