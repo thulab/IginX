@@ -14,14 +14,4 @@ sh -c "sleep 30"
 
 sh -c "./influxdb2-2.0.7-darwin-amd64/influx setup --org testOrg --bucket testBucket --username user --password 12345678 --token testToken --force"
 
-#sed -i "" "s/your-token/testToken/" conf/config.properties
-
-#sed -i "" "s/your-organization/testOrg/" conf/config.properties
-
-#sed -i "" "s/storageEngineList=127.0.0.1#6667/#storageEngineList=127.0.0.1#6667/" conf/config.properties
-
-#sed -i "" "s/#storageEngineList=127.0.0.1#8086/storageEngineList=127.0.0.1#8086/" conf/config.properties
-
 sed -i "" "s/enablePushDown=true/enablePushDown=false/" conf/config.properties
-
-#sed -i "" "s/has_data=false/has_data=true/" conf/config.properties
