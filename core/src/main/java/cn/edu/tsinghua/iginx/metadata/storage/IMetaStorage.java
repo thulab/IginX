@@ -19,8 +19,11 @@
 package cn.edu.tsinghua.iginx.metadata.storage;
 
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -69,6 +72,8 @@ public interface IMetaStorage {
 
     void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta) throws MetaStorageException;
 
+    void removeFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
+
     void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
     void releaseFragment() throws MetaStorageException;
@@ -99,8 +104,6 @@ public interface IMetaStorage {
 
     int updateVersion();
 
-    void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception;
-
     void registerTransformChangeHook(TransformChangeHook hook);
 
     List<TransformTaskMeta> loadTransformTask() throws MetaStorageException;
@@ -110,6 +113,88 @@ public interface IMetaStorage {
     void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException;
 
     void dropTransformTask(String name) throws MetaStorageException;
+
+    void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception;
+
+    Map<String, Long> loadTimeseriesHeat() throws MetaStorageException, Exception;
+
+    void removeTimeseriesHeat() throws MetaStorageException;
+
+    void lockTimeseriesHeatCounter() throws MetaStorageException;
+
+    void incrementTimeseriesHeatCounter() throws MetaStorageException;
+
+    void resetTimeseriesHeatCounter() throws MetaStorageException;
+
+    void releaseTimeseriesHeatCounter() throws MetaStorageException;
+
+    int getTimeseriesHeatCounter() throws MetaStorageException;
+
+    void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+                                Map<FragmentMeta, Long> readRequestsMap) throws Exception;
+
+    void removeFragmentRequests() throws MetaStorageException;
+
+    void lockFragmentRequestsCounter() throws MetaStorageException;
+
+    void incrementMonitorClearCounter() throws MetaStorageException;
+
+    int getMonitorClearCounter() throws MetaStorageException;
+
+    void incrementFragmentRequestsCounter() throws MetaStorageException;
+
+    void resetFragmentRequestsCounter() throws MetaStorageException;
+
+    void releaseFragmentRequestsCounter() throws MetaStorageException;
+
+    int getFragmentRequestsCounter() throws MetaStorageException;
+
+    Map<FragmentMeta, Long> loadFragmentPoints(IMetaCache cache) throws Exception;
+
+    void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) throws Exception;
+
+    void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception;
+
+    void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
+                            Map<FragmentMeta, Long> readHotspotMap) throws Exception;
+
+    Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat(IMetaCache cache) throws Exception;
+
+    void removeFragmentHeat() throws MetaStorageException;
+
+    void lockFragmentHeatCounter() throws MetaStorageException;
+
+    void incrementFragmentHeatCounter() throws MetaStorageException;
+
+    void resetFragmentHeatCounter() throws MetaStorageException;
+
+    void releaseFragmentHeatCounter() throws MetaStorageException;
+
+    int getFragmentHeatCounter() throws MetaStorageException;
+
+    boolean proposeToReshard() throws MetaStorageException;
+
+    void lockReshardStatus() throws MetaStorageException;
+
+    void updateReshardStatus(ReshardStatus status) throws MetaStorageException;
+
+    void releaseReshardStatus() throws MetaStorageException;
+
+    void removeReshardStatus() throws MetaStorageException;
+
+    void registerReshardStatusHook(ReshardStatusChangeHook hook);
+
+    void lockReshardCounter() throws MetaStorageException;
+
+    void incrementReshardCounter() throws MetaStorageException;
+
+    void resetReshardCounter() throws MetaStorageException;
+
+    void releaseReshardCounter() throws MetaStorageException;
+
+    void removeReshardCounter() throws MetaStorageException;
+
+    void registerReshardCounterChangeHook(ReshardCounterChangeHook hook);
 
     void lockMaxActiveEndTimeStatistics() throws MetaStorageException;
 

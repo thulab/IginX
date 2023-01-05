@@ -20,10 +20,13 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
@@ -763,6 +766,11 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void removeFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
+
+    }
+
+    @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         updateFragment(fragmentMeta);
     }
@@ -921,6 +929,201 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     @Override
     public void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception {
+
+    }
+
+    @Override
+    public Map<String, Long> loadTimeseriesHeat() throws MetaStorageException, Exception {
+        return null;
+    }
+
+    @Override
+    public void removeTimeseriesHeat() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getTimeseriesHeatCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap, Map<FragmentMeta, Long> readRequestsMap) throws Exception {
+
+    }
+
+    @Override
+    public void removeFragmentRequests() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockFragmentRequestsCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementMonitorClearCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getMonitorClearCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public void incrementFragmentRequestsCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetFragmentRequestsCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseFragmentRequestsCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getFragmentRequestsCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public Map<FragmentMeta, Long> loadFragmentPoints(IMetaCache cache) throws Exception {
+        return null;
+    }
+
+    @Override
+    public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) throws Exception {
+
+    }
+
+    @Override
+    public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception {
+
+    }
+
+    @Override
+    public void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap, Map<FragmentMeta, Long> readHotspotMap) throws Exception {
+
+    }
+
+    @Override
+    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat(IMetaCache cache) throws Exception {
+        return null;
+    }
+
+    @Override
+    public void removeFragmentHeat() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getFragmentHeatCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        return false;
+    }
+
+    @Override
+    public void lockReshardStatus() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseReshardStatus() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeReshardStatus() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
+
+    }
+
+    @Override
+    public void lockReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
 
     }
 

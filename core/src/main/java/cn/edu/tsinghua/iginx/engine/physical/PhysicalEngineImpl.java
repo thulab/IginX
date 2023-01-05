@@ -156,9 +156,6 @@ public class PhysicalEngineImpl implements PhysicalEngine {
                 }
                 insertDataByBatch(timestampList, valuesList, bitmapList, bitmapBufferList,
                     toMigrateFragment, selectResultPaths, selectResultTypes, targetStorageUnitMeta.getId());
-
-                // 设置分片现在所属的du
-                toMigrateFragment.setMasterStorageUnit(targetStorageUnitMeta);
                 return selectResult.getRowStream();
             } else {
                 GlobalPhysicalTask task = new GlobalPhysicalTask(root);
