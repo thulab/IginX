@@ -77,6 +77,8 @@ public interface IMetaManager {
      */
     List<FragmentMeta> getFragments();
 
+    List<FragmentMeta> getFragmentsByStorageUnit(String storageUnitId);
+
     /**
      * 获取某个du的时空范围
      * */
