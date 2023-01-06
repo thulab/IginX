@@ -1111,7 +1111,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testSelectWithTimeFilter() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
-        Filter filter = new TimeFilter(Op.GE, 5);
+        Filter filter = new KeyFilter(Op.GE, 5);
         Select select = new Select(EmptySource.EMPTY_SOURCE, filter, null);
         RowStream stream = getExecutor().executeUnaryOperator(select, table);
 
@@ -1148,7 +1148,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testSelectWithCompoundFilter() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
-        Filter filter = new AndFilter(Arrays.asList(new TimeFilter(Op.LE, 5), new ValueFilter("a.a.b", Op.NE, new Value(3))));
+        Filter filter = new AndFilter(Arrays.asList(new KeyFilter(Op.LE, 5), new ValueFilter("a.a.b", Op.NE, new Value(3))));
         Select select = new Select(EmptySource.EMPTY_SOURCE, filter, null);
         RowStream stream = getExecutor().executeUnaryOperator(select, table);
 

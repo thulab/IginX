@@ -68,7 +68,7 @@ public class UDFIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
 
         long startTimestamp = 0L;
         long endTimestamp = 15000L;
@@ -129,7 +129,7 @@ public class UDFIT {
 
     @Test
     public void baseTests() {
-        String udtfSQLFormat = "SELECT %s(s1) FROM us.d1 WHERE time < 200;";
+        String udtfSQLFormat = "SELECT %s(s1) FROM us.d1 WHERE key < 200;";
         String udafSQLFormat = "SELECT %s(s1) FROM us.d1 GROUP [0, 200) BY 50ms;";
 
         List<TransformTaskMeta> taskMetas = metaManager.getTransformTasks();

@@ -124,9 +124,9 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
     //@Test
     public void testQueryAfterInsertNewData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
-        session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
-        session.executeSql("insert into ln.wf02 (time, version) values (800, \"v8\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (100, true, \"v1\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (400, false, \"v4\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (800, \"v8\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -157,9 +157,9 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testQueryAfterInsertNewDataFromNoInitialNode() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
-        session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
-        session.executeSql("insert into ln.wf02 (time, version) values (800, \"v8\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (100, true, \"v1\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (400, false, \"v4\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (800, \"v8\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -320,7 +320,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
     //@Test
     public void testWriteAndQueryAfterCapacityExpansion_oriHasDataExpHasData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -353,7 +353,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriNoDataExpHasData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -386,7 +386,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriHasDataExpNoData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -418,7 +418,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriNoDataExpNoData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from *";
         String expect = "ResultSets:\n" +

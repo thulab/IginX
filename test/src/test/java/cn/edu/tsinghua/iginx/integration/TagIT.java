@@ -45,12 +45,12 @@ public class TagIT {
     @Before
     public void insertData() throws ExecutionException, SessionException {
         String[] insertStatements = (
-            "insert into ah.hr01 (time, s, v, s[t1=v1, t2=vv1], v[t1=v2, t2=vv1]) values (0, 1, 2, 3, 4), (1, 2, 3, 4, 5), (2, 3, 4, 5, 6), (3, 4, 5, 6, 7);\n" +
-            "insert into ah.hr02 (time, s, v) values (100, true, \"v1\");\n" +
-            "insert into ah.hr02[t1=v1] (time, s, v) values (400, false, \"v4\");\n" +
-            "insert into ah.hr02[t1=v1,t2=v2] (time, v) values (800, \"v8\");\n" +
-            "insert into ah.hr03 (time, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
-            "insert into ah.hr03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);"
+            "insert into ah.hr01 (key, s, v, s[t1=v1, t2=vv1], v[t1=v2, t2=vv1]) values (0, 1, 2, 3, 4), (1, 2, 3, 4, 5), (2, 3, 4, 5, 6), (3, 4, 5, 6, 7);\n" +
+            "insert into ah.hr02 (key, s, v) values (100, true, \"v1\");\n" +
+            "insert into ah.hr02[t1=v1] (key, s, v) values (400, false, \"v4\");\n" +
+            "insert into ah.hr02[t1=v1,t2=v2] (key, v) values (800, \"v8\");\n" +
+            "insert into ah.hr03 (key, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
+            "insert into ah.hr03 (key, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);"
         ).split("\n");
 
         for (String insertStatement : insertStatements) {
@@ -546,7 +546,7 @@ public class TagIT {
                         + "Total line number = 8\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
@@ -586,7 +586,7 @@ public class TagIT {
                         + "Total line number = 8\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1 AND t2=vv2;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1 AND t2=vv2;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
@@ -606,7 +606,7 @@ public class TagIT {
                         + "Total line number = 7\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH_PRECISE t1=v1;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH_PRECISE t1=v1;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
@@ -625,7 +625,7 @@ public class TagIT {
                         + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1 OR t2=v2;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1 OR t2=v2;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
@@ -1275,7 +1275,7 @@ public class TagIT {
                 "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        String insert = "INSERT INTO copy.ah.hr01(TIME, s, v) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
+        String insert = "INSERT INTO copy.ah.hr01(key, s, v) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr01;";
@@ -1289,7 +1289,7 @@ public class TagIT {
                         + "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO copy.ah.hr02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
+        insert = "INSERT INTO copy.ah.hr02(key, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr02;";

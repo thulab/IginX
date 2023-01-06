@@ -67,8 +67,8 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | KEY | path) comparisonOperator constant
-    | constant comparisonOperator (TIME | TIMESTAMP | KEY | path)
+    : (KEY | path) comparisonOperator constant
+    | constant comparisonOperator (KEY | path)
     | path comparisonOperator path
     | path OPERATOR_LIKE regex=stringLiteral
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
@@ -202,7 +202,7 @@ comparisonOperator
     ;
 
 insertColumnsSpec
-    : LR_BRACKET (TIMESTAMP|TIME|KEY) (COMMA insertPath)+ RR_BRACKET
+    : LR_BRACKET KEY (COMMA insertPath)+ RR_BRACKET
     ;
 
 insertPath

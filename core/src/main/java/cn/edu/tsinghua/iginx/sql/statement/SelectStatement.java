@@ -4,7 +4,7 @@ import cn.edu.tsinghua.iginx.engine.shared.function.FunctionUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.KeyFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.expression.BaseExpression;
@@ -172,8 +172,8 @@ public class SelectStatement extends DataStatement {
         this.orderByPath = "";
 
         this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
-            new TimeFilter(Op.GE, startTime),
-            new TimeFilter(Op.L, endTime)
+            new KeyFilter(Op.GE, startTime),
+            new KeyFilter(Op.L, endTime)
         )));
         this.hasValueFilter = true;
         this.layers = new ArrayList<>();

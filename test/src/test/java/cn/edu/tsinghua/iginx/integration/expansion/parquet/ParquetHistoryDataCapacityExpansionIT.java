@@ -43,9 +43,9 @@ public class ParquetHistoryDataCapacityExpansionIT {
     }
 
     private void testInitialNodeInsertAndQuery() throws Exception {
-        session.executeSql("insert into test.us (time, cpu_usage, engine, desc) values (10, 12.1, 1, \"normal\");");
-        session.executeSql("insert into test.us (time, cpu_usage, engine, desc) values (11, 32.2, 2, \"normal\");");
-        session.executeSql("insert into test.us (time, cpu_usage, engine, desc) values (12, 66.8, 3, \"high\");");
+        session.executeSql("insert into test.us (key, cpu_usage, engine, desc) values (10, 12.1, 1, \"normal\");");
+        session.executeSql("insert into test.us (key, cpu_usage, engine, desc) values (11, 32.2, 2, \"normal\");");
+        session.executeSql("insert into test.us (key, cpu_usage, engine, desc) values (12, 66.8, 3, \"high\");");
 
         String statement = "select * from test";
         String expect =
@@ -113,7 +113,7 @@ public class ParquetHistoryDataCapacityExpansionIT {
     }
 
     private void testWriteAndQueryAfterCapacityExpansion() throws Exception {
-        session.executeSql("insert into test.us (time, cpu_usage, engine, desc) values (13, 88.8, 2, \"high\");");
+        session.executeSql("insert into test.us (key, cpu_usage, engine, desc) values (13, 88.8, 2, \"high\");");
 
         String statement = "select * from test";
         String expect =

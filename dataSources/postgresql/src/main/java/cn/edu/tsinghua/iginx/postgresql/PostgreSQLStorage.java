@@ -42,7 +42,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.KeyFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
@@ -161,8 +161,8 @@ public class PostgreSQLStorage implements IStorage {
         filter = ((Select) operators.get(1)).getFilter();
       } else {
         filter = new AndFilter(Arrays
-            .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
-                new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
+            .asList(new KeyFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
+                new KeyFilter(Op.L, fragment.getTimeInterval().getEndTime())));
       }
       return executeProjectTask(project, filter);
     } else if (op.getType() == OperatorType.Insert) {

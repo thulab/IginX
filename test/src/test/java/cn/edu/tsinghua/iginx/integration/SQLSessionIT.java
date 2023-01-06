@@ -39,9 +39,9 @@ public abstract class SQLSessionIT {
 
     protected boolean isAbleToShowTimeSeries;
 
-    private final long startTimestamp = 0L;
+    private final long startKey = 0L;
 
-    private final long endTimestamp = 15000L;
+    private final long endKey = 15000L;
 
     protected boolean ifClearData = true;
 
@@ -79,15 +79,15 @@ public abstract class SQLSessionIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 
-        int size = (int) (endTimestamp - startTimestamp);
+        int size = (int) (endKey - startKey);
         for (int i = 0; i < size; i++) {
             builder.append(", ");
             builder.append("(");
-            builder.append(startTimestamp + i).append(", ");
+            builder.append(startKey + i).append(", ");
             builder.append(i).append(", ");
             builder.append(i + 1).append(", ");
             builder.append("\"")
@@ -335,7 +335,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testTimeRangeQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String statement = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 120;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -366,7 +366,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testValueFilter() {
-        String query = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
+        String query = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 and s1 > 200 and s1 < 210;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -384,7 +384,7 @@ public abstract class SQLSessionIT {
             "Total line number = 9\n";
         executeAndCompare(query, expected);
 
-        String insert = "INSERT INTO us.d2(time, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
+        String insert = "INSERT INTO us.d2(key, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
         execute(insert);
 
         query = "SELECT c FROM us.d2 WHERE c like \"^a.*\";";
@@ -426,11 +426,11 @@ public abstract class SQLSessionIT {
         executeAndCompare(query, expected);
 
         StringBuilder builder = new StringBuilder();
-        builder.append("INSERT INTO us.d2(time, s1) VALUES ");
-        int size = (int) (endTimestamp - startTimestamp);
+        builder.append("INSERT INTO us.d2(key, s1) VALUES ");
+        int size = (int) (endKey - startKey);
         for (int i = 0; i < size; i++) {
             builder.append(", (");
-            builder.append(startTimestamp + i).append(", ");
+            builder.append(startKey + i).append(", ");
             builder.append(i + 5);
             builder.append(")");
         }
@@ -456,7 +456,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testPathFilter() {
-        String insert = "INSERT INTO us.d9(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        String insert = "INSERT INTO us.d9(key, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
         execute(insert);
 
         String query = "SELECT a, b FROM us.d9 WHERE a > b;";
@@ -543,7 +543,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testLimitAndOffsetQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10;";
+        String statement = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 limit 10;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -562,7 +562,7 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10 offset 5;";
+        statement = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 limit 10 offset 5;";
         expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -584,7 +584,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testOrderByQuery() {
-        String insert = "INSERT INTO us.d2 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d2 (key, s1, s2, s3) values " +
             "(1, \"apple\", 871, 232.1), (2, \"peach\", 123, 132.5), (3, \"banana\", 356, 317.8);";
         execute(insert);
 
@@ -603,7 +603,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testFirstLastQuery() {
-        String statement = "SELECT FIRST(s2) FROM us.d1 WHERE time > 0;";
+        String statement = "SELECT FIRST(s2) FROM us.d1 WHERE key > 0;";
         String expected = "ResultSets:\n" +
             "+---+--------+-----+\n" +
             "|key|    path|value|\n" +
@@ -613,7 +613,7 @@ public abstract class SQLSessionIT {
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s2) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-----+\n" +
             "|  key|    path|value|\n" +
@@ -623,7 +623,7 @@ public abstract class SQLSessionIT {
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT FIRST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+---+--------+-----+\n" +
             "|key|    path|value|\n" +
@@ -633,7 +633,7 @@ public abstract class SQLSessionIT {
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
             "|  key|    path|  value|\n" +
@@ -643,7 +643,7 @@ public abstract class SQLSessionIT {
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
             "|  key|    path|  value|\n" +
@@ -654,7 +654,7 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), FIRST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT FIRST(s2), FIRST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+---+--------+-----+\n" +
             "|key|    path|value|\n" +
@@ -665,7 +665,7 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time < 1000;";
+        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE key < 1000;";
         expected = "ResultSets:\n" +
             "+---+--------+-----+\n" +
             "|key|    path|value|\n" +
@@ -676,7 +676,7 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), LAST(s4) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s2), LAST(s4) FROM us.d1 WHERE key > 1000;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
             "|  key|    path|  value|\n" +
@@ -687,7 +687,7 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s4), LAST(s2) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+------+\n"
@@ -699,7 +699,7 @@ public abstract class SQLSessionIT {
                 + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s2), LAST(s2) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+-----+\n"
@@ -711,7 +711,7 @@ public abstract class SQLSessionIT {
                 + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4), LAST(s4) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s4), LAST(s4) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+-------+\n"
@@ -726,7 +726,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testAggregateQuery() {
-        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE time > 0 AND time < 1000;";
+        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE key > 0 AND key < 1000;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -917,7 +917,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testRangeDownSampleQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE key > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ns;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -1185,7 +1185,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testRangeSlideWindowByTimeQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 300 AND s1 <= 600 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE key > 300 AND s1 <= 600 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -1294,10 +1294,10 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 120;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -1316,10 +1316,10 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s1 WHERE time >= 1126 AND time <= 1155;";
+        delete = "DELETE FROM us.d1.s1 WHERE key >= 1126 AND key <= 1155;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 1120 AND time < 1160;";
+        queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 1120 AND key < 1160;";
         expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "| key|us.d1.s1|\n" +
@@ -1337,10 +1337,10 @@ public abstract class SQLSessionIT {
             "Total line number = 9\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 2236 AND time <= 2265;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 2236 AND key <= 2265;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 2230 AND time < 2270;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 2230 AND key < 2270;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "| key|us.d1.s2|us.d1.s4|\n" +
@@ -1359,10 +1359,10 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time >= 3346 AND time < 3375;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key >= 3346 AND key < 3375;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 3340 AND time < 3380;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 3340 AND key < 3380;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "| key|us.d1.s2|us.d1.s4|\n" +
@@ -1387,10 +1387,10 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 OR time >= 120 AND time <= 230;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 OR key >= 120 AND key <= 230;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 235;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -1413,10 +1413,10 @@ public abstract class SQLSessionIT {
             "Total line number = 14\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1130 AND time < 1230;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 1115 AND key <= 1125 OR key >= 1130 AND key < 1230;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 1110 AND key < 1235;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "| key|us.d1.s2|us.d1.s4|\n" +
@@ -1445,10 +1445,10 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 205 AND time < 215 OR time >= 210 AND time <= 230;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 205 AND key < 215 OR key >= 210 AND key <= 230;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 200 AND key < 235;";
         String expected = "ResultSets:\n" +
             "+---+--------+\n" +
             "|key|us.d1.s1|\n" +
@@ -1466,10 +1466,10 @@ public abstract class SQLSessionIT {
             "Total line number = 9\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1120 AND time < 1230;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 1115 AND key <= 1125 OR key >= 1120 AND key < 1230;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 1110 AND key < 1235;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "| key|us.d1.s2|us.d1.s4|\n" +
@@ -1491,7 +1491,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testJoin() {
-        String insert = "insert into test(time, a.a, a.b, b.a, b.b) values (1, 1, 1.1, 2, 2.1), (2, 3, 3.1, 3, 3.1), (3, 5, 5.1, 4, 4.1), (4, 7, 7.1, 5, 5.1), (5, 9, 9.1, 6, 6.1);";
+        String insert = "insert into test(key, a.a, a.b, b.a, b.b) values (1, 1, 1.1, 2, 2.1), (2, 3, 3.1, 3, 3.1), (3, 5, 5.1, 4, 4.1), (4, 7, 7.1, 5, 5.1), (5, 9, 9.1, 6, 6.1);";
         execute(insert);
 
         String statement = "select * from test.a join test.b on test.a.a = test.b.a";
@@ -1681,13 +1681,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testMultiJoin() {
-        String insert = "insert into test(time, a.a, a.b) values (1, 1, 1.1), (2, 3, 3.1), (3, 5, 5.1), (4, 7, 7.1), (5, 9, 9.1);";
+        String insert = "insert into test(key, a.a, a.b) values (1, 1, 1.1), (2, 3, 3.1), (3, 5, 5.1), (4, 7, 7.1), (5, 9, 9.1);";
         execute(insert);
 
-        insert = "insert into test(time, b.a, b.b) values (1, 2, \"aaa\"), (2, 3, \"bbb\"), (3, 4, \"ccc\"), (4, 5, \"ddd\"), (5, 6, \"eee\");";
+        insert = "insert into test(key, b.a, b.b) values (1, 2, \"aaa\"), (2, 3, \"bbb\"), (3, 4, \"ccc\"), (4, 5, \"ddd\"), (5, 6, \"eee\");";
         execute(insert);
 
-        insert = "insert into test(time, c.a, c.b) values (1, \"ddd\", true), (2, \"eee\", false), (3, \"aaa\", true), (4, \"bbb\", false), (5, \"ccc\", true);";
+        insert = "insert into test(key, c.a, c.b) values (1, \"ddd\", true), (2, \"eee\", false), (3, \"aaa\", true), (4, \"bbb\", false), (5, \"ccc\", true);";
         execute(insert);
 
         String statement = "select * from test";
@@ -1768,7 +1768,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testBasicArithmeticExpr() {
-        String insert = "INSERT INTO us.d3 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d3 (key, s1, s2, s3) values " +
             "(1, 1, 6, 1.5), (2, 2, 5, 2.5), (3, 3, 4, 3.5), (4, 4, 3, 4.5), (5, 5, 2, 5.5), (6, 6, 1, 6.5);";
         execute(insert);
 
@@ -1855,7 +1855,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testComplexArithmeticExpr() {
-        String insert = "INSERT INTO us.d3 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d3 (key, s1, s2, s3) values " +
             "(1, 1, 6, 1.5), (2, 2, 5, 2.5), (3, 3, 4, 3.5), (4, 4, 3, 4.5), (5, 5, 2, 5.5), (6, 6, 1, 6.5);";
         execute(insert);
 
@@ -2230,7 +2230,7 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
+        String insert = "INSERT INTO us.d2(key, date) VALUES (%s, %s);";
         List<String> dateFormats = Arrays.asList(
             "2021-08-26 16:15:27",
             "2021/08/26 16:15:28",
@@ -2273,7 +2273,7 @@ public abstract class SQLSessionIT {
                 + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021-08-26 16:15:27 AND time <= 2021.08.26T16:15:32.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021-08-26 16:15:27 AND key <= 2021.08.26T16:15:32.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
@@ -2295,7 +2295,7 @@ public abstract class SQLSessionIT {
                 + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021.08.26 16:15:29 AND time <= 2021-08-26T16:15:30.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021.08.26 16:15:29 AND key <= 2021-08-26T16:15:30.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
@@ -2309,7 +2309,7 @@ public abstract class SQLSessionIT {
                 + "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021/08/26 16:15:28 AND time <= 2021/08/26T16:15:31.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021/08/26 16:15:28 AND key <= 2021/08/26T16:15:31.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
@@ -2330,7 +2330,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testInsertWithSubQuery() {
-        String insert = "INSERT INTO us.d2(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
+        String insert = "INSERT INTO us.d2(key, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
         execute(insert);
 
         String query = "SELECT s1 FROM us.d2;";
@@ -2352,7 +2352,7 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d3(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010) TIME_OFFSET = 100;";
+        insert = "INSERT INTO us.d3(key, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010) TIME_OFFSET = 100;";
         execute(insert);
 
         query = "SELECT s1 FROM us.d3;";
@@ -2374,7 +2374,7 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d4(TIME, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns);";
+        insert = "INSERT INTO us.d4(key, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d4";
@@ -2396,7 +2396,7 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d5(TIME, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        insert = "INSERT INTO us.d5(key, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d5";
@@ -2414,7 +2414,7 @@ public abstract class SQLSessionIT {
             "Total line number = 6\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d6(TIME, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
+        insert = "INSERT INTO us.d6(key, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d6";
@@ -2435,7 +2435,7 @@ public abstract class SQLSessionIT {
             return;
         }
         // Chinese path
-        String insert = "INSERT INTO 测试.前缀(TIME, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        String insert = "INSERT INTO 测试.前缀(key, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         String query = "SELECT 后缀 FROM 测试.前缀;";
@@ -2454,7 +2454,7 @@ public abstract class SQLSessionIT {
         executeAndCompare(query, expected);
 
         // number path
-        insert = "INSERT INTO 114514(TIME, 1919810) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO 114514(key, 1919810) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT 1919810 FROM 114514;";
@@ -2473,7 +2473,7 @@ public abstract class SQLSessionIT {
         executeAndCompare(query, expected);
 
         // special symbol path
-        insert = "INSERT INTO _:@#$(TIME, _:@#$) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO _:@#$(key, _:@#$) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT _:@#$ FROM _:@#$;";
@@ -2492,7 +2492,7 @@ public abstract class SQLSessionIT {
         executeAndCompare(query, expected);
 
         // mix path
-        insert = "INSERT INTO 测试.前缀.114514(TIME, 1919810._:@#$.后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO 测试.前缀.114514(key, 1919810._:@#$.后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT 1919810._:@#$.后缀 FROM 测试.前缀.114514;";
@@ -2513,13 +2513,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testErrorClause() {
-        String errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND time >= 120 AND time <= 230;";
+        String errClause = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 AND key >= 120 AND key <= 230;";
         executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");
 
-        errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND s1 < 10;";
+        errClause = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 AND s1 < 10;";
         executeAndCompareErrMsg(errClause, "delete clause can not use value or path filter.");
 
-        errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
+        errClause = "DELETE FROM us.d1.s1 WHERE key != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
 
         errClause = "SELECT s1 FROM us.d1 GROUP (0, 1000) BY 100ms;";

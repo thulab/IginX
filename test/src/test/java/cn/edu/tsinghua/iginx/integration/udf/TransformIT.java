@@ -80,9 +80,9 @@ public class TransformIT {
 
     private static final String SHOW_TIME_SERIES_SQL = "SHOW TIME SERIES;";
 
-    private static final String QUERY_SQL_1 = "SELECT s2 FROM us.d1 WHERE time >= 14800;";
+    private static final String QUERY_SQL_1 = "SELECT s2 FROM us.d1 WHERE key >= 14800;";
 
-    private static final String QUERY_SQL_2 = "SELECT s1, s2 FROM us.d1 WHERE time < 200;";
+    private static final String QUERY_SQL_2 = "SELECT s1, s2 FROM us.d1 WHERE key < 200;";
 
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
@@ -113,7 +113,7 @@ public class TransformIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
         StringBuilder builder = new StringBuilder(insertStrPrefix);
         int size = (int) (END_TIMESTAMP - START_TIMESTAMP);
 
@@ -218,7 +218,7 @@ public class TransformIT {
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
         List<String> sqlList = new ArrayList<>();
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s2) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s2) values ";
         StringBuilder builder = new StringBuilder(insertStrPrefix);
         for (int i = 0; i < 100; i++) {
             builder.append("(");

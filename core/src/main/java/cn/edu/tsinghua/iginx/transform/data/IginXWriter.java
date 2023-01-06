@@ -43,7 +43,7 @@ public class IginXWriter extends ExportWriter {
         StringBuilder builder = new StringBuilder();
 
         // construct paths
-        builder.append("INSERT INTO transform(Time, ");
+        builder.append("INSERT INTO transform(key, ");
         Header header = batchData.getHeader();
         header.getFields().forEach(field ->
             builder.append(reformatPath(field.getFullName())).append(",")
