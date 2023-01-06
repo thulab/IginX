@@ -110,7 +110,7 @@ public class StringUtils {
     }
 
     public static boolean isContainSpecialChar(String str) {
-        String regEx = "[ _`~!@#$%^&*()+=|{}':;',\\[\\]<>/?~！@#￥%……&*（）+|{}【】‘；：”“’。，、？]|\n|\r|\t";
+        String regEx = "[_`~!@#$%^&()+=|{}':;',<>?~！@#￥%……&（）+|{}【】‘；：”“’。，、？]|\n|\r|\t";
         Pattern p = Pattern.compile(regEx);
         Matcher m = p.matcher(str);
         return m.find();
