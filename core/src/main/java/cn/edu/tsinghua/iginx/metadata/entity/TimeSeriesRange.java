@@ -105,7 +105,7 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
             assert parts.length == 2;
             return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
         } else {
-            if (str.contains(".*") && str.indexOf(".*")==str.length()-2)
+            if (str.contains(".*") && str.indexOf(".*") == str.length() - 2)
                 str = str.substring(0, str.length()-2);
             if(!isContainSpecialChar(str))
                 return new TimeSeriesPrefixRange(str);
