@@ -690,17 +690,22 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
         List<Row> rowsA = tableA.getRows();
         List<Row> rowsB = tableB.getRows();
+        List<String> joinColumnsA = new ArrayList<>(joinColumns);
+        List<String> joinColumnsB = new ArrayList<>(joinColumns);
         if (filter != null) {
-            joinColumns = new ArrayList<>();
+            joinColumnsA = new ArrayList<>();
+            joinColumnsB = new ArrayList<>();
             List<Pair<String, String>> pairs = FilterUtils.getJoinColumnsFromFilter(filter);
             if (pairs.isEmpty()) {
                 throw new InvalidOperatorParameterException("on condition in join operator has no join columns.");
             }
             for(Pair<String, String> p : pairs) {
                 if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                    joinColumns.add(p.k.replaceFirst(innerJoin.getPrefixA() + '.', ""));
+                    joinColumnsA.add(p.k.replaceFirst(innerJoin.getPrefixA() + '.', ""));
+                    joinColumnsB.add(p.v.replaceFirst(innerJoin.getPrefixB() + '.', ""));
                 } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                    joinColumns.add(p.v.replaceFirst(innerJoin.getPrefixA() + '.', ""));
+                    joinColumnsA.add(p.v.replaceFirst(innerJoin.getPrefixA() + '.', ""));
+                    joinColumnsB.add(p.k.replaceFirst(innerJoin.getPrefixB() + '.', ""));
                 } else {
                     throw new InvalidOperatorParameterException("invalid join path filter input.");
                 }
@@ -708,8 +713,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
 
         boolean isAscendingSorted;
-        int flagA = RowUtils.checkRowsSortedByColumns(rowsA, innerJoin.getPrefixA(), joinColumns);
-        int flagB = RowUtils.checkRowsSortedByColumns(rowsB, innerJoin.getPrefixB(), joinColumns);
+        int flagA = RowUtils.checkRowsSortedByColumns(rowsA, innerJoin.getPrefixA(), joinColumnsA);
+        int flagB = RowUtils.checkRowsSortedByColumns(rowsB, innerJoin.getPrefixB(), joinColumnsB);
         if (flagA == -1 || flagB == -1) {
             throw new InvalidOperatorParameterException("input rows in merge join haven't be sorted.");
         } else if (flagA + flagB == 3) {
@@ -737,7 +742,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             int indexB = 0;
             int startIndexOfContinuousEqualValuesB = 0;
             while (indexA < rowsA.size() && indexB < rowsB.size()) {
-                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), innerJoin.getPrefixA(), innerJoin.getPrefixB(), joinColumns);
+                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), innerJoin.getPrefixA(), innerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                 if (flagAEqualB == 0) {
                     Object[] valuesA = rowsA.get(indexA).getValues();
                     Object[] valuesB = rowsB.get(indexB).getValues();
@@ -760,8 +765,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                             indexA++;
                             indexB = startIndexOfContinuousEqualValuesB;
                         } else {
-                            int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), innerJoin.getPrefixA(), innerJoin.getPrefixA(), joinColumns);
-                            int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), innerJoin.getPrefixB(), innerJoin.getPrefixB(), joinColumns);
+                            int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), innerJoin.getPrefixA(), innerJoin.getPrefixA(), joinColumnsA, joinColumnsB);
+                            int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), innerJoin.getPrefixB(), innerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                             if (flagBEqualNextB == 0) {
                                 indexB++;
                             } else {
@@ -800,7 +805,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             int indexB = 0;
             int startIndexOfContinuousEqualValuesB = 0;
             while (indexA < rowsA.size() && indexB < rowsB.size()) {
-                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), innerJoin.getPrefixA(), innerJoin.getPrefixB(), joinColumns);
+                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), innerJoin.getPrefixA(), innerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                 if (flagAEqualB == 0) {
                     Object[] valuesA = rowsA.get(indexA).getValues();
                     Object[] valuesB = rowsB.get(indexB).getValues();
@@ -818,8 +823,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     }
                     transformedRows.add(new Row(newHeader, valuesJoin));
 
-                    int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), innerJoin.getPrefixA(), innerJoin.getPrefixA(), joinColumns);
-                    int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), innerJoin.getPrefixB(), innerJoin.getPrefixB(), joinColumns);
+                    int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), innerJoin.getPrefixA(), innerJoin.getPrefixA(), joinColumnsA, joinColumnsB);
+                    int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), innerJoin.getPrefixB(), innerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                     if (flagBEqualNextB == 0) {
                         indexB++;
                     } else {
@@ -1177,18 +1182,22 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
         List<Row> rowsA = tableA.getRows();
         List<Row> rowsB = tableB.getRows();
-
+        List<String> joinColumnsA = new ArrayList<>(joinColumns);
+        List<String> joinColumnsB = new ArrayList<>(joinColumns);
         if (filter != null) {
-            joinColumns = new ArrayList<>();
+            joinColumnsA = new ArrayList<>();
+            joinColumnsB = new ArrayList<>();
             List<Pair<String, String>> pairs = FilterUtils.getJoinColumnsFromFilter(filter);
             if (pairs.isEmpty()) {
                 throw new InvalidOperatorParameterException("on condition in join operator has no join columns.");
             }
             for(Pair<String, String> p : pairs) {
                 if (headerA.indexOf(p.k) != -1 && headerB.indexOf(p.v) != -1) {
-                    joinColumns.add(p.k.replaceFirst(outerJoin.getPrefixA() + '.', ""));
+                    joinColumnsA.add(p.k.replaceFirst(outerJoin.getPrefixA() + '.', ""));
+                    joinColumnsB.add(p.v.replaceFirst(outerJoin.getPrefixB() + '.', ""));
                 } else if (headerA.indexOf(p.v) != -1 && headerB.indexOf(p.k) != -1) {
-                    joinColumns.add(p.v.replaceFirst(outerJoin.getPrefixA() + '.', ""));
+                    joinColumnsA.add(p.v.replaceFirst(outerJoin.getPrefixA() + '.', ""));
+                    joinColumnsB.add(p.k.replaceFirst(outerJoin.getPrefixB() + '.', ""));
                 } else {
                     throw new InvalidOperatorParameterException("invalid join path filter input.");
                 }
@@ -1196,8 +1205,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
 
         boolean isAscendingSorted;
-        int flagA = RowUtils.checkRowsSortedByColumns(rowsA, outerJoin.getPrefixA(), joinColumns);
-        int flagB = RowUtils.checkRowsSortedByColumns(rowsB, outerJoin.getPrefixB(), joinColumns);
+        int flagA = RowUtils.checkRowsSortedByColumns(rowsA, outerJoin.getPrefixA(), joinColumnsA);
+        int flagB = RowUtils.checkRowsSortedByColumns(rowsB, outerJoin.getPrefixB(), joinColumnsB);
         if (flagA == -1 || flagB == -1) {
             throw new InvalidOperatorParameterException("input rows in merge join haven't be sorted.");
         } else if (flagA + flagB == 3) {
@@ -1228,7 +1237,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             int indexB = 0;
             int startIndexOfContinuousEqualValuesB = 0;
             while (indexA < rowsA.size() && indexB < rowsB.size()) {
-                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), outerJoin.getPrefixA(), outerJoin.getPrefixB(), joinColumns);
+                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), outerJoin.getPrefixA(), outerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                 if (flagAEqualB == 0) {
                     Object[] valuesA = rowsA.get(indexA).getValues();
                     Object[] valuesB = rowsB.get(indexB).getValues();
@@ -1257,8 +1266,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                             indexA++;
                             indexB = startIndexOfContinuousEqualValuesB;
                         } else {
-                            int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), outerJoin.getPrefixA(), outerJoin.getPrefixA(), joinColumns);
-                            int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), outerJoin.getPrefixB(), outerJoin.getPrefixB(), joinColumns);
+                            int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), outerJoin.getPrefixA(), outerJoin.getPrefixA(), joinColumnsA, joinColumnsB);
+                            int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), outerJoin.getPrefixB(), outerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                             if (flagBEqualNextB == 0) {
                                 indexB++;
                             } else {
@@ -1315,7 +1324,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             int indexB = 0;
             int startIndexOfContinuousEqualValuesB = 0;
             while (indexA < rowsA.size() && indexB < rowsB.size()) {
-                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), outerJoin.getPrefixA(), outerJoin.getPrefixB(), joinColumns);
+                int flagAEqualB = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsB.get(indexB), outerJoin.getPrefixA(), outerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                 if (flagAEqualB == 0) {
                     Object[] valuesA = rowsA.get(indexA).getValues();
                     Object[] valuesB = rowsB.get(indexB).getValues();
@@ -1356,8 +1365,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                     }
                     transformedRows.add(new Row(newHeader, valuesJoin));
 
-                    int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), outerJoin.getPrefixA(), outerJoin.getPrefixA(), joinColumns);
-                    int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), outerJoin.getPrefixB(), outerJoin.getPrefixB(), joinColumns);
+                    int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), outerJoin.getPrefixA(), outerJoin.getPrefixA(), joinColumnsA, joinColumnsB);
+                    int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), outerJoin.getPrefixB(), outerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                     if (flagBEqualNextB == 0) {
                         indexB++;
                     } else {

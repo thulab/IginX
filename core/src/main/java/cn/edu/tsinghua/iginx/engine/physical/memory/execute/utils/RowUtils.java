@@ -58,7 +58,7 @@ public class RowUtils {
         int index = 0;
         while (index < rows.size() - 1) {
             int mark = compareRowsSortedByColumns(rows.get(index), rows.get(index + 1), prefix,
-                prefix, columns);
+                prefix, columns, columns);
             if (mark == -1) {
                 if (res == 0) {
                     res = 1;
@@ -83,10 +83,12 @@ public class RowUtils {
      * <tt>1</tt>: row1 > row2
      */
     public static int compareRowsSortedByColumns(Row row1, Row row2, String prefix1, String prefix2,
-        List<String> columns) {
-        for (String column : columns) {
-            Object value1 = row1.getValue(prefix1 + '.' + column);
-            Object value2 = row2.getValue(prefix2 + '.' + column);
+        List<String> columns1, List<String> columns2) {
+        assert columns1.size() == columns2.size();
+        int size = columns1.size();
+        for (int index = 0; index < columns1.size(); index++) {
+            Object value1 = row1.getValue(prefix1 + '.' + columns1.get(index));
+            Object value2 = row2.getValue(prefix2 + '.' + columns2.get(index));
             if (value1 == null && value2 == null) {
                 return 0;
             } else if (value1 == null) {
@@ -94,7 +96,7 @@ public class RowUtils {
             } else if (value2 == null) {
                 return 1;
             }
-            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column))
+            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + columns1.get(index)))
                 .getType();
             int cmp = compareObjects(dataType, value1, value2);
             if (cmp != 0) {
