@@ -66,21 +66,30 @@ public class ValueUtils {
         return new Value(DataType.DOUBLE, dVal);
     }
 
-    public static int compare(Value o1, Value o2) {
-        DataType dataType = o1.getDataType();
-        switch (dataType) {
+    public static int compare(Value v1, Value v2) throws PhysicalException {
+        DataType dataType1 =  v1.getDataType();
+        DataType dataType2 =  v2.getDataType();
+        if (dataType1 != dataType2) {
+            if (numericTypeSet.contains(dataType1) && numericTypeSet.contains(dataType2)) {
+                v1 = transformToDouble(v1);
+                v2 = transformToDouble(v2);
+            } else {
+                throw new InvalidOperatorParameterException(dataType1.toString() + " and " + dataType2.toString() + " can't be compared");
+            }
+        }
+        switch (dataType1) {
             case INTEGER:
-                return Integer.compare(o1.getIntV(), o2.getIntV());
+                return Integer.compare(v1.getIntV(), v2.getIntV());
             case LONG:
-                return Long.compare(o1.getLongV(), o2.getLongV());
+                return Long.compare(v1.getLongV(), v2.getLongV());
             case BOOLEAN:
-                return Boolean.compare(o1.getBoolV(), o2.getBoolV());
+                return Boolean.compare(v1.getBoolV(), v2.getBoolV());
             case FLOAT:
-                return Float.compare(o1.getFloatV(), o2.getFloatV());
+                return Float.compare(v1.getFloatV(), v2.getFloatV());
             case DOUBLE:
-                return Double.compare(o1.getDoubleV(), o2.getDoubleV());
+                return Double.compare(v1.getDoubleV(), v2.getDoubleV());
             case BINARY:
-                return o1.getBinaryVAsString().compareTo(o2.getBinaryVAsString());
+                return v1.getBinaryVAsString().compareTo(v2.getBinaryVAsString());
         }
         return 0;
     }

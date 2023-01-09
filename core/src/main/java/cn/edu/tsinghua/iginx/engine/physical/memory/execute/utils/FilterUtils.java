@@ -18,12 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
-import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import java.util.List;
 
 public class FilterUtils {
 
-    public static boolean validate(Filter filter, Row row) {
+    public static boolean validate(Filter filter, Row row) throws PhysicalException {
         switch (filter.getType()) {
             case Or:
                 OrFilter orFilter = (OrFilter) filter;
@@ -91,7 +90,7 @@ public class FilterUtils {
         return false;
     }
 
-    private static boolean validateValueFilter(ValueFilter valueFilter, Row row) {
+    private static boolean validateValueFilter(ValueFilter valueFilter, Row row) throws PhysicalException {
         String path = valueFilter.getPath();
         Value targetValue = valueFilter.getValue();
         if (targetValue.isNull()) { // targetValue是空值，则认为不可比较
@@ -118,7 +117,7 @@ public class FilterUtils {
         }
     }
 
-    private static boolean validatePathFilter(PathFilter pathFilter, Row row) {
+    private static boolean validatePathFilter(PathFilter pathFilter, Row row) throws PhysicalException {
         Value valueA = row.getAsValue(pathFilter.getPathA());
         Value valueB = row.getAsValue(pathFilter.getPathB());
         if (valueA == null || valueA.isNull() || valueB == null || valueB.isNull()) { // 如果任何一个是空值，则认为不可比较
@@ -127,7 +126,7 @@ public class FilterUtils {
         return validateValueCompare(pathFilter.getOp(), valueA, valueB);
     }
 
-    private static boolean validateValueCompare(Op op, Value valueA, Value valueB) {
+    private static boolean validateValueCompare(Op op, Value valueA, Value valueB) throws PhysicalException {
         if (valueA.getDataType() != valueB.getDataType()) {
             if (ValueUtils.isNumericType(valueA) && ValueUtils.isNumericType(valueB)) {
                 valueA = ValueUtils.transformToDouble(valueA);
