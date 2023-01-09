@@ -500,32 +500,32 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from p1.test";
         String expect = "ResultSets:\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|Time|p1.test.wf03.wt01.status|p1.test.wf03.wt01.temperature|\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|  77|                    true|                         null|\n" +
-                "| 200|                   false|                        77.71|\n" +
-                "+----+------------------------+-----------------------------+\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "|key|p1.test.wf03.wt01.status|p1.test.wf03.wt01.temperature|\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "| 77|                    true|                         null|\n" +
+                "|200|                   false|                        77.71|\n" +
+                "+---+------------------------+-----------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from p2.test";
         expect = "ResultSets:\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|Time|p2.test.wf03.wt01.status|p2.test.wf03.wt01.temperature|\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|  77|                    true|                         null|\n" +
-                "| 200|                   false|                        77.71|\n" +
-                "+----+------------------------+-----------------------------+\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "|key|p2.test.wf03.wt01.status|p2.test.wf03.wt01.temperature|\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "| 77|                    true|                         null|\n" +
+                "|200|                   false|                        77.71|\n" +
+                "+---+------------------------+-----------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from test";
         expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
