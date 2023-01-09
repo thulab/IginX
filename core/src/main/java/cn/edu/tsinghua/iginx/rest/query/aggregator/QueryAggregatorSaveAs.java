@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +44,7 @@ public class QueryAggregatorSaveAs extends QueryAggregator {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
         queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
-        int n = sessionQueryDataSet.getTimestamps().length;
+        int n = sessionQueryDataSet.getKeys().length;
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
         for (int i = 0; i < n; i++) {
@@ -53,9 +52,9 @@ public class QueryAggregatorSaveAs extends QueryAggregator {
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     if (!flag) {
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                        queryResultDataset.add(sessionQueryDataSet.getKeys()[i], sessionQueryDataSet.getValues().get(i).get(j));
                         flag = true;
-                        ins.addTimestamp(sessionQueryDataSet.getTimestamps()[i]);
+                        ins.addKey(sessionQueryDataSet.getKeys()[i]);
                         ins.addValue(sessionQueryDataSet.getValues().get(i).get(j).toString());
                     }
                     datapoints += 1;

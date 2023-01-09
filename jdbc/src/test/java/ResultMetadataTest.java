@@ -25,7 +25,7 @@ public class ResultMetadataTest {
     @Test
     public void testMetaDataColumnName() throws SQLException {
         ResultSetMetaData metaData = resultSet.getMetaData();
-        Assert.assertEquals("time", metaData.getColumnName(1));
+        Assert.assertEquals("key", metaData.getColumnName(1));
         Assert.assertEquals("test.result.set.boolean", metaData.getColumnName(2));
         Assert.assertEquals("test.result.set.int", metaData.getColumnName(3));
         Assert.assertEquals("test.result.set.long", metaData.getColumnName(4));

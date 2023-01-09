@@ -54,7 +54,7 @@ public class UDFCompareToSys {
     }
 
     private static void partialRangeAggregationQuery() throws ExecutionException, SessionException {
-        String SQLFormatter = "SELECT %s(s1) FROM test.compare WHERE time < 50;";
+        String SQLFormatter = "SELECT %s(s1) FROM test.compare WHERE key < 50;";
         for (String func : FUNC_LIST) {
             String sysSql = String.format(SQLFormatter, func);
             String udfSql = String.format(SQLFormatter, "udf_" + func);
@@ -74,7 +74,7 @@ public class UDFCompareToSys {
     }
 
     private static void multiPathPartialRangeAggregationQuery() throws ExecutionException, SessionException {
-        String SQLFormatter = "SELECT %s(s1), %s(s2) FROM test.compare WHERE time < 50;";
+        String SQLFormatter = "SELECT %s(s1), %s(s2) FROM test.compare WHERE key < 50;";
         for (String func : FUNC_LIST) {
             String sysSql = String.format(SQLFormatter, func, func);
             String udfSql = String.format(SQLFormatter, "udf_" + func, "udf_" + func);
@@ -163,7 +163,7 @@ public class UDFCompareToSys {
     }
 
     public static void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO test.compare (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO test.compare (key, s1, s2, s3, s4) values ";
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 

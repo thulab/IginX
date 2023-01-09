@@ -24,7 +24,7 @@ public class Message {
 
     private String path;
 
-    private long timestamp;
+    private long key;
 
     private DataType dataType;
 
@@ -38,12 +38,12 @@ public class Message {
         this.path = path;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getKey() {
+        return key;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setKey(long key) {
+        this.key = key;
     }
 
     public DataType getDataType() {

@@ -83,12 +83,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     public void testQueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from *";
         String expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|\n" +
-                "+----+-------------------+------------------------+\n" +
-                "| 100|               true|                    null|\n" +
-                "| 200|              false|                   20.71|\n" +
-                "+----+-------------------+------------------------+\n" +
+                "+---+-------------------+------------------------+\n" +
+                "|key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|\n" +
+                "+---+-------------------+------------------------+\n" +
+                "|100|               true|                    null|\n" +
+                "|200|              false|                   20.71|\n" +
+                "+---+-------------------+------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -110,10 +110,10 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     public void testQueryHistoryDataFromNoInitialNode() throws Exception {
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -124,20 +124,20 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
     //@Test
     public void testQueryAfterInsertNewData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
-        session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
-        session.executeSql("insert into ln.wf02 (time, version) values (800, \"v8\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (100, true, \"v1\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (400, false, \"v4\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (800, \"v8\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
-                "| 100|               true|                    null|          true|             v1|\n" +
-                "| 200|              false|                   20.71|          null|           null|\n" +
-                "| 400|               null|                    null|         false|             v4|\n" +
-                "| 800|               null|                    null|          null|             v8|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
+                "|key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
+                "|100|               true|                    null|          true|             v1|\n" +
+                "|200|              false|                   20.71|          null|           null|\n" +
+                "|400|               null|                    null|         false|             v4|\n" +
+                "|800|               null|                    null|          null|             v8|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
                 "Total line number = 4\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -157,19 +157,19 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testQueryAfterInsertNewDataFromNoInitialNode() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
-        session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
-        session.executeSql("insert into ln.wf02 (time, version) values (800, \"v8\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (100, true, \"v1\");");
+        session.executeSql("insert into ln.wf02 (key, status, version) values (400, false, \"v4\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (800, \"v8\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
-                "+----+--------------+---------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|\n" +
-                "+----+--------------+---------------+\n" +
-                "| 100|          true|             v1|\n" +
-                "| 400|         false|             v4|\n" +
-                "| 800|          null|             v8|\n" +
-                "+----+--------------+---------------+\n" +
+                "+---+--------------+---------------+\n" +
+                "|key|ln.wf02.status|ln.wf02.version|\n" +
+                "+---+--------------+---------------+\n" +
+                "|100|          true|             v1|\n" +
+                "|400|         false|             v4|\n" +
+                "|800|          null|             v8|\n" +
+                "+---+--------------+---------------+\n" +
                 "Total line number = 3\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -194,23 +194,23 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
         expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
-                "| 100|               true|                    null|          true|             v1|\n" +
-                "| 200|              false|                   20.71|          null|           null|\n" +
-                "| 400|               null|                    null|         false|             v4|\n" +
-                "| 800|               null|                    null|          null|             v8|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
+                "|key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
+                "|100|               true|                    null|          true|             v1|\n" +
+                "|200|              false|                   20.71|          null|           null|\n" +
+                "|400|               null|                    null|         false|             v4|\n" +
+                "|800|               null|                    null|          null|             v8|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+\n" +
                 "Total line number = 4\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -225,26 +225,26 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|Time|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|  77|               true|                    null|\n" +
-                "| 200|              false|                   77.71|\n" +
-                "+----+-------------------+------------------------+\n" +
+                "+---+-------------------+------------------------+\n" +
+                "|key|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "+---+-------------------+------------------------+\n" +
+                "| 77|               true|                    null|\n" +
+                "|200|              false|                   77.71|\n" +
+                "+---+-------------------+------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
         expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
-                "|  77|               null|                    null|          null|           null|               true|                    null|\n" +
-                "| 100|               true|                    null|          true|             v1|               null|                    null|\n" +
-                "| 200|              false|                   20.71|          null|           null|              false|                   77.71|\n" +
-                "| 400|               null|                    null|         false|             v4|               null|                    null|\n" +
-                "| 800|               null|                    null|          null|             v8|               null|                    null|\n" +
-                "+----+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
+                "+---+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
+                "|key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
+                "| 77|               null|                    null|          null|           null|               true|                    null|\n" +
+                "|100|               true|                    null|          true|             v1|               null|                    null|\n" +
+                "|200|              false|                   20.71|          null|           null|              false|                   77.71|\n" +
+                "|400|               null|                    null|         false|             v4|               null|                    null|\n" +
+                "|800|               null|                    null|          null|             v8|               null|                    null|\n" +
+                "+---+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
                 "Total line number = 5\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -259,26 +259,26 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|Time|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+-------------------+------------------------+\n" +
-                "|  77|               true|                    null|\n" +
-                "| 200|              false|                   77.71|\n" +
-                "+----+-------------------+------------------------+\n" +
+                "+---+-------------------+------------------------+\n" +
+                "|key|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "+---+-------------------+------------------------+\n" +
+                "| 77|               true|                    null|\n" +
+                "|200|              false|                   77.71|\n" +
+                "+---+-------------------+------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
         expect = "ResultSets:\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "|  77|          null|           null|               true|                    null|\n" +
-                "| 100|          true|             v1|               null|                    null|\n" +
-                "| 200|          null|           null|              false|                   77.71|\n" +
-                "| 400|         false|             v4|               null|                    null|\n" +
-                "| 800|          null|             v8|               null|                    null|\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
+                "+---+--------------+---------------+-------------------+------------------------+\n" +
+                "|key|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "+---+--------------+---------------+-------------------+------------------------+\n" +
+                "| 77|          null|           null|               true|                    null|\n" +
+                "|100|          true|             v1|               null|                    null|\n" +
+                "|200|          null|           null|              false|                   77.71|\n" +
+                "|400|         false|             v4|               null|                    null|\n" +
+                "|800|          null|             v8|               null|                    null|\n" +
+                "+---+--------------+---------------+-------------------+------------------------+\n" +
                 "Total line number = 5\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -293,22 +293,22 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
         expect = "ResultSets:\n" +
-                "+----+--------------+---------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|\n" +
-                "+----+--------------+---------------+\n" +
-                "| 100|          true|             v1|\n" +
-                "| 400|         false|             v4|\n" +
-                "| 800|          null|             v8|\n" +
-                "+----+--------------+---------------+\n" +
+                "+---+--------------+---------------+\n" +
+                "|key|ln.wf02.status|ln.wf02.version|\n" +
+                "+---+--------------+---------------+\n" +
+                "|100|          true|             v1|\n" +
+                "|400|         false|             v4|\n" +
+                "|800|          null|             v8|\n" +
+                "+---+--------------+---------------+\n" +
                 "Total line number = 3\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -320,12 +320,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
     //@Test
     public void testWriteAndQueryAfterCapacityExpansion_oriHasDataExpHasData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "| key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
                 "+----+-------------------+------------------------+--------------+---------------+-------------------+------------------------+\n" +
                 "|  77|               null|                    null|          null|           null|               true|                    null|\n" +
                 "| 100|               true|                    null|          true|             v1|               null|                    null|\n" +
@@ -353,12 +353,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriNoDataExpHasData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
                 "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
+                "| key|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
                 "+----+--------------+---------------+-------------------+------------------------+\n" +
                 "|  77|          null|           null|               true|                    null|\n" +
                 "| 100|          true|             v1|               null|                    null|\n" +
@@ -386,12 +386,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriHasDataExpNoData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+--------------+---------------+\n" +
-                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
+                "| key|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
                 "+----+-------------------+------------------------+--------------+---------------+\n" +
                 "| 100|               true|                    null|          true|             v1|\n" +
                 "| 200|              false|                   20.71|          null|           null|\n" +
@@ -418,12 +418,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     public void testWriteAndQueryAfterCapacityExpansion_oriNoDataExpNoData() throws Exception {
-        session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
+        session.executeSql("insert into ln.wf02 (key, version) values (1600, \"v48\");");
 
         String statement = "select * from *";
         String expect = "ResultSets:\n" +
                 "+----+--------------+---------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|\n" +
+                "| key|ln.wf02.status|ln.wf02.version|\n" +
                 "+----+--------------+---------------+\n" +
                 "| 100|          true|             v1|\n" +
                 "| 400|         false|             v4|\n" +
@@ -453,12 +453,12 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from expansion.ln.wf03";
         String expect = "ResultSets:\n" +
-                "+----+-----------------------------+----------------------------------+\n" +
-                "|Time|expansion.ln.wf03.wt01.status|expansion.ln.wf03.wt01.temperature|\n" +
-                "+----+-----------------------------+----------------------------------+\n" +
-                "|  77|                         true|                              null|\n" +
-                "| 200|                        false|                             77.71|\n" +
-                "+----+-----------------------------+----------------------------------+\n" +
+                "+---+-----------------------------+----------------------------------+\n" +
+                "|key|expansion.ln.wf03.wt01.status|expansion.ln.wf03.wt01.temperature|\n" +
+                "+---+-----------------------------+----------------------------------+\n" +
+                "| 77|                         true|                              null|\n" +
+                "|200|                        false|                             77.71|\n" +
+                "+---+-----------------------------+----------------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
@@ -474,21 +474,21 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from test";
         String expect = "ResultSets:\n" +
-                "+----+---------------------+--------------------------+\n" +
-                "|Time|test.wf03.wt01.status|test.wf03.wt01.temperature|\n" +
-                "+----+---------------------+--------------------------+\n" +
-                "|  77|                 true|                      null|\n" +
-                "| 200|                false|                     77.71|\n" +
-                "+----+---------------------+--------------------------+\n" +
+                "+---+---------------------+--------------------------+\n" +
+                "|key|test.wf03.wt01.status|test.wf03.wt01.temperature|\n" +
+                "+---+---------------------+--------------------------+\n" +
+                "| 77|                 true|                      null|\n" +
+                "|200|                false|                     77.71|\n" +
+                "+---+---------------------+--------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
         expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
@@ -500,32 +500,32 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
         String statement = "select * from p1.test";
         String expect = "ResultSets:\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|Time|p1.test.wf03.wt01.status|p1.test.wf03.wt01.temperature|\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|  77|                    true|                         null|\n" +
-                "| 200|                   false|                        77.71|\n" +
-                "+----+------------------------+-----------------------------+\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "|key|p1.test.wf03.wt01.status|p1.test.wf03.wt01.temperature|\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "| 77|                    true|                         null|\n" +
+                "|200|                   false|                        77.71|\n" +
+                "+---+------------------------+-----------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from p2.test";
         expect = "ResultSets:\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|Time|p2.test.wf03.wt01.status|p2.test.wf03.wt01.temperature|\n" +
-                "+----+------------------------+-----------------------------+\n" +
-                "|  77|                    true|                         null|\n" +
-                "| 200|                   false|                        77.71|\n" +
-                "+----+------------------------+-----------------------------+\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "|key|p2.test.wf03.wt01.status|p2.test.wf03.wt01.temperature|\n" +
+                "+---+------------------------+-----------------------------+\n" +
+                "| 77|                    true|                         null|\n" +
+                "|200|                   false|                        77.71|\n" +
+                "+---+------------------------+-----------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from test";
         expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }

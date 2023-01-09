@@ -2,7 +2,7 @@ taskList:
   - taskType: iginx
     timeout: 10000000
     sqlList:
-      - SELECT s1, s2 FROM us.d1 WHERE time < 200;
+      - SELECT s1, s2 FROM us.d1 WHERE key < 200;
   - taskType: python
     dataFlowType: stream
     timeout: 10000000

@@ -64,7 +64,7 @@ public class ProjectLazyStream extends UnaryLazyStream {
                     }
                 }
             }
-            this.header = new Header(header.getTime(), targetFields);
+            this.header = new Header(header.getKey(), targetFields);
         }
         return header;
     }
@@ -93,8 +93,8 @@ public class ProjectLazyStream extends UnaryLazyStream {
             if (allNull) {
                 continue;
             }
-            if (header.hasTimestamp()) {
-                return new Row(header, row.getTimestamp(), objects);
+            if (header.hasKey()) {
+                return new Row(header, row.getKey(), objects);
             } else {
                 return new Row(header, objects);
             }

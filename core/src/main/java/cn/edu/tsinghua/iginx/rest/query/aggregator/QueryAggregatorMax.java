@@ -50,7 +50,7 @@ public class QueryAggregatorMax extends QueryAggregator {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths, tagList, startTimestamp, endTimestamp, AggregateType.MAX, getDur(), timePrecision);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
-            int n = sessionQueryDataSet.getTimestamps().length;
+            int n = sessionQueryDataSet.getKeys().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             for (int j = 0; j < m; j++) {
@@ -60,7 +60,7 @@ public class QueryAggregatorMax extends QueryAggregator {
                     if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                         value.add(sessionQueryDataSet.getValues().get(i).get(j));
 //                        long timeRes = TimeUtils.getTimeFromNsToSpecPrecision(sessionQueryDataSet.getTimestamps()[i], TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
-                        long timeRes = sessionQueryDataSet.getTimestamps()[i];
+                        long timeRes = sessionQueryDataSet.getKeys()[i];
                         time.add(timeRes);
                         queryResultDataset.add(timeRes, sessionQueryDataSet.getValues().get(i).get(j));
                         datapoints += 1;

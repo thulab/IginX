@@ -22,20 +22,20 @@ import java.util.Map;
 
 public class IginXRecord {
 
-    private final long timestamp;
+    private final long key;
 
     private final IginXHeader header;
 
     private final Map<String, Object> values;
 
     public IginXRecord(IginXHeader header, Map<String, Object> values) {
-        this.timestamp = 0L;
+        this.key = 0L;
         this.header = header;
         this.values = values;
     }
 
-    public IginXRecord(long timestamp, IginXHeader header, Map<String, Object> values) {
-        this.timestamp = timestamp;
+    public IginXRecord(long key, IginXHeader header, Map<String, Object> values) {
+        this.key = key;
         this.header = header;
         this.values = values;
     }
@@ -56,8 +56,8 @@ public class IginXRecord {
         return header.hasTimestamp();
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getKey() {
+        return key;
     }
 
     @Override
