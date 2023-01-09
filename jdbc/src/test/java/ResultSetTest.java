@@ -1,3 +1,4 @@
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,7 +23,7 @@ public class ResultSetTest {
 
     @Test
     public void testFindColumn() throws SQLException {
-        Assert.assertEquals(1, resultSet.findColumn("time"));
+        Assert.assertEquals(1, resultSet.findColumn(GlobalConstant.KEY_NAME));
         Assert.assertEquals(2, resultSet.findColumn("test.result.set.boolean"));
         Assert.assertEquals(3, resultSet.findColumn("test.result.set.int"));
         Assert.assertEquals(4, resultSet.findColumn("test.result.set.long"));
@@ -43,7 +44,7 @@ public class ResultSetTest {
             Assert.assertEquals(100.5, resultSet.getDouble(6), 0.000000001);
             Assert.assertEquals("one", resultSet.getString(7));
             // get by label
-            Assert.assertEquals(1, resultSet.getLong("time"));
+            Assert.assertEquals(1, resultSet.getLong(GlobalConstant.KEY_NAME));
             Assert.assertTrue(resultSet.getBoolean("test.result.set.boolean"));
             Assert.assertEquals(1, resultSet.getInt("test.result.set.int"));
             Assert.assertEquals(100000L, resultSet.getLong("test.result.set.long"));

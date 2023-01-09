@@ -11,6 +11,6 @@ public class SQLConstant {
     public static final String QUOTE = "\"";
     public static final String DOUBLE_QUOTES = "\"\"";
 
-    public static final String TIME = "time";
+    public static final String KEY = "key";
     public static final String INF = "inf";
 }

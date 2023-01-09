@@ -41,7 +41,7 @@ public class FilterVisitorTest {
         }
 
         @Override
-        public void visit(TimeFilter filter) {
+        public void visit(KeyFilter filter) {
             System.out.printf("this is time filter: [%s]\n", filter.toString());
         }
 

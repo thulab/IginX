@@ -55,7 +55,7 @@ public class ResultMapper {
                     String fieldName = field.getName();
 
                     if (anno != null && anno.timestamp()) {
-                        setFieldValue(pojo, field, record.getTimestamp());
+                        setFieldValue(pojo, field, record.getKey());
                         continue;
                     }
 

@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.transform;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.thrift.DataFlowType;
 import cn.edu.tsinghua.iginx.thrift.TaskType;
 import cn.edu.tsinghua.iginx.transform.data.ArrowWriter;
@@ -51,7 +52,7 @@ public class PythonDriverTest {
     private VectorSchemaRoot prepareData() {
         RootAllocator allocator = new RootAllocator(Long.MAX_VALUE);
 
-        BigIntVector bigIntVector = new BigIntVector("time", allocator);
+        BigIntVector bigIntVector = new BigIntVector(GlobalConstant.KEY_NAME, allocator);
         IntVector intVector1 = new IntVector("root.value1", allocator);
         IntVector intVector2 = new IntVector("root.value2", allocator);
 //        BitVector bitVector = new BitVector("root.value3", allocator);

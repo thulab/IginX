@@ -32,7 +32,7 @@ public class Metric {
     private Long startAbsolute;
     private Long endAbsolute;
     private Map<String, String> tags = new TreeMap<>();
-    private List<Long> timestamps = new ArrayList<>();
+    private List<Long> keys = new ArrayList<>();
     private List<String> values = new ArrayList<>();
     private Map<String, String> anno = new HashMap<>();
     private String annotation = null;
@@ -41,8 +41,8 @@ public class Metric {
         tags.put(key, value);
     }
 
-    public void addTimestamp(Long timestamp) {
-        timestamps.add(timestamp);
+    public void addKey(Long key) {
+        keys.add(key);
     }
 
     public void addValue(String value) {

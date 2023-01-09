@@ -39,9 +39,9 @@ public abstract class SQLSessionIT {
 
     protected boolean isAbleToShowTimeSeries;
 
-    private final long startTimestamp = 0L;
+    private final long startKey = 0L;
 
-    private final long endTimestamp = 15000L;
+    private final long endKey = 15000L;
 
     protected boolean ifClearData = true;
 
@@ -79,15 +79,15 @@ public abstract class SQLSessionIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 
-        int size = (int) (endTimestamp - startTimestamp);
+        int size = (int) (endKey - startKey);
         for (int i = 0; i < size; i++) {
             builder.append(", ");
             builder.append("(");
-            builder.append(startTimestamp + i).append(", ");
+            builder.append(startKey + i).append(", ");
             builder.append(i).append(", ");
             builder.append(i + 1).append(", ");
             builder.append("\"")
@@ -335,102 +335,102 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testTimeRangeQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String statement = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 120;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "| 101|     101|\n" +
-            "| 102|     102|\n" +
-            "| 103|     103|\n" +
-            "| 104|     104|\n" +
-            "| 105|     105|\n" +
-            "| 106|     106|\n" +
-            "| 107|     107|\n" +
-            "| 108|     108|\n" +
-            "| 109|     109|\n" +
-            "| 110|     110|\n" +
-            "| 111|     111|\n" +
-            "| 112|     112|\n" +
-            "| 113|     113|\n" +
-            "| 114|     114|\n" +
-            "| 115|     115|\n" +
-            "| 116|     116|\n" +
-            "| 117|     117|\n" +
-            "| 118|     118|\n" +
-            "| 119|     119|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|101|     101|\n" +
+            "|102|     102|\n" +
+            "|103|     103|\n" +
+            "|104|     104|\n" +
+            "|105|     105|\n" +
+            "|106|     106|\n" +
+            "|107|     107|\n" +
+            "|108|     108|\n" +
+            "|109|     109|\n" +
+            "|110|     110|\n" +
+            "|111|     111|\n" +
+            "|112|     112|\n" +
+            "|113|     113|\n" +
+            "|114|     114|\n" +
+            "|115|     115|\n" +
+            "|116|     116|\n" +
+            "|117|     117|\n" +
+            "|118|     118|\n" +
+            "|119|     119|\n" +
+            "+---+--------+\n" +
             "Total line number = 19\n";
         executeAndCompare(statement, expected);
     }
 
     @Test
     public void testValueFilter() {
-        String query = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
+        String query = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 and s1 > 200 and s1 < 210;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "| 201|     201|\n" +
-            "| 202|     202|\n" +
-            "| 203|     203|\n" +
-            "| 204|     204|\n" +
-            "| 205|     205|\n" +
-            "| 206|     206|\n" +
-            "| 207|     207|\n" +
-            "| 208|     208|\n" +
-            "| 209|     209|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|201|     201|\n" +
+            "|202|     202|\n" +
+            "|203|     203|\n" +
+            "|204|     204|\n" +
+            "|205|     205|\n" +
+            "|206|     206|\n" +
+            "|207|     207|\n" +
+            "|208|     208|\n" +
+            "|209|     209|\n" +
+            "+---+--------+\n" +
             "Total line number = 9\n";
         executeAndCompare(query, expected);
 
-        String insert = "INSERT INTO us.d2(time, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
+        String insert = "INSERT INTO us.d2(key, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
         execute(insert);
 
         query = "SELECT c FROM us.d2 WHERE c like \"^a.*\";";
         expected = "ResultSets:\n" +
-            "+----+-------+\n" +
-            "|Time|us.d2.c|\n" +
-            "+----+-------+\n" +
-            "|   1|  asdas|\n" +
-            "|   4|  asdad|\n" +
-            "|   7| asdsad|\n" +
-            "|   9|  asdad|\n" +
-            "+----+-------+\n" +
+            "+---+-------+\n" +
+            "|key|us.d2.c|\n" +
+            "+---+-------+\n" +
+            "|  1|  asdas|\n" +
+            "|  4|  asdad|\n" +
+            "|  7| asdsad|\n" +
+            "|  9|  asdad|\n" +
+            "+---+-------+\n" +
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
         query = "SELECT c FROM us.d2 WHERE c like \"^[s|f].*\"";
         expected = "ResultSets:\n" +
-            "+----+-------+\n" +
-            "|Time|us.d2.c|\n" +
-            "+----+-------+\n" +
-            "|   2|  sadaa|\n" +
-            "|   3| sadada|\n" +
-            "|   8|  frgsa|\n" +
-            "+----+-------+\n" +
+            "+---+-------+\n" +
+            "|key|us.d2.c|\n" +
+            "+---+-------+\n" +
+            "|  2|  sadaa|\n" +
+            "|  3| sadada|\n" +
+            "|  8|  frgsa|\n" +
+            "+---+-------+\n" +
             "Total line number = 3\n";
         executeAndCompare(query, expected);
 
         query = "SELECT c FROM us.d2 WHERE c like \"^.*[s|d]\";";
         expected = "ResultSets:\n" +
-            "+----+-------+\n" +
-            "|Time|us.d2.c|\n" +
-            "+----+-------+\n" +
-            "|   1|  asdas|\n" +
-            "|   4|  asdad|\n" +
-            "|   7| asdsad|\n" +
-            "|   9|  asdad|\n" +
-            "+----+-------+\n" +
+            "+---+-------+\n" +
+            "|key|us.d2.c|\n" +
+            "+---+-------+\n" +
+            "|  1|  asdas|\n" +
+            "|  4|  asdad|\n" +
+            "|  7| asdsad|\n" +
+            "|  9|  asdad|\n" +
+            "+---+-------+\n" +
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
         StringBuilder builder = new StringBuilder();
-        builder.append("INSERT INTO us.d2(time, s1) VALUES ");
-        int size = (int) (endTimestamp - startTimestamp);
+        builder.append("INSERT INTO us.d2(key, s1) VALUES ");
+        int size = (int) (endKey - startKey);
         for (int i = 0; i < size; i++) {
             builder.append(", (");
-            builder.append(startTimestamp + i).append(", ");
+            builder.append(startKey + i).append(", ");
             builder.append(i + 5);
             builder.append(")");
         }
@@ -442,211 +442,211 @@ public abstract class SQLSessionIT {
         query = "SELECT s1 FROM us.* WHERE s1 > 200 and s1 < 210;";
         expected =
             "ResultSets:\n"
-                + "+----+--------+--------+\n"
-                + "|Time|us.d1.s1|us.d2.s1|\n"
-                + "+----+--------+--------+\n"
-                + "| 201|     201|     206|\n"
-                + "| 202|     202|     207|\n"
-                + "| 203|     203|     208|\n"
-                + "| 204|     204|     209|\n"
-                + "+----+--------+--------+\n"
+                + "+---+--------+--------+\n"
+                + "|key|us.d1.s1|us.d2.s1|\n"
+                + "+---+--------+--------+\n"
+                + "|201|     201|     206|\n"
+                + "|202|     202|     207|\n"
+                + "|203|     203|     208|\n"
+                + "|204|     204|     209|\n"
+                + "+---+--------+--------+\n"
                 + "Total line number = 4\n";
         executeAndCompare(query, expected);
     }
 
     @Test
     public void testPathFilter() {
-        String insert = "INSERT INTO us.d9(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        String insert = "INSERT INTO us.d9(key, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
         execute(insert);
 
         String query = "SELECT a, b FROM us.d9 WHERE a > b;";
         String expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   6|      6|      4|\n" +
-            "|   7|      7|      3|\n" +
-            "|   8|      8|      2|\n" +
-            "|   9|      9|      1|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  6|      6|      4|\n" +
+            "|  7|      7|      3|\n" +
+            "|  8|      8|      2|\n" +
+            "|  9|      9|      1|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
         query = "SELECT a, b FROM us.d9 WHERE a >= b;";
         expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   5|      5|      5|\n" +
-            "|   6|      6|      4|\n" +
-            "|   7|      7|      3|\n" +
-            "|   8|      8|      2|\n" +
-            "|   9|      9|      1|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  5|      5|      5|\n" +
+            "|  6|      6|      4|\n" +
+            "|  7|      7|      3|\n" +
+            "|  8|      8|      2|\n" +
+            "|  9|      9|      1|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
         query = "SELECT a, b FROM us.d9 WHERE a < b;";
         expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   1|      1|      9|\n" +
-            "|   2|      2|      8|\n" +
-            "|   3|      3|      7|\n" +
-            "|   4|      4|      6|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  1|      1|      9|\n" +
+            "|  2|      2|      8|\n" +
+            "|  3|      3|      7|\n" +
+            "|  4|      4|      6|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 4\n";
         executeAndCompare(query, expected);
 
         query = "SELECT a, b FROM us.d9 WHERE a <= b;";
         expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   1|      1|      9|\n" +
-            "|   2|      2|      8|\n" +
-            "|   3|      3|      7|\n" +
-            "|   4|      4|      6|\n" +
-            "|   5|      5|      5|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  1|      1|      9|\n" +
+            "|  2|      2|      8|\n" +
+            "|  3|      3|      7|\n" +
+            "|  4|      4|      6|\n" +
+            "|  5|      5|      5|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 5\n";
         executeAndCompare(query, expected);
 
         query = "SELECT a, b FROM us.d9 WHERE a = b;";
         expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   5|      5|      5|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  5|      5|      5|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 1\n";
         executeAndCompare(query, expected);
 
         query = "SELECT a, b FROM us.d9 WHERE a != b;";
         expected = "ResultSets:\n" +
-            "+----+-------+-------+\n" +
-            "|Time|us.d9.a|us.d9.b|\n" +
-            "+----+-------+-------+\n" +
-            "|   1|      1|      9|\n" +
-            "|   2|      2|      8|\n" +
-            "|   3|      3|      7|\n" +
-            "|   4|      4|      6|\n" +
-            "|   6|      6|      4|\n" +
-            "|   7|      7|      3|\n" +
-            "|   8|      8|      2|\n" +
-            "|   9|      9|      1|\n" +
-            "+----+-------+-------+\n" +
+            "+---+-------+-------+\n" +
+            "|key|us.d9.a|us.d9.b|\n" +
+            "+---+-------+-------+\n" +
+            "|  1|      1|      9|\n" +
+            "|  2|      2|      8|\n" +
+            "|  3|      3|      7|\n" +
+            "|  4|      4|      6|\n" +
+            "|  6|      6|      4|\n" +
+            "|  7|      7|      3|\n" +
+            "|  8|      8|      2|\n" +
+            "|  9|      9|      1|\n" +
+            "+---+-------+-------+\n" +
             "Total line number = 8\n";
         executeAndCompare(query, expected);
     }
 
     @Test
     public void testLimitAndOffsetQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10;";
+        String statement = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 limit 10;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "|   1|       1|\n" +
-            "|   2|       2|\n" +
-            "|   3|       3|\n" +
-            "|   4|       4|\n" +
-            "|   5|       5|\n" +
-            "|   6|       6|\n" +
-            "|   7|       7|\n" +
-            "|   8|       8|\n" +
-            "|   9|       9|\n" +
-            "|  10|      10|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|  1|       1|\n" +
+            "|  2|       2|\n" +
+            "|  3|       3|\n" +
+            "|  4|       4|\n" +
+            "|  5|       5|\n" +
+            "|  6|       6|\n" +
+            "|  7|       7|\n" +
+            "|  8|       8|\n" +
+            "|  9|       9|\n" +
+            "| 10|      10|\n" +
+            "+---+--------+\n" +
             "Total line number = 10\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10 offset 5;";
+        statement = "SELECT s1 FROM us.d1 WHERE key > 0 AND key < 10000 limit 10 offset 5;";
         expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "|   6|       6|\n" +
-            "|   7|       7|\n" +
-            "|   8|       8|\n" +
-            "|   9|       9|\n" +
-            "|  10|      10|\n" +
-            "|  11|      11|\n" +
-            "|  12|      12|\n" +
-            "|  13|      13|\n" +
-            "|  14|      14|\n" +
-            "|  15|      15|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|  6|       6|\n" +
+            "|  7|       7|\n" +
+            "|  8|       8|\n" +
+            "|  9|       9|\n" +
+            "| 10|      10|\n" +
+            "| 11|      11|\n" +
+            "| 12|      12|\n" +
+            "| 13|      13|\n" +
+            "| 14|      14|\n" +
+            "| 15|      15|\n" +
+            "+---+--------+\n" +
             "Total line number = 10\n";
         executeAndCompare(statement, expected);
     }
 
     @Test
     public void testOrderByQuery() {
-        String insert = "INSERT INTO us.d2 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d2 (key, s1, s2, s3) values " +
             "(1, \"apple\", 871, 232.1), (2, \"peach\", 123, 132.5), (3, \"banana\", 356, 317.8);";
         execute(insert);
 
         String orderByQuery = "SELECT * FROM us.d2 ORDER BY TIME";
         String expected = "ResultSets:\n" +
-            "+----+--------+--------+--------+\n" +
-            "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
-            "+----+--------+--------+--------+\n" +
-            "|   1|   apple|     871|   232.1|\n" +
-            "|   2|   peach|     123|   132.5|\n" +
-            "|   3|  banana|     356|   317.8|\n" +
-            "+----+--------+--------+--------+\n" +
+            "+---+--------+--------+--------+\n" +
+            "|key|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+            "+---+--------+--------+--------+\n" +
+            "|  1|   apple|     871|   232.1|\n" +
+            "|  2|   peach|     123|   132.5|\n" +
+            "|  3|  banana|     356|   317.8|\n" +
+            "+---+--------+--------+--------+\n" +
             "Total line number = 3\n";
         executeAndCompare(orderByQuery, expected);
     }
 
     @Test
     public void testFirstLastQuery() {
-        String statement = "SELECT FIRST(s2) FROM us.d1 WHERE time > 0;";
+        String statement = "SELECT FIRST(s2) FROM us.d1 WHERE key > 0;";
         String expected = "ResultSets:\n" +
-            "+----+--------+-----+\n" +
-            "|Time|    path|value|\n" +
-            "+----+--------+-----+\n" +
-            "|   1|us.d1.s2|    2|\n" +
-            "+----+--------+-----+\n" +
+            "+---+--------+-----+\n" +
+            "|key|    path|value|\n" +
+            "+---+--------+-----+\n" +
+            "|  1|us.d1.s2|    2|\n" +
+            "+---+--------+-----+\n" +
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s2) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-----+\n" +
-            "| Time|    path|value|\n" +
+            "|  key|    path|value|\n" +
             "+-----+--------+-----+\n" +
             "|14999|us.d1.s2|15000|\n" +
             "+-----+--------+-----+\n" +
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT FIRST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
-            "+----+--------+-----+\n" +
-            "|Time|    path|value|\n" +
-            "+----+--------+-----+\n" +
-            "|   1|us.d1.s4|  1.1|\n" +
-            "+----+--------+-----+\n" +
+            "+---+--------+-----+\n" +
+            "|key|    path|value|\n" +
+            "+---+--------+-----+\n" +
+            "|  1|us.d1.s4|  1.1|\n" +
+            "+---+--------+-----+\n" +
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
-            "| Time|    path|  value|\n" +
+            "|  key|    path|  value|\n" +
             "+-----+--------+-------+\n" +
             "|14999|us.d1.s4|14999.1|\n" +
             "+-----+--------+-------+\n" +
             "Total line number = 1\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
-            "| Time|    path|  value|\n" +
+            "|  key|    path|  value|\n" +
             "+-----+--------+-------+\n" +
             "|14999|us.d1.s2|  15000|\n" +
             "|14999|us.d1.s4|14999.1|\n" +
@@ -654,32 +654,32 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), FIRST(s4) FROM us.d1 WHERE time > 0;";
+        statement = "SELECT FIRST(s2), FIRST(s4) FROM us.d1 WHERE key > 0;";
         expected = "ResultSets:\n" +
-            "+----+--------+-----+\n" +
-            "|Time|    path|value|\n" +
-            "+----+--------+-----+\n" +
-            "|   1|us.d1.s2|    2|\n" +
-            "|   1|us.d1.s4|  1.1|\n" +
-            "+----+--------+-----+\n" +
+            "+---+--------+-----+\n" +
+            "|key|    path|value|\n" +
+            "+---+--------+-----+\n" +
+            "|  1|us.d1.s2|    2|\n" +
+            "|  1|us.d1.s4|  1.1|\n" +
+            "+---+--------+-----+\n" +
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time < 1000;";
+        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE key < 1000;";
         expected = "ResultSets:\n" +
-            "+----+--------+-----+\n" +
-            "|Time|    path|value|\n" +
-            "+----+--------+-----+\n" +
-            "| 999|us.d1.s2| 1000|\n" +
-            "| 999|us.d1.s4|999.1|\n" +
-            "+----+--------+-----+\n" +
+            "+---+--------+-----+\n" +
+            "|key|    path|value|\n" +
+            "+---+--------+-----+\n" +
+            "|999|us.d1.s2| 1000|\n" +
+            "|999|us.d1.s4|999.1|\n" +
+            "+---+--------+-----+\n" +
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), LAST(s4) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s2), LAST(s4) FROM us.d1 WHERE key > 1000;";
         expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
-            "| Time|    path|  value|\n" +
+            "|  key|    path|  value|\n" +
             "+-----+--------+-------+\n" +
             "| 1001|us.d1.s2|   1002|\n" +
             "|14999|us.d1.s4|14999.1|\n" +
@@ -687,11 +687,11 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s4), LAST(s2) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+------+\n"
-                + "| Time|    path| value|\n"
+                + "|  key|    path| value|\n"
                 + "+-----+--------+------+\n"
                 + "| 1001|us.d1.s4|1001.1|\n"
                 + "|14999|us.d1.s2| 15000|\n"
@@ -699,11 +699,11 @@ public abstract class SQLSessionIT {
                 + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s2), LAST(s2) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+-----+\n"
-                + "| Time|    path|value|\n"
+                + "|  key|    path|value|\n"
                 + "+-----+--------+-----+\n"
                 + "| 1001|us.d1.s2| 1002|\n"
                 + "|14999|us.d1.s2|15000|\n"
@@ -711,11 +711,11 @@ public abstract class SQLSessionIT {
                 + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s4), LAST(s4) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s4), LAST(s4) FROM us.d1 WHERE key > 1000;";
         expected =
             "ResultSets:\n"
                 + "+-----+--------+-------+\n"
-                + "| Time|    path|  value|\n"
+                + "|  key|    path|  value|\n"
                 + "+-----+--------+-------+\n"
                 + "| 1001|us.d1.s4| 1001.1|\n"
                 + "|14999|us.d1.s4|14999.1|\n"
@@ -726,7 +726,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testAggregateQuery() {
-        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE time > 0 AND time < 1000;";
+        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE key > 0 AND key < 1000;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -796,116 +796,116 @@ public abstract class SQLSessionIT {
         );
         List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "|   1|          100|        100.1|\n" +
-                "| 101|          200|        200.1|\n" +
-                "| 201|          300|        300.1|\n" +
-                "| 301|          400|        400.1|\n" +
-                "| 401|          500|        500.1|\n" +
-                "| 501|          600|        600.1|\n" +
-                "| 601|          700|        700.1|\n" +
-                "| 701|          800|        800.1|\n" +
-                "| 801|          900|        900.1|\n" +
-                "| 901|          999|        999.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|max(us.d1.s1)|max(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|  1|          100|        100.1|\n" +
+                "|101|          200|        200.1|\n" +
+                "|201|          300|        300.1|\n" +
+                "|301|          400|        400.1|\n" +
+                "|401|          500|        500.1|\n" +
+                "|501|          600|        600.1|\n" +
+                "|601|          700|        700.1|\n" +
+                "|701|          800|        800.1|\n" +
+                "|801|          900|        900.1|\n" +
+                "|901|          999|        999.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|min(us.d1.s1)|min(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "|   1|            1|          1.1|\n" +
-                "| 101|          101|        101.1|\n" +
-                "| 201|          201|        201.1|\n" +
-                "| 301|          301|        301.1|\n" +
-                "| 401|          401|        401.1|\n" +
-                "| 501|          501|        501.1|\n" +
-                "| 601|          601|        601.1|\n" +
-                "| 701|          701|        701.1|\n" +
-                "| 801|          801|        801.1|\n" +
-                "| 901|          901|        901.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|min(us.d1.s1)|min(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|  1|            1|          1.1|\n" +
+                "|101|          101|        101.1|\n" +
+                "|201|          201|        201.1|\n" +
+                "|301|          301|        301.1|\n" +
+                "|401|          401|        401.1|\n" +
+                "|501|          501|        501.1|\n" +
+                "|601|          601|        601.1|\n" +
+                "|701|          701|        701.1|\n" +
+                "|801|          801|        801.1|\n" +
+                "|901|          901|        901.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|Time|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|   1|                    1|                  1.1|\n" +
-                "| 101|                  101|                101.1|\n" +
-                "| 201|                  201|                201.1|\n" +
-                "| 301|                  301|                301.1|\n" +
-                "| 401|                  401|                401.1|\n" +
-                "| 501|                  501|                501.1|\n" +
-                "| 601|                  601|                601.1|\n" +
-                "| 701|                  701|                701.1|\n" +
-                "| 801|                  801|                801.1|\n" +
-                "| 901|                  901|                901.1|\n" +
-                "+----+---------------------+---------------------+\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|key|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|  1|                    1|                  1.1|\n" +
+                "|101|                  101|                101.1|\n" +
+                "|201|                  201|                201.1|\n" +
+                "|301|                  301|                301.1|\n" +
+                "|401|                  401|                401.1|\n" +
+                "|501|                  501|                501.1|\n" +
+                "|601|                  601|                601.1|\n" +
+                "|701|                  701|                701.1|\n" +
+                "|801|                  801|                801.1|\n" +
+                "|901|                  901|                901.1|\n" +
+                "+---+---------------------+---------------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|Time|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|   1|                 100|               100.1|\n" +
-                "| 101|                 200|               200.1|\n" +
-                "| 201|                 300|               300.1|\n" +
-                "| 301|                 400|               400.1|\n" +
-                "| 401|                 500|               500.1|\n" +
-                "| 501|                 600|               600.1|\n" +
-                "| 601|                 700|               700.1|\n" +
-                "| 701|                 800|               800.1|\n" +
-                "| 801|                 900|               900.1|\n" +
-                "| 901|                 999|               999.1|\n" +
-                "+----+--------------------+--------------------+\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|key|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|  1|                 100|               100.1|\n" +
+                "|101|                 200|               200.1|\n" +
+                "|201|                 300|               300.1|\n" +
+                "|301|                 400|               400.1|\n" +
+                "|401|                 500|               500.1|\n" +
+                "|501|                 600|               600.1|\n" +
+                "|601|                 700|               700.1|\n" +
+                "|701|                 800|               800.1|\n" +
+                "|801|                 900|               900.1|\n" +
+                "|901|                 999|               999.1|\n" +
+                "+---+--------------------+--------------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "|   1|         5050|            5060.0|\n" +
-                "| 101|        15050|15060.000000000022|\n" +
-                "| 201|        25050| 25059.99999999997|\n" +
-                "| 301|        35050| 35059.99999999994|\n" +
-                "| 401|        45050| 45059.99999999992|\n" +
-                "| 501|        55050| 55059.99999999991|\n" +
-                "| 601|        65050|  65059.9999999999|\n" +
-                "| 701|        75050| 75059.99999999999|\n" +
-                "| 801|        85050| 85060.00000000004|\n" +
-                "| 901|        94050|  94059.9000000001|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|  1|         5050|            5060.0|\n" +
+                "|101|        15050|15060.000000000022|\n" +
+                "|201|        25050| 25059.99999999997|\n" +
+                "|301|        35050| 35059.99999999994|\n" +
+                "|401|        45050| 45059.99999999992|\n" +
+                "|501|        55050| 55059.99999999991|\n" +
+                "|601|        65050|  65059.9999999999|\n" +
+                "|701|        75050| 75059.99999999999|\n" +
+                "|801|        85050| 85060.00000000004|\n" +
+                "|901|        94050|  94059.9000000001|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "|   1|         50.5|              50.6|\n" +
-                "| 101|        150.5|150.60000000000022|\n" +
-                "| 201|        250.5| 250.5999999999997|\n" +
-                "| 301|        350.5| 350.5999999999994|\n" +
-                "| 401|        450.5| 450.5999999999992|\n" +
-                "| 501|        550.5| 550.5999999999991|\n" +
-                "| 601|        650.5|  650.599999999999|\n" +
-                "| 701|        750.5| 750.5999999999999|\n" +
-                "| 801|        850.5| 850.6000000000005|\n" +
-                "| 901|        950.0| 950.1000000000009|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|  1|         50.5|              50.6|\n" +
+                "|101|        150.5|150.60000000000022|\n" +
+                "|201|        250.5| 250.5999999999997|\n" +
+                "|301|        350.5| 350.5999999999994|\n" +
+                "|401|        450.5| 450.5999999999992|\n" +
+                "|501|        550.5| 550.5999999999991|\n" +
+                "|601|        650.5|  650.599999999999|\n" +
+                "|701|        750.5| 750.5999999999999|\n" +
+                "|801|        850.5| 850.6000000000005|\n" +
+                "|901|        950.0| 950.1000000000009|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 10\n",
             "ResultSets:\n" +
-                "+----+---------------+---------------+\n" +
-                "|Time|count(us.d1.s1)|count(us.d1.s4)|\n" +
-                "+----+---------------+---------------+\n" +
-                "|   1|            100|            100|\n" +
-                "| 101|            100|            100|\n" +
-                "| 201|            100|            100|\n" +
-                "| 301|            100|            100|\n" +
-                "| 401|            100|            100|\n" +
-                "| 501|            100|            100|\n" +
-                "| 601|            100|            100|\n" +
-                "| 701|            100|            100|\n" +
-                "| 801|            100|            100|\n" +
-                "| 901|             99|             99|\n" +
-                "+----+---------------+---------------+\n" +
+                "+---+---------------+---------------+\n" +
+                "|key|count(us.d1.s1)|count(us.d1.s4)|\n" +
+                "+---+---------------+---------------+\n" +
+                "|  1|            100|            100|\n" +
+                "|101|            100|            100|\n" +
+                "|201|            100|            100|\n" +
+                "|301|            100|            100|\n" +
+                "|401|            100|            100|\n" +
+                "|501|            100|            100|\n" +
+                "|601|            100|            100|\n" +
+                "|701|            100|            100|\n" +
+                "|801|            100|            100|\n" +
+                "|901|             99|             99|\n" +
+                "+---+---------------+---------------+\n" +
                 "Total line number = 10\n"
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
@@ -917,73 +917,73 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testRangeDownSampleQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE key > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ns;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
         List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "| 601|          700|        700.1|\n" +
-                "| 701|          800|        800.1|\n" +
-                "| 801|          900|        900.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|max(us.d1.s1)|max(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|601|          700|        700.1|\n" +
+                "|701|          800|        800.1|\n" +
+                "|801|          900|        900.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|min(us.d1.s1)|min(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "| 601|          601|        601.1|\n" +
-                "| 701|          701|        701.1|\n" +
-                "| 801|          801|        801.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|min(us.d1.s1)|min(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|601|          601|        601.1|\n" +
+                "|701|          701|        701.1|\n" +
+                "|801|          801|        801.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|Time|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
-                "+----+---------------------+---------------------+\n" +
-                "| 601|                  601|                601.1|\n" +
-                "| 701|                  701|                701.1|\n" +
-                "| 801|                  801|                801.1|\n" +
-                "+----+---------------------+---------------------+\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|key|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|601|                  601|                601.1|\n" +
+                "|701|                  701|                701.1|\n" +
+                "|801|                  801|                801.1|\n" +
+                "+---+---------------------+---------------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|Time|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
-                "+----+--------------------+--------------------+\n" +
-                "| 601|                 700|               700.1|\n" +
-                "| 701|                 800|               800.1|\n" +
-                "| 801|                 900|               900.1|\n" +
-                "+----+--------------------+--------------------+\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|key|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|601|                 700|               700.1|\n" +
+                "|701|                 800|               800.1|\n" +
+                "|801|                 900|               900.1|\n" +
+                "+---+--------------------+--------------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+-------------+-----------------+\n" +
-                "|Time|sum(us.d1.s1)|    sum(us.d1.s4)|\n" +
-                "+----+-------------+-----------------+\n" +
-                "| 601|        65050| 65059.9999999999|\n" +
-                "| 701|        75050|75059.99999999999|\n" +
-                "| 801|        85050|85060.00000000004|\n" +
-                "+----+-------------+-----------------+\n" +
+                "+---+-------------+-----------------+\n" +
+                "|key|sum(us.d1.s1)|    sum(us.d1.s4)|\n" +
+                "+---+-------------+-----------------+\n" +
+                "|601|        65050| 65059.9999999999|\n" +
+                "|701|        75050|75059.99999999999|\n" +
+                "|801|        85050|85060.00000000004|\n" +
+                "+---+-------------+-----------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+-------------+-----------------+\n" +
-                "|Time|avg(us.d1.s1)|    avg(us.d1.s4)|\n" +
-                "+----+-------------+-----------------+\n" +
-                "| 601|        650.5| 650.599999999999|\n" +
-                "| 701|        750.5|750.5999999999999|\n" +
-                "| 801|        850.5|850.6000000000005|\n" +
-                "+----+-------------+-----------------+\n" +
+                "+---+-------------+-----------------+\n" +
+                "|key|avg(us.d1.s1)|    avg(us.d1.s4)|\n" +
+                "+---+-------------+-----------------+\n" +
+                "|601|        650.5| 650.599999999999|\n" +
+                "|701|        750.5|750.5999999999999|\n" +
+                "|801|        850.5|850.6000000000005|\n" +
+                "+---+-------------+-----------------+\n" +
                 "Total line number = 3\n",
             "ResultSets:\n" +
-                "+----+---------------+---------------+\n" +
-                "|Time|count(us.d1.s1)|count(us.d1.s4)|\n" +
-                "+----+---------------+---------------+\n" +
-                "| 601|            100|            100|\n" +
-                "| 701|            100|            100|\n" +
-                "| 801|            100|            100|\n" +
-                "+----+---------------+---------------+\n" +
+                "+---+---------------+---------------+\n" +
+                "|key|count(us.d1.s1)|count(us.d1.s4)|\n" +
+                "+---+---------------+---------------+\n" +
+                "|601|            100|            100|\n" +
+                "|701|            100|            100|\n" +
+                "|801|            100|            100|\n" +
+                "+---+---------------+---------------+\n" +
                 "Total line number = 3\n"
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
@@ -1001,179 +1001,179 @@ public abstract class SQLSessionIT {
         );
         List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "|   1|          100|        100.1|\n" +
-                "|  51|          150|        150.1|\n" +
-                "| 101|          200|        200.1|\n" +
-                "| 151|          250|        250.1|\n" +
-                "| 201|          300|        300.1|\n" +
-                "| 251|          350|        350.1|\n" +
-                "| 301|          400|        400.1|\n" +
-                "| 351|          450|        450.1|\n" +
-                "| 401|          500|        500.1|\n" +
-                "| 451|          550|        550.1|\n" +
-                "| 501|          600|        600.1|\n" +
-                "| 551|          650|        650.1|\n" +
-                "| 601|          700|        700.1|\n" +
-                "| 651|          750|        750.1|\n" +
-                "| 701|          800|        800.1|\n" +
-                "| 751|          850|        850.1|\n" +
-                "| 801|          900|        900.1|\n" +
-                "| 851|          950|        950.1|\n" +
-                "| 901|          999|        999.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|max(us.d1.s1)|max(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|  1|          100|        100.1|\n" +
+                "| 51|          150|        150.1|\n" +
+                "|101|          200|        200.1|\n" +
+                "|151|          250|        250.1|\n" +
+                "|201|          300|        300.1|\n" +
+                "|251|          350|        350.1|\n" +
+                "|301|          400|        400.1|\n" +
+                "|351|          450|        450.1|\n" +
+                "|401|          500|        500.1|\n" +
+                "|451|          550|        550.1|\n" +
+                "|501|          600|        600.1|\n" +
+                "|551|          650|        650.1|\n" +
+                "|601|          700|        700.1|\n" +
+                "|651|          750|        750.1|\n" +
+                "|701|          800|        800.1|\n" +
+                "|751|          850|        850.1|\n" +
+                "|801|          900|        900.1|\n" +
+                "|851|          950|        950.1|\n" +
+                "|901|          999|        999.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|min(us.d1.s1)|min(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "|   1|            1|          1.1|\n" +
-                "|  51|           51|         51.1|\n" +
-                "| 101|          101|        101.1|\n" +
-                "| 151|          151|        151.1|\n" +
-                "| 201|          201|        201.1|\n" +
-                "| 251|          251|        251.1|\n" +
-                "| 301|          301|        301.1|\n" +
-                "| 351|          351|        351.1|\n" +
-                "| 401|          401|        401.1|\n" +
-                "| 451|          451|        451.1|\n" +
-                "| 501|          501|        501.1|\n" +
-                "| 551|          551|        551.1|\n" +
-                "| 601|          601|        601.1|\n" +
-                "| 651|          651|        651.1|\n" +
-                "| 701|          701|        701.1|\n" +
-                "| 751|          751|        751.1|\n" +
-                "| 801|          801|        801.1|\n" +
-                "| 851|          851|        851.1|\n" +
-                "| 901|          901|        901.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|min(us.d1.s1)|min(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|  1|            1|          1.1|\n" +
+                "| 51|           51|         51.1|\n" +
+                "|101|          101|        101.1|\n" +
+                "|151|          151|        151.1|\n" +
+                "|201|          201|        201.1|\n" +
+                "|251|          251|        251.1|\n" +
+                "|301|          301|        301.1|\n" +
+                "|351|          351|        351.1|\n" +
+                "|401|          401|        401.1|\n" +
+                "|451|          451|        451.1|\n" +
+                "|501|          501|        501.1|\n" +
+                "|551|          551|        551.1|\n" +
+                "|601|          601|        601.1|\n" +
+                "|651|          651|        651.1|\n" +
+                "|701|          701|        701.1|\n" +
+                "|751|          751|        751.1|\n" +
+                "|801|          801|        801.1|\n" +
+                "|851|          851|        851.1|\n" +
+                "|901|          901|        901.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|Time|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|   1|                    1|                  1.1|\n" +
-                "|  51|                   51|                 51.1|\n" +
-                "| 101|                  101|                101.1|\n" +
-                "| 151|                  151|                151.1|\n" +
-                "| 201|                  201|                201.1|\n" +
-                "| 251|                  251|                251.1|\n" +
-                "| 301|                  301|                301.1|\n" +
-                "| 351|                  351|                351.1|\n" +
-                "| 401|                  401|                401.1|\n" +
-                "| 451|                  451|                451.1|\n" +
-                "| 501|                  501|                501.1|\n" +
-                "| 551|                  551|                551.1|\n" +
-                "| 601|                  601|                601.1|\n" +
-                "| 651|                  651|                651.1|\n" +
-                "| 701|                  701|                701.1|\n" +
-                "| 751|                  751|                751.1|\n" +
-                "| 801|                  801|                801.1|\n" +
-                "| 851|                  851|                851.1|\n" +
-                "| 901|                  901|                901.1|\n" +
-                "+----+---------------------+---------------------+\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|key|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|  1|                    1|                  1.1|\n" +
+                "| 51|                   51|                 51.1|\n" +
+                "|101|                  101|                101.1|\n" +
+                "|151|                  151|                151.1|\n" +
+                "|201|                  201|                201.1|\n" +
+                "|251|                  251|                251.1|\n" +
+                "|301|                  301|                301.1|\n" +
+                "|351|                  351|                351.1|\n" +
+                "|401|                  401|                401.1|\n" +
+                "|451|                  451|                451.1|\n" +
+                "|501|                  501|                501.1|\n" +
+                "|551|                  551|                551.1|\n" +
+                "|601|                  601|                601.1|\n" +
+                "|651|                  651|                651.1|\n" +
+                "|701|                  701|                701.1|\n" +
+                "|751|                  751|                751.1|\n" +
+                "|801|                  801|                801.1|\n" +
+                "|851|                  851|                851.1|\n" +
+                "|901|                  901|                901.1|\n" +
+                "+---+---------------------+---------------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|Time|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|   1|                 100|               100.1|\n" +
-                "|  51|                 150|               150.1|\n" +
-                "| 101|                 200|               200.1|\n" +
-                "| 151|                 250|               250.1|\n" +
-                "| 201|                 300|               300.1|\n" +
-                "| 251|                 350|               350.1|\n" +
-                "| 301|                 400|               400.1|\n" +
-                "| 351|                 450|               450.1|\n" +
-                "| 401|                 500|               500.1|\n" +
-                "| 451|                 550|               550.1|\n" +
-                "| 501|                 600|               600.1|\n" +
-                "| 551|                 650|               650.1|\n" +
-                "| 601|                 700|               700.1|\n" +
-                "| 651|                 750|               750.1|\n" +
-                "| 701|                 800|               800.1|\n" +
-                "| 751|                 850|               850.1|\n" +
-                "| 801|                 900|               900.1|\n" +
-                "| 851|                 950|               950.1|\n" +
-                "| 901|                 999|               999.1|\n" +
-                "+----+--------------------+--------------------+\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|key|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|  1|                 100|               100.1|\n" +
+                "| 51|                 150|               150.1|\n" +
+                "|101|                 200|               200.1|\n" +
+                "|151|                 250|               250.1|\n" +
+                "|201|                 300|               300.1|\n" +
+                "|251|                 350|               350.1|\n" +
+                "|301|                 400|               400.1|\n" +
+                "|351|                 450|               450.1|\n" +
+                "|401|                 500|               500.1|\n" +
+                "|451|                 550|               550.1|\n" +
+                "|501|                 600|               600.1|\n" +
+                "|551|                 650|               650.1|\n" +
+                "|601|                 700|               700.1|\n" +
+                "|651|                 750|               750.1|\n" +
+                "|701|                 800|               800.1|\n" +
+                "|751|                 850|               850.1|\n" +
+                "|801|                 900|               900.1|\n" +
+                "|851|                 950|               950.1|\n" +
+                "|901|                 999|               999.1|\n" +
+                "+---+--------------------+--------------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "|   1|         5050|            5060.0|\n" +
-                "|  51|        10050|10060.000000000013|\n" +
-                "| 101|        15050|15060.000000000022|\n" +
-                "| 151|        20050|20059.999999999996|\n" +
-                "| 201|        25050| 25059.99999999997|\n" +
-                "| 251|        30050|30059.999999999953|\n" +
-                "| 301|        35050| 35059.99999999994|\n" +
-                "| 351|        40050| 40059.99999999993|\n" +
-                "| 401|        45050| 45059.99999999992|\n" +
-                "| 451|        50050| 50059.99999999992|\n" +
-                "| 501|        55050| 55059.99999999991|\n" +
-                "| 551|        60050|60059.999999999905|\n" +
-                "| 601|        65050|  65059.9999999999|\n" +
-                "| 651|        70050| 70059.99999999994|\n" +
-                "| 701|        75050| 75059.99999999999|\n" +
-                "| 751|        80050| 80060.00000000001|\n" +
-                "| 801|        85050| 85060.00000000004|\n" +
-                "| 851|        90050| 90060.00000000009|\n" +
-                "| 901|        94050|  94059.9000000001|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|  1|         5050|            5060.0|\n" +
+                "| 51|        10050|10060.000000000013|\n" +
+                "|101|        15050|15060.000000000022|\n" +
+                "|151|        20050|20059.999999999996|\n" +
+                "|201|        25050| 25059.99999999997|\n" +
+                "|251|        30050|30059.999999999953|\n" +
+                "|301|        35050| 35059.99999999994|\n" +
+                "|351|        40050| 40059.99999999993|\n" +
+                "|401|        45050| 45059.99999999992|\n" +
+                "|451|        50050| 50059.99999999992|\n" +
+                "|501|        55050| 55059.99999999991|\n" +
+                "|551|        60050|60059.999999999905|\n" +
+                "|601|        65050|  65059.9999999999|\n" +
+                "|651|        70050| 70059.99999999994|\n" +
+                "|701|        75050| 75059.99999999999|\n" +
+                "|751|        80050| 80060.00000000001|\n" +
+                "|801|        85050| 85060.00000000004|\n" +
+                "|851|        90050| 90060.00000000009|\n" +
+                "|901|        94050|  94059.9000000001|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "|   1|         50.5|              50.6|\n" +
-                "|  51|        100.5|100.60000000000012|\n" +
-                "| 101|        150.5|150.60000000000022|\n" +
-                "| 151|        200.5|200.59999999999997|\n" +
-                "| 201|        250.5| 250.5999999999997|\n" +
-                "| 251|        300.5| 300.5999999999995|\n" +
-                "| 301|        350.5| 350.5999999999994|\n" +
-                "| 351|        400.5| 400.5999999999993|\n" +
-                "| 401|        450.5| 450.5999999999992|\n" +
-                "| 451|        500.5| 500.5999999999992|\n" +
-                "| 501|        550.5| 550.5999999999991|\n" +
-                "| 551|        600.5|  600.599999999999|\n" +
-                "| 601|        650.5|  650.599999999999|\n" +
-                "| 651|        700.5| 700.5999999999995|\n" +
-                "| 701|        750.5| 750.5999999999999|\n" +
-                "| 751|        800.5| 800.6000000000001|\n" +
-                "| 801|        850.5| 850.6000000000005|\n" +
-                "| 851|        900.5| 900.6000000000008|\n" +
-                "| 901|        950.0| 950.1000000000009|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|  1|         50.5|              50.6|\n" +
+                "| 51|        100.5|100.60000000000012|\n" +
+                "|101|        150.5|150.60000000000022|\n" +
+                "|151|        200.5|200.59999999999997|\n" +
+                "|201|        250.5| 250.5999999999997|\n" +
+                "|251|        300.5| 300.5999999999995|\n" +
+                "|301|        350.5| 350.5999999999994|\n" +
+                "|351|        400.5| 400.5999999999993|\n" +
+                "|401|        450.5| 450.5999999999992|\n" +
+                "|451|        500.5| 500.5999999999992|\n" +
+                "|501|        550.5| 550.5999999999991|\n" +
+                "|551|        600.5|  600.599999999999|\n" +
+                "|601|        650.5|  650.599999999999|\n" +
+                "|651|        700.5| 700.5999999999995|\n" +
+                "|701|        750.5| 750.5999999999999|\n" +
+                "|751|        800.5| 800.6000000000001|\n" +
+                "|801|        850.5| 850.6000000000005|\n" +
+                "|851|        900.5| 900.6000000000008|\n" +
+                "|901|        950.0| 950.1000000000009|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 19\n",
             "ResultSets:\n" +
-                "+----+---------------+---------------+\n" +
-                "|Time|count(us.d1.s1)|count(us.d1.s4)|\n" +
-                "+----+---------------+---------------+\n" +
-                "|   1|            100|            100|\n" +
-                "|  51|            100|            100|\n" +
-                "| 101|            100|            100|\n" +
-                "| 151|            100|            100|\n" +
-                "| 201|            100|            100|\n" +
-                "| 251|            100|            100|\n" +
-                "| 301|            100|            100|\n" +
-                "| 351|            100|            100|\n" +
-                "| 401|            100|            100|\n" +
-                "| 451|            100|            100|\n" +
-                "| 501|            100|            100|\n" +
-                "| 551|            100|            100|\n" +
-                "| 601|            100|            100|\n" +
-                "| 651|            100|            100|\n" +
-                "| 701|            100|            100|\n" +
-                "| 751|            100|            100|\n" +
-                "| 801|            100|            100|\n" +
-                "| 851|            100|            100|\n" +
-                "| 901|             99|             99|\n" +
-                "+----+---------------+---------------+\n" +
+                "+---+---------------+---------------+\n" +
+                "|key|count(us.d1.s1)|count(us.d1.s4)|\n" +
+                "+---+---------------+---------------+\n" +
+                "|  1|            100|            100|\n" +
+                "| 51|            100|            100|\n" +
+                "|101|            100|            100|\n" +
+                "|151|            100|            100|\n" +
+                "|201|            100|            100|\n" +
+                "|251|            100|            100|\n" +
+                "|301|            100|            100|\n" +
+                "|351|            100|            100|\n" +
+                "|401|            100|            100|\n" +
+                "|451|            100|            100|\n" +
+                "|501|            100|            100|\n" +
+                "|551|            100|            100|\n" +
+                "|601|            100|            100|\n" +
+                "|651|            100|            100|\n" +
+                "|701|            100|            100|\n" +
+                "|751|            100|            100|\n" +
+                "|801|            100|            100|\n" +
+                "|851|            100|            100|\n" +
+                "|901|             99|             99|\n" +
+                "+---+---------------+---------------+\n" +
                 "Total line number = 19\n"
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
@@ -1185,101 +1185,101 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testRangeSlideWindowByTimeQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 300 AND s1 <= 600 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE key > 300 AND s1 <= 600 GROUP (0, 1000) BY 100ns SLIDE 50ns;";
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
         List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "| 251|          350|        350.1|\n" +
-                "| 301|          400|        400.1|\n" +
-                "| 351|          450|        450.1|\n" +
-                "| 401|          500|        500.1|\n" +
-                "| 451|          550|        550.1|\n" +
-                "| 501|          600|        600.1|\n" +
-                "| 551|          600|        600.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|max(us.d1.s1)|max(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|251|          350|        350.1|\n" +
+                "|301|          400|        400.1|\n" +
+                "|351|          450|        450.1|\n" +
+                "|401|          500|        500.1|\n" +
+                "|451|          550|        550.1|\n" +
+                "|501|          600|        600.1|\n" +
+                "|551|          600|        600.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+-------------+-------------+\n" +
-                "|Time|min(us.d1.s1)|min(us.d1.s4)|\n" +
-                "+----+-------------+-------------+\n" +
-                "| 251|          301|        301.1|\n" +
-                "| 301|          301|        301.1|\n" +
-                "| 351|          351|        351.1|\n" +
-                "| 401|          401|        401.1|\n" +
-                "| 451|          451|        451.1|\n" +
-                "| 501|          501|        501.1|\n" +
-                "| 551|          551|        551.1|\n" +
-                "+----+-------------+-------------+\n" +
+                "+---+-------------+-------------+\n" +
+                "|key|min(us.d1.s1)|min(us.d1.s4)|\n" +
+                "+---+-------------+-------------+\n" +
+                "|251|          301|        301.1|\n" +
+                "|301|          301|        301.1|\n" +
+                "|351|          351|        351.1|\n" +
+                "|401|          401|        401.1|\n" +
+                "|451|          451|        451.1|\n" +
+                "|501|          501|        501.1|\n" +
+                "|551|          551|        551.1|\n" +
+                "+---+-------------+-------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+---------------------+---------------------+\n" +
-                "|Time|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
-                "+----+---------------------+---------------------+\n" +
-                "| 251|                  301|                301.1|\n" +
-                "| 301|                  301|                301.1|\n" +
-                "| 351|                  351|                351.1|\n" +
-                "| 401|                  401|                401.1|\n" +
-                "| 451|                  451|                451.1|\n" +
-                "| 501|                  501|                501.1|\n" +
-                "| 551|                  551|                551.1|\n" +
-                "+----+---------------------+---------------------+\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|key|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
+                "+---+---------------------+---------------------+\n" +
+                "|251|                  301|                301.1|\n" +
+                "|301|                  301|                301.1|\n" +
+                "|351|                  351|                351.1|\n" +
+                "|401|                  401|                401.1|\n" +
+                "|451|                  451|                451.1|\n" +
+                "|501|                  501|                501.1|\n" +
+                "|551|                  551|                551.1|\n" +
+                "+---+---------------------+---------------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+--------------------+--------------------+\n" +
-                "|Time|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
-                "+----+--------------------+--------------------+\n" +
-                "| 251|                 350|               350.1|\n" +
-                "| 301|                 400|               400.1|\n" +
-                "| 351|                 450|               450.1|\n" +
-                "| 401|                 500|               500.1|\n" +
-                "| 451|                 550|               550.1|\n" +
-                "| 501|                 600|               600.1|\n" +
-                "| 551|                 600|               600.1|\n" +
-                "+----+--------------------+--------------------+\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|key|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
+                "+---+--------------------+--------------------+\n" +
+                "|251|                 350|               350.1|\n" +
+                "|301|                 400|               400.1|\n" +
+                "|351|                 450|               450.1|\n" +
+                "|401|                 500|               500.1|\n" +
+                "|451|                 550|               550.1|\n" +
+                "|501|                 600|               600.1|\n" +
+                "|551|                 600|               600.1|\n" +
+                "+---+--------------------+--------------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "| 251|        16275|16280.000000000013|\n" +
-                "| 301|        35050| 35059.99999999994|\n" +
-                "| 351|        40050| 40059.99999999993|\n" +
-                "| 401|        45050| 45059.99999999992|\n" +
-                "| 451|        50050| 50059.99999999992|\n" +
-                "| 501|        55050| 55059.99999999991|\n" +
-                "| 551|        28775|28779.999999999975|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|251|        16275|16280.000000000013|\n" +
+                "|301|        35050| 35059.99999999994|\n" +
+                "|351|        40050| 40059.99999999993|\n" +
+                "|401|        45050| 45059.99999999992|\n" +
+                "|451|        50050| 50059.99999999992|\n" +
+                "|501|        55050| 55059.99999999991|\n" +
+                "|551|        28775|28779.999999999975|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+-------------+------------------+\n" +
-                "|Time|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
-                "+----+-------------+------------------+\n" +
-                "| 251|        325.5|325.60000000000025|\n" +
-                "| 301|        350.5| 350.5999999999994|\n" +
-                "| 351|        400.5| 400.5999999999993|\n" +
-                "| 401|        450.5| 450.5999999999992|\n" +
-                "| 451|        500.5| 500.5999999999992|\n" +
-                "| 501|        550.5| 550.5999999999991|\n" +
-                "| 551|        575.5| 575.5999999999995|\n" +
-                "+----+-------------+------------------+\n" +
+                "+---+-------------+------------------+\n" +
+                "|key|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
+                "+---+-------------+------------------+\n" +
+                "|251|        325.5|325.60000000000025|\n" +
+                "|301|        350.5| 350.5999999999994|\n" +
+                "|351|        400.5| 400.5999999999993|\n" +
+                "|401|        450.5| 450.5999999999992|\n" +
+                "|451|        500.5| 500.5999999999992|\n" +
+                "|501|        550.5| 550.5999999999991|\n" +
+                "|551|        575.5| 575.5999999999995|\n" +
+                "+---+-------------+------------------+\n" +
                 "Total line number = 7\n",
             "ResultSets:\n" +
-                "+----+---------------+---------------+\n" +
-                "|Time|count(us.d1.s1)|count(us.d1.s4)|\n" +
-                "+----+---------------+---------------+\n" +
-                "| 251|             50|             50|\n" +
-                "| 301|            100|            100|\n" +
-                "| 351|            100|            100|\n" +
-                "| 401|            100|            100|\n" +
-                "| 451|            100|            100|\n" +
-                "| 501|            100|            100|\n" +
-                "| 551|             50|             50|\n" +
-                "+----+---------------+---------------+\n" +
+                "+---+---------------+---------------+\n" +
+                "|key|count(us.d1.s1)|count(us.d1.s4)|\n" +
+                "+---+---------------+---------------+\n" +
+                "|251|             50|             50|\n" +
+                "|301|            100|            100|\n" +
+                "|351|            100|            100|\n" +
+                "|401|            100|            100|\n" +
+                "|451|            100|            100|\n" +
+                "|501|            100|            100|\n" +
+                "|551|             50|             50|\n" +
+                "+---+---------------+---------------+\n" +
                 "Total line number = 7\n"
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
@@ -1294,35 +1294,35 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 120;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "| 101|     101|\n" +
-            "| 102|     102|\n" +
-            "| 103|     103|\n" +
-            "| 104|     104|\n" +
-            "| 105|     105|\n" +
-            "| 115|     115|\n" +
-            "| 116|     116|\n" +
-            "| 117|     117|\n" +
-            "| 118|     118|\n" +
-            "| 119|     119|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|101|     101|\n" +
+            "|102|     102|\n" +
+            "|103|     103|\n" +
+            "|104|     104|\n" +
+            "|105|     105|\n" +
+            "|115|     115|\n" +
+            "|116|     116|\n" +
+            "|117|     117|\n" +
+            "|118|     118|\n" +
+            "|119|     119|\n" +
+            "+---+--------+\n" +
             "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s1 WHERE time >= 1126 AND time <= 1155;";
+        delete = "DELETE FROM us.d1.s1 WHERE key >= 1126 AND key <= 1155;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 1120 AND time < 1160;";
+        queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 1120 AND key < 1160;";
         expected = "ResultSets:\n" +
             "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
+            "| key|us.d1.s1|\n" +
             "+----+--------+\n" +
             "|1121|    1121|\n" +
             "|1122|    1122|\n" +
@@ -1337,13 +1337,13 @@ public abstract class SQLSessionIT {
             "Total line number = 9\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 2236 AND time <= 2265;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 2236 AND key <= 2265;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 2230 AND time < 2270;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 2230 AND key < 2270;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d1.s2|us.d1.s4|\n" +
+            "| key|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
             "|2231|    2232|  2231.1|\n" +
             "|2232|    2233|  2232.1|\n" +
@@ -1359,13 +1359,13 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time >= 3346 AND time < 3375;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key >= 3346 AND key < 3375;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 3340 AND time < 3380;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 3340 AND key < 3380;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d1.s2|us.d1.s4|\n" +
+            "| key|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
             "|3341|    3342|  3341.1|\n" +
             "|3342|    3343|  3342.1|\n" +
@@ -1387,39 +1387,39 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 OR time >= 120 AND time <= 230;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 OR key >= 120 AND key <= 230;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 100 AND key < 235;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "| 101|     101|\n" +
-            "| 102|     102|\n" +
-            "| 103|     103|\n" +
-            "| 104|     104|\n" +
-            "| 105|     105|\n" +
-            "| 115|     115|\n" +
-            "| 116|     116|\n" +
-            "| 117|     117|\n" +
-            "| 118|     118|\n" +
-            "| 119|     119|\n" +
-            "| 231|     231|\n" +
-            "| 232|     232|\n" +
-            "| 233|     233|\n" +
-            "| 234|     234|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|101|     101|\n" +
+            "|102|     102|\n" +
+            "|103|     103|\n" +
+            "|104|     104|\n" +
+            "|105|     105|\n" +
+            "|115|     115|\n" +
+            "|116|     116|\n" +
+            "|117|     117|\n" +
+            "|118|     118|\n" +
+            "|119|     119|\n" +
+            "|231|     231|\n" +
+            "|232|     232|\n" +
+            "|233|     233|\n" +
+            "|234|     234|\n" +
+            "+---+--------+\n" +
             "Total line number = 14\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1130 AND time < 1230;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 1115 AND key <= 1125 OR key >= 1130 AND key < 1230;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 1110 AND key < 1235;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d1.s2|us.d1.s4|\n" +
+            "| key|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
             "|1111|    1112|  1111.1|\n" +
             "|1112|    1113|  1112.1|\n" +
@@ -1445,34 +1445,34 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 205 AND time < 215 OR time >= 210 AND time <= 230;";
+        String delete = "DELETE FROM us.d1.s1 WHERE key > 205 AND key < 215 OR key >= 210 AND key <= 230;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE key > 200 AND key < 235;";
         String expected = "ResultSets:\n" +
-            "+----+--------+\n" +
-            "|Time|us.d1.s1|\n" +
-            "+----+--------+\n" +
-            "| 201|     201|\n" +
-            "| 202|     202|\n" +
-            "| 203|     203|\n" +
-            "| 204|     204|\n" +
-            "| 205|     205|\n" +
-            "| 231|     231|\n" +
-            "| 232|     232|\n" +
-            "| 233|     233|\n" +
-            "| 234|     234|\n" +
-            "+----+--------+\n" +
+            "+---+--------+\n" +
+            "|key|us.d1.s1|\n" +
+            "+---+--------+\n" +
+            "|201|     201|\n" +
+            "|202|     202|\n" +
+            "|203|     203|\n" +
+            "|204|     204|\n" +
+            "|205|     205|\n" +
+            "|231|     231|\n" +
+            "|232|     232|\n" +
+            "|233|     233|\n" +
+            "|234|     234|\n" +
+            "+---+--------+\n" +
             "Total line number = 9\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
-        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1120 AND time < 1230;";
+        delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE key > 1115 AND key <= 1125 OR key >= 1120 AND key < 1230;";
         execute(delete);
 
-        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
+        queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE key > 1110 AND key < 1235;";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d1.s2|us.d1.s4|\n" +
+            "| key|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
             "|1111|    1112|  1111.1|\n" +
             "|1112|    1113|  1112.1|\n" +
@@ -1491,7 +1491,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testJoin() {
-        String insert = "insert into test(time, a.a, a.b, b.a, b.b) values (1, 1, 1.1, 2, 2.1), (2, 3, 3.1, 3, 3.1), (3, 5, 5.1, 4, 4.1), (4, 7, 7.1, 5, 5.1), (5, 9, 9.1, 6, 6.1);";
+        String insert = "insert into test(key, a.a, a.b, b.a, b.b) values (1, 1, 1.1, 2, 2.1), (2, 3, 3.1, 3, 3.1), (3, 5, 5.1, 4, 4.1), (4, 7, 7.1, 5, 5.1), (5, 9, 9.1, 6, 6.1);";
         execute(insert);
 
         String statement = "select * from test.a join test.b on test.a.a = test.b.a";
@@ -1681,27 +1681,27 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testMultiJoin() {
-        String insert = "insert into test(time, a.a, a.b) values (1, 1, 1.1), (2, 3, 3.1), (3, 5, 5.1), (4, 7, 7.1), (5, 9, 9.1);";
+        String insert = "insert into test(key, a.a, a.b) values (1, 1, 1.1), (2, 3, 3.1), (3, 5, 5.1), (4, 7, 7.1), (5, 9, 9.1);";
         execute(insert);
 
-        insert = "insert into test(time, b.a, b.b) values (1, 2, \"aaa\"), (2, 3, \"bbb\"), (3, 4, \"ccc\"), (4, 5, \"ddd\"), (5, 6, \"eee\");";
+        insert = "insert into test(key, b.a, b.b) values (1, 2, \"aaa\"), (2, 3, \"bbb\"), (3, 4, \"ccc\"), (4, 5, \"ddd\"), (5, 6, \"eee\");";
         execute(insert);
 
-        insert = "insert into test(time, c.a, c.b) values (1, \"ddd\", true), (2, \"eee\", false), (3, \"aaa\", true), (4, \"bbb\", false), (5, \"ccc\", true);";
+        insert = "insert into test(key, c.a, c.b) values (1, \"ddd\", true), (2, \"eee\", false), (3, \"aaa\", true), (4, \"bbb\", false), (5, \"ccc\", true);";
         execute(insert);
 
         String statement = "select * from test";
         String expected =
             "ResultSets:\n"
-                + "+----+--------+--------+--------+--------+--------+--------+\n"
-                + "|Time|test.a.a|test.a.b|test.b.a|test.b.b|test.c.a|test.c.b|\n"
-                + "+----+--------+--------+--------+--------+--------+--------+\n"
-                + "|   1|       1|     1.1|       2|     aaa|     ddd|    true|\n"
-                + "|   2|       3|     3.1|       3|     bbb|     eee|   false|\n"
-                + "|   3|       5|     5.1|       4|     ccc|     aaa|    true|\n"
-                + "|   4|       7|     7.1|       5|     ddd|     bbb|   false|\n"
-                + "|   5|       9|     9.1|       6|     eee|     ccc|    true|\n"
-                + "+----+--------+--------+--------+--------+--------+--------+\n"
+                + "+---+--------+--------+--------+--------+--------+--------+\n"
+                + "|key|test.a.a|test.a.b|test.b.a|test.b.b|test.c.a|test.c.b|\n"
+                + "+---+--------+--------+--------+--------+--------+--------+\n"
+                + "|  1|       1|     1.1|       2|     aaa|     ddd|    true|\n"
+                + "|  2|       3|     3.1|       3|     bbb|     eee|   false|\n"
+                + "|  3|       5|     5.1|       4|     ccc|     aaa|    true|\n"
+                + "|  4|       7|     7.1|       5|     ddd|     bbb|   false|\n"
+                + "|  5|       9|     9.1|       6|     eee|     ccc|    true|\n"
+                + "+---+--------+--------+--------+--------+--------+--------+\n"
                 + "Total line number = 5\n";
         executeAndCompare(statement, expected);
 
@@ -1768,174 +1768,174 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testBasicArithmeticExpr() {
-        String insert = "INSERT INTO us.d3 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d3 (key, s1, s2, s3) values " +
             "(1, 1, 6, 1.5), (2, 2, 5, 2.5), (3, 3, 4, 3.5), (4, 4, 3, 4.5), (5, 5, 2, 5.5), (6, 6, 1, 6.5);";
         execute(insert);
 
         String statement = "SELECT s1, s2, s3 FROM us.d3;";
         String expected =
             "ResultSets:\n"
-                + "+----+--------+--------+--------+\n"
-                + "|Time|us.d3.s1|us.d3.s2|us.d3.s3|\n"
-                + "+----+--------+--------+--------+\n"
-                + "|   1|       1|       6|     1.5|\n"
-                + "|   2|       2|       5|     2.5|\n"
-                + "|   3|       3|       4|     3.5|\n"
-                + "|   4|       4|       3|     4.5|\n"
-                + "|   5|       5|       2|     5.5|\n"
-                + "|   6|       6|       1|     6.5|\n"
-                + "+----+--------+--------+--------+\n"
+                + "+---+--------+--------+--------+\n"
+                + "|key|us.d3.s1|us.d3.s2|us.d3.s3|\n"
+                + "+---+--------+--------+--------+\n"
+                + "|  1|       1|       6|     1.5|\n"
+                + "|  2|       2|       5|     2.5|\n"
+                + "|  3|       3|       4|     3.5|\n"
+                + "|  4|       4|       3|     4.5|\n"
+                + "|  5|       5|       2|     5.5|\n"
+                + "|  6|       6|       1|     6.5|\n"
+                + "+---+--------+--------+--------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s1+1, s2-1, s3*2 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+------------+------------+------------+\n"
-                + "|Time|us.d3.s1 + 1|us.d3.s2 - 1|us.d3.s3 × 2|\n"
-                + "+----+------------+------------+------------+\n"
-                + "|   1|           2|           5|         3.0|\n"
-                + "|   2|           3|           4|         5.0|\n"
-                + "|   3|           4|           3|         7.0|\n"
-                + "|   4|           5|           2|         9.0|\n"
-                + "|   5|           6|           1|        11.0|\n"
-                + "|   6|           7|           0|        13.0|\n"
-                + "+----+------------+------------+------------+\n"
+                + "+---+------------+------------+------------+\n"
+                + "|key|us.d3.s1 + 1|us.d3.s2 - 1|us.d3.s3 × 2|\n"
+                + "+---+------------+------------+------------+\n"
+                + "|  1|           2|           5|         3.0|\n"
+                + "|  2|           3|           4|         5.0|\n"
+                + "|  3|           4|           3|         7.0|\n"
+                + "|  4|           5|           2|         9.0|\n"
+                + "|  5|           6|           1|        11.0|\n"
+                + "|  6|           7|           0|        13.0|\n"
+                + "+---+------------+------------+------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s1+s2, s1-s2, s1+s3, s1-s3 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+-------------------+-------------------+-------------------+-------------------+\n"
-                + "|Time|us.d3.s1 + us.d3.s2|us.d3.s1 - us.d3.s2|us.d3.s1 + us.d3.s3|us.d3.s1 - us.d3.s3|\n"
-                + "+----+-------------------+-------------------+-------------------+-------------------+\n"
-                + "|   1|                  7|                 -5|                2.5|               -0.5|\n"
-                + "|   2|                  7|                 -3|                4.5|               -0.5|\n"
-                + "|   3|                  7|                 -1|                6.5|               -0.5|\n"
-                + "|   4|                  7|                  1|                8.5|               -0.5|\n"
-                + "|   5|                  7|                  3|               10.5|               -0.5|\n"
-                + "|   6|                  7|                  5|               12.5|               -0.5|\n"
-                + "+----+-------------------+-------------------+-------------------+-------------------+\n"
+                + "+---+-------------------+-------------------+-------------------+-------------------+\n"
+                + "|key|us.d3.s1 + us.d3.s2|us.d3.s1 - us.d3.s2|us.d3.s1 + us.d3.s3|us.d3.s1 - us.d3.s3|\n"
+                + "+---+-------------------+-------------------+-------------------+-------------------+\n"
+                + "|  1|                  7|                 -5|                2.5|               -0.5|\n"
+                + "|  2|                  7|                 -3|                4.5|               -0.5|\n"
+                + "|  3|                  7|                 -1|                6.5|               -0.5|\n"
+                + "|  4|                  7|                  1|                8.5|               -0.5|\n"
+                + "|  5|                  7|                  3|               10.5|               -0.5|\n"
+                + "|  6|                  7|                  5|               12.5|               -0.5|\n"
+                + "+---+-------------------+-------------------+-------------------+-------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s1*s2, s1/s2, s1%s2 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
-                + "|Time|us.d3.s1 × us.d3.s2|us.d3.s1 ÷ us.d3.s2|us.d3.s1 % us.d3.s2|\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
-                + "|   1|                  6|                  0|                  1|\n"
-                + "|   2|                 10|                  0|                  2|\n"
-                + "|   3|                 12|                  0|                  3|\n"
-                + "|   4|                 12|                  1|                  1|\n"
-                + "|   5|                 10|                  2|                  1|\n"
-                + "|   6|                  6|                  6|                  0|\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
+                + "|key|us.d3.s1 × us.d3.s2|us.d3.s1 ÷ us.d3.s2|us.d3.s1 % us.d3.s2|\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
+                + "|  1|                  6|                  0|                  1|\n"
+                + "|  2|                 10|                  0|                  2|\n"
+                + "|  3|                 12|                  0|                  3|\n"
+                + "|  4|                 12|                  1|                  1|\n"
+                + "|  5|                 10|                  2|                  1|\n"
+                + "|  6|                  6|                  6|                  0|\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s1*s3, s1/s3, s1%s3 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
-                + "|Time|us.d3.s1 × us.d3.s3|us.d3.s1 ÷ us.d3.s3|us.d3.s1 % us.d3.s3|\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
-                + "|   1|                1.5| 0.6666666666666666|                1.0|\n"
-                + "|   2|                5.0|                0.8|                2.0|\n"
-                + "|   3|               10.5| 0.8571428571428571|                3.0|\n"
-                + "|   4|               18.0| 0.8888888888888888|                4.0|\n"
-                + "|   5|               27.5| 0.9090909090909091|                5.0|\n"
-                + "|   6|               39.0| 0.9230769230769231|                6.0|\n"
-                + "+----+-------------------+-------------------+-------------------+\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
+                + "|key|us.d3.s1 × us.d3.s3|us.d3.s1 ÷ us.d3.s3|us.d3.s1 % us.d3.s3|\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
+                + "|  1|                1.5| 0.6666666666666666|                1.0|\n"
+                + "|  2|                5.0|                0.8|                2.0|\n"
+                + "|  3|               10.5| 0.8571428571428571|                3.0|\n"
+                + "|  4|               18.0| 0.8888888888888888|                4.0|\n"
+                + "|  5|               27.5| 0.9090909090909091|                5.0|\n"
+                + "|  6|               39.0| 0.9230769230769231|                6.0|\n"
+                + "+---+-------------------+-------------------+-------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
     }
 
     @Test
     public void testComplexArithmeticExpr() {
-        String insert = "INSERT INTO us.d3 (timestamp, s1, s2, s3) values " +
+        String insert = "INSERT INTO us.d3 (key, s1, s2, s3) values " +
             "(1, 1, 6, 1.5), (2, 2, 5, 2.5), (3, 3, 4, 3.5), (4, 4, 3, 4.5), (5, 5, 2, 5.5), (6, 6, 1, 6.5);";
         execute(insert);
 
         String statement = "SELECT s1, s2, s3 FROM us.d3;";
         String expected =
             "ResultSets:\n"
-                + "+----+--------+--------+--------+\n"
-                + "|Time|us.d3.s1|us.d3.s2|us.d3.s3|\n"
-                + "+----+--------+--------+--------+\n"
-                + "|   1|       1|       6|     1.5|\n"
-                + "|   2|       2|       5|     2.5|\n"
-                + "|   3|       3|       4|     3.5|\n"
-                + "|   4|       4|       3|     4.5|\n"
-                + "|   5|       5|       2|     5.5|\n"
-                + "|   6|       6|       1|     6.5|\n"
-                + "+----+--------+--------+--------+\n"
+                + "+---+--------+--------+--------+\n"
+                + "|key|us.d3.s1|us.d3.s2|us.d3.s3|\n"
+                + "+---+--------+--------+--------+\n"
+                + "|  1|       1|       6|     1.5|\n"
+                + "|  2|       2|       5|     2.5|\n"
+                + "|  3|       3|       4|     3.5|\n"
+                + "|  4|       4|       3|     4.5|\n"
+                + "|  5|       5|       2|     5.5|\n"
+                + "|  6|       6|       1|     6.5|\n"
+                + "+---+--------+--------+--------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT (s1+s2)*s3 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+--------------------------------+\n"
-                + "|Time|(us.d3.s1 + us.d3.s2) × us.d3.s3|\n"
-                + "+----+--------------------------------+\n"
-                + "|   1|                            10.5|\n"
-                + "|   2|                            17.5|\n"
-                + "|   3|                            24.5|\n"
-                + "|   4|                            31.5|\n"
-                + "|   5|                            38.5|\n"
-                + "|   6|                            45.5|\n"
-                + "+----+--------------------------------+\n"
+                + "+---+--------------------------------+\n"
+                + "|key|(us.d3.s1 + us.d3.s2) × us.d3.s3|\n"
+                + "+---+--------------------------------+\n"
+                + "|  1|                            10.5|\n"
+                + "|  2|                            17.5|\n"
+                + "|  3|                            24.5|\n"
+                + "|  4|                            31.5|\n"
+                + "|  5|                            38.5|\n"
+                + "|  6|                            45.5|\n"
+                + "+---+--------------------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT (s1+s3)*(s2-s3) FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+---------------------------------------------+\n"
-                + "|Time|(us.d3.s1 + us.d3.s3) × (us.d3.s2 - us.d3.s3)|\n"
-                + "+----+---------------------------------------------+\n"
-                + "|   1|                                        11.25|\n"
-                + "|   2|                                        11.25|\n"
-                + "|   3|                                         3.25|\n"
-                + "|   4|                                       -12.75|\n"
-                + "|   5|                                       -36.75|\n"
-                + "|   6|                                       -68.75|\n"
-                + "+----+---------------------------------------------+\n"
+                + "+---+---------------------------------------------+\n"
+                + "|key|(us.d3.s1 + us.d3.s3) × (us.d3.s2 - us.d3.s3)|\n"
+                + "+---+---------------------------------------------+\n"
+                + "|  1|                                        11.25|\n"
+                + "|  2|                                        11.25|\n"
+                + "|  3|                                         3.25|\n"
+                + "|  4|                                       -12.75|\n"
+                + "|  5|                                       -36.75|\n"
+                + "|  6|                                       -68.75|\n"
+                + "+---+---------------------------------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT ((s1+s2)*s3+s2)*s3 FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+--------------------------------------------------------+\n"
-                + "|Time|((us.d3.s1 + us.d3.s2) × us.d3.s3 + us.d3.s2) × us.d3.s3|\n"
-                + "+----+--------------------------------------------------------+\n"
-                + "|   1|                                                   24.75|\n"
-                + "|   2|                                                   56.25|\n"
-                + "|   3|                                                   99.75|\n"
-                + "|   4|                                                  155.25|\n"
-                + "|   5|                                                  222.75|\n"
-                + "|   6|                                                  302.25|\n"
-                + "+----+--------------------------------------------------------+\n"
+                + "+---+--------------------------------------------------------+\n"
+                + "|key|((us.d3.s1 + us.d3.s2) × us.d3.s3 + us.d3.s2) × us.d3.s3|\n"
+                + "+---+--------------------------------------------------------+\n"
+                + "|  1|                                                   24.75|\n"
+                + "|  2|                                                   56.25|\n"
+                + "|  3|                                                   99.75|\n"
+                + "|  4|                                                  155.25|\n"
+                + "|  5|                                                  222.75|\n"
+                + "|  6|                                                  302.25|\n"
+                + "+---+--------------------------------------------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT (s1+1)*(s2-1)*(s3*2) FROM us.d3;";
         expected =
             "ResultSets:\n"
-                + "+----+------------------------------------------------+\n"
-                + "|Time|(us.d3.s1 + 1) × (us.d3.s2 - 1) × (us.d3.s3 × 2)|\n"
-                + "+----+------------------------------------------------+\n"
-                + "|   1|                                            30.0|\n"
-                + "|   2|                                            60.0|\n"
-                + "|   3|                                            84.0|\n"
-                + "|   4|                                            90.0|\n"
-                + "|   5|                                            66.0|\n"
-                + "|   6|                                             0.0|\n"
-                + "+----+------------------------------------------------+\n"
+                + "+---+------------------------------------------------+\n"
+                + "|key|(us.d3.s1 + 1) × (us.d3.s2 - 1) × (us.d3.s3 × 2)|\n"
+                + "+---+------------------------------------------------+\n"
+                + "|  1|                                            30.0|\n"
+                + "|  2|                                            60.0|\n"
+                + "|  3|                                            84.0|\n"
+                + "|  4|                                            90.0|\n"
+                + "|  5|                                            66.0|\n"
+                + "|  6|                                             0.0|\n"
+                + "+---+------------------------------------------------+\n"
                 + "Total line number = 6\n";
         executeAndCompare(statement, expected);
     }
@@ -1946,7 +1946,7 @@ public abstract class SQLSessionIT {
         String statement = "SELECT s1 AS rename_series, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010;";
         String expected = "ResultSets:\n" +
             "+----+-------------+--------+\n" +
-            "|Time|rename_series|us.d1.s2|\n" +
+            "| key|rename_series|us.d1.s2|\n" +
             "+----+-------------+--------+\n" +
             "|1000|         1000|    1001|\n" +
             "|1001|         1001|    1002|\n" +
@@ -1966,7 +1966,7 @@ public abstract class SQLSessionIT {
         statement = "SELECT s1, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010 AS rename_result_set;";
         expected = "ResultSets:\n" +
             "+----+--------------------------+--------------------------+\n" +
-            "|Time|rename_result_set.us.d1.s1|rename_result_set.us.d1.s2|\n" +
+            "| key|rename_result_set.us.d1.s1|rename_result_set.us.d1.s2|\n" +
             "+----+--------------------------+--------------------------+\n" +
             "|1000|                      1000|                      1001|\n" +
             "|1001|                      1001|                      1002|\n" +
@@ -1986,7 +1986,7 @@ public abstract class SQLSessionIT {
         statement = "SELECT s1 AS rename_series, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010 AS rename_result_set;";
         expected = "ResultSets:\n" +
             "+----+-------------------------------+--------------------------+\n" +
-            "|Time|rename_result_set.rename_series|rename_result_set.us.d1.s2|\n" +
+            "| key|rename_result_set.rename_series|rename_result_set.us.d1.s2|\n" +
             "+----+-------------------------------+--------------------------+\n" +
             "|1000|                           1000|                      1001|\n" +
             "|1001|                           1001|                      1002|\n" +
@@ -2013,7 +2013,7 @@ public abstract class SQLSessionIT {
         List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
                 "+----+------+\n" +
-                "|Time|max_s1|\n" +
+                "| key|max_s1|\n" +
                 "+----+------+\n" +
                 "|1000|  1059|\n" +
                 "|1060|  1119|\n" +
@@ -2029,7 +2029,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+------+\n" +
-                "|Time|min_s1|\n" +
+                "| key|min_s1|\n" +
                 "+----+------+\n" +
                 "|1000|  1000|\n" +
                 "|1060|  1060|\n" +
@@ -2045,7 +2045,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+------+\n" +
-                "|Time|sum_s1|\n" +
+                "| key|sum_s1|\n" +
                 "+----+------+\n" +
                 "|1000| 61770|\n" +
                 "|1060| 65370|\n" +
@@ -2061,7 +2061,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+------+\n" +
-                "|Time|avg_s1|\n" +
+                "| key|avg_s1|\n" +
                 "+----+------+\n" +
                 "|1000|1029.5|\n" +
                 "|1060|1089.5|\n" +
@@ -2077,7 +2077,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+--------+\n" +
-                "|Time|count_s1|\n" +
+                "| key|count_s1|\n" +
                 "+----+--------+\n" +
                 "|1000|      60|\n" +
                 "|1060|      60|\n" +
@@ -2093,7 +2093,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+--------------+\n" +
-                "|Time|first_value_s1|\n" +
+                "| key|first_value_s1|\n" +
                 "+----+--------------+\n" +
                 "|1000|          1000|\n" +
                 "|1060|          1060|\n" +
@@ -2109,7 +2109,7 @@ public abstract class SQLSessionIT {
                 "Total line number = 10\n",
             "ResultSets:\n" +
                 "+----+-------------+\n" +
-                "|Time|last_value_s1|\n" +
+                "| key|last_value_s1|\n" +
                 "+----+-------------+\n" +
                 "|1000|         1059|\n" +
                 "|1060|         1119|\n" +
@@ -2136,7 +2136,7 @@ public abstract class SQLSessionIT {
         String statement = "SELECT ts FROM (SELECT s1 AS ts FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
         String expected = "ResultSets:\n" +
             "+----+----+\n" +
-            "|Time|  ts|\n" +
+            "| key|  ts|\n" +
             "+----+----+\n" +
             "|1000|1000|\n" +
             "|1001|1001|\n" +
@@ -2155,7 +2155,7 @@ public abstract class SQLSessionIT {
         statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 GROUP [1000, 1600) BY 100ns) WHERE avg_s1 > 1200;";
         expected = "ResultSets:\n" +
             "+----+------+\n" +
-            "|Time|avg_s1|\n" +
+            "| key|avg_s1|\n" +
             "+----+------+\n" +
             "|1200|1249.5|\n" +
             "|1300|1349.5|\n" +
@@ -2168,7 +2168,7 @@ public abstract class SQLSessionIT {
         statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 WHERE s1 < 1500 GROUP [1000, 1600) BY 100ns) WHERE avg_s1 > 1200;";
         expected = "ResultSets:\n" +
             "+----+------+\n" +
-            "|Time|avg_s1|\n" +
+            "| key|avg_s1|\n" +
             "+----+------+\n" +
             "|1200|1249.5|\n" +
             "|1300|1349.5|\n" +
@@ -2183,7 +2183,7 @@ public abstract class SQLSessionIT {
         String statement = "SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns;";
         String expected = "ResultSets:\n" +
             "+----+------+------+\n" +
-            "|Time|avg_s1|sum_s2|\n" +
+            "| key|avg_s1|sum_s2|\n" +
             "+----+------+------+\n" +
             "|1000|1004.5| 10055|\n" +
             "|1010|1014.5| 10155|\n" +
@@ -2202,7 +2202,7 @@ public abstract class SQLSessionIT {
         statement = "SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800;";
         expected = "ResultSets:\n" +
             "+----+------+------+\n" +
-            "|Time|avg_s1|sum_s2|\n" +
+            "| key|avg_s1|sum_s2|\n" +
             "+----+------+------+\n" +
             "|1020|1024.5| 10255|\n" +
             "|1030|1034.5| 10355|\n" +
@@ -2230,7 +2230,7 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
+        String insert = "INSERT INTO us.d2(key, date) VALUES (%s, %s);";
         List<String> dateFormats = Arrays.asList(
             "2021-08-26 16:15:27",
             "2021/08/26 16:15:28",
@@ -2255,7 +2255,7 @@ public abstract class SQLSessionIT {
         String expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
-                + "|               Time|us.d2.date|\n"
+                + "|                key|us.d2.date|\n"
                 + "+-------------------+----------+\n"
                 + "|1629965727000000000|         0|\n"
                 + "|1629965727001000000|         6|\n"
@@ -2273,11 +2273,11 @@ public abstract class SQLSessionIT {
                 + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021-08-26 16:15:27 AND time <= 2021.08.26T16:15:32.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021-08-26 16:15:27 AND key <= 2021.08.26T16:15:32.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
-                + "|               Time|us.d2.date|\n"
+                + "|                key|us.d2.date|\n"
                 + "+-------------------+----------+\n"
                 + "|1629965727000000000|         0|\n"
                 + "|1629965727001000000|         6|\n"
@@ -2295,11 +2295,11 @@ public abstract class SQLSessionIT {
                 + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021.08.26 16:15:29 AND time <= 2021-08-26T16:15:30.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021.08.26 16:15:29 AND key <= 2021-08-26T16:15:30.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
-                + "|               Time|us.d2.date|\n"
+                + "|                key|us.d2.date|\n"
                 + "+-------------------+----------+\n"
                 + "|1629965729000000000|         2|\n"
                 + "|1629965729001000000|         8|\n"
@@ -2309,11 +2309,11 @@ public abstract class SQLSessionIT {
                 + "Total line number = 4\n";
         executeAndCompare(query, expected);
 
-        query = "SELECT date FROM us.d2 WHERE time >= 2021/08/26 16:15:28 AND time <= 2021/08/26T16:15:31.001;";
+        query = "SELECT date FROM us.d2 WHERE key >= 2021/08/26 16:15:28 AND key <= 2021/08/26T16:15:31.001;";
         expected =
             "ResultSets:\n"
                 + "+-------------------+----------+\n"
-                + "|               Time|us.d2.date|\n"
+                + "|                key|us.d2.date|\n"
                 + "+-------------------+----------+\n"
                 + "|1629965728000000000|         1|\n"
                 + "|1629965728001000000|         7|\n"
@@ -2330,13 +2330,13 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testInsertWithSubQuery() {
-        String insert = "INSERT INTO us.d2(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
+        String insert = "INSERT INTO us.d2(key, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
         execute(insert);
 
         String query = "SELECT s1 FROM us.d2;";
         String expected = "ResultSets:\n" +
             "+----+--------+\n" +
-            "|Time|us.d2.s1|\n" +
+            "| key|us.d2.s1|\n" +
             "+----+--------+\n" +
             "|1000|    1000|\n" +
             "|1001|    1001|\n" +
@@ -2352,13 +2352,13 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d3(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010) TIME_OFFSET = 100;";
+        insert = "INSERT INTO us.d3(key, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010) TIME_OFFSET = 100;";
         execute(insert);
 
         query = "SELECT s1 FROM us.d3;";
         expected = "ResultSets:\n" +
             "+----+--------+\n" +
-            "|Time|us.d3.s1|\n" +
+            "| key|us.d3.s1|\n" +
             "+----+--------+\n" +
             "|1100|    1000|\n" +
             "|1101|    1001|\n" +
@@ -2374,13 +2374,13 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d4(TIME, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns);";
+        insert = "INSERT INTO us.d4(key, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d4";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d4.s1|us.d4.s2|\n" +
+            "| key|us.d4.s1|us.d4.s2|\n" +
             "+----+--------+--------+\n" +
             "|1000|  1004.5|   10055|\n" +
             "|1010|  1014.5|   10155|\n" +
@@ -2396,13 +2396,13 @@ public abstract class SQLSessionIT {
             "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d5(TIME, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        insert = "INSERT INTO us.d5(key, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d5";
         expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
-            "|Time|us.d5.s1|us.d5.s2|\n" +
+            "| key|us.d5.s1|us.d5.s2|\n" +
             "+----+--------+--------+\n" +
             "|1020|  1024.5|   10255|\n" +
             "|1030|  1034.5|   10355|\n" +
@@ -2414,17 +2414,17 @@ public abstract class SQLSessionIT {
             "Total line number = 6\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d6(TIME, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
+        insert = "INSERT INTO us.d6(key, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d6";
         expected =
             "ResultSets:\n"
-                + "+----+--------+--------+\n"
-                + "|Time|us.d6.s1|us.d6.s2|\n"
-                + "+----+--------+--------+\n"
-                + "|   0|  1074.5|   10255|\n"
-                + "+----+--------+--------+\n"
+                + "+---+--------+--------+\n"
+                + "|key|us.d6.s1|us.d6.s2|\n"
+                + "+---+--------+--------+\n"
+                + "|  0|  1074.5|   10255|\n"
+                + "+---+--------+--------+\n"
                 + "Total line number = 1\n";
         executeAndCompare(query, expected);
     }
@@ -2435,91 +2435,91 @@ public abstract class SQLSessionIT {
             return;
         }
         // Chinese path
-        String insert = "INSERT INTO 测试.前缀(TIME, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        String insert = "INSERT INTO 测试.前缀(key, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         String query = "SELECT 后缀 FROM 测试.前缀;";
         String expected =
             "ResultSets:\n"
-                + "+----+--------+\n"
-                + "|Time|测试.前缀.后缀|\n"
-                + "+----+--------+\n"
-                + "|   1|       1|\n"
-                + "|   2|       2|\n"
-                + "|   3|       3|\n"
-                + "|   4|       4|\n"
-                + "|   5|       5|\n"
-                + "+----+--------+\n"
+                + "+---+--------+\n"
+                + "|key|测试.前缀.后缀|\n"
+                + "+---+--------+\n"
+                + "|  1|       1|\n"
+                + "|  2|       2|\n"
+                + "|  3|       3|\n"
+                + "|  4|       4|\n"
+                + "|  5|       5|\n"
+                + "+---+--------+\n"
                 + "Total line number = 5\n";
         executeAndCompare(query, expected);
 
         // number path
-        insert = "INSERT INTO 114514(TIME, 1919810) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO 114514(key, 1919810) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT 1919810 FROM 114514;";
         expected =
             "ResultSets:\n"
-                + "+----+--------------+\n"
-                + "|Time|114514.1919810|\n"
-                + "+----+--------------+\n"
-                + "|   1|             1|\n"
-                + "|   2|             2|\n"
-                + "|   3|             3|\n"
-                + "|   4|             4|\n"
-                + "|   5|             5|\n"
-                + "+----+--------------+\n"
+                + "+---+--------------+\n"
+                + "|key|114514.1919810|\n"
+                + "+---+--------------+\n"
+                + "|  1|             1|\n"
+                + "|  2|             2|\n"
+                + "|  3|             3|\n"
+                + "|  4|             4|\n"
+                + "|  5|             5|\n"
+                + "+---+--------------+\n"
                 + "Total line number = 5\n";
         executeAndCompare(query, expected);
 
         // special symbol path
-        insert = "INSERT INTO _:@#$(TIME, _:@#$) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO _:@#$(key, _:@#$) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT _:@#$ FROM _:@#$;";
         expected =
             "ResultSets:\n"
-                + "+----+-----------+\n"
-                + "|Time|_:@#$._:@#$|\n"
-                + "+----+-----------+\n"
-                + "|   1|          1|\n"
-                + "|   2|          2|\n"
-                + "|   3|          3|\n"
-                + "|   4|          4|\n"
-                + "|   5|          5|\n"
-                + "+----+-----------+\n"
+                + "+---+-----------+\n"
+                + "|key|_:@#$._:@#$|\n"
+                + "+---+-----------+\n"
+                + "|  1|          1|\n"
+                + "|  2|          2|\n"
+                + "|  3|          3|\n"
+                + "|  4|          4|\n"
+                + "|  5|          5|\n"
+                + "+---+-----------+\n"
                 + "Total line number = 5\n";
         executeAndCompare(query, expected);
 
         // mix path
-        insert = "INSERT INTO 测试.前缀.114514(TIME, 1919810._:@#$.后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        insert = "INSERT INTO 测试.前缀.114514(key, 1919810._:@#$.后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
 
         query = "SELECT 1919810._:@#$.后缀 FROM 测试.前缀.114514;";
         expected =
             "ResultSets:\n"
-                + "+----+-----------------------------+\n"
-                + "|Time|测试.前缀.114514.1919810._:@#$.后缀|\n"
-                + "+----+-----------------------------+\n"
-                + "|   1|                            1|\n"
-                + "|   2|                            2|\n"
-                + "|   3|                            3|\n"
-                + "|   4|                            4|\n"
-                + "|   5|                            5|\n"
-                + "+----+-----------------------------+\n"
+                + "+---+-----------------------------+\n"
+                + "|key|测试.前缀.114514.1919810._:@#$.后缀|\n"
+                + "+---+-----------------------------+\n"
+                + "|  1|                            1|\n"
+                + "|  2|                            2|\n"
+                + "|  3|                            3|\n"
+                + "|  4|                            4|\n"
+                + "|  5|                            5|\n"
+                + "+---+-----------------------------+\n"
                 + "Total line number = 5\n";
         executeAndCompare(query, expected);
     }
 
     @Test
     public void testErrorClause() {
-        String errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND time >= 120 AND time <= 230;";
+        String errClause = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 AND key >= 120 AND key <= 230;";
         executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");
 
-        errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND s1 < 10;";
+        errClause = "DELETE FROM us.d1.s1 WHERE key > 105 AND key < 115 AND s1 < 10;";
         executeAndCompareErrMsg(errClause, "delete clause can not use value or path filter.");
 
-        errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
+        errClause = "DELETE FROM us.d1.s1 WHERE key != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
 
         errClause = "SELECT s1 FROM us.d1 GROUP (0, 1000) BY 100ms;";
@@ -2575,10 +2575,10 @@ public abstract class SQLSessionIT {
 
         String showTimeSeriesData = "SELECT s4 FROM us.d1;";
         expected = "ResultSets:\n" +
-            "+----+\n" +
-            "|Time|\n" +
-            "+----+\n" +
-            "+----+\n" +
+            "+---+\n" +
+            "|key|\n" +
+            "+---+\n" +
+            "+---+\n" +
             "Empty set.\n";
         executeAndCompare(showTimeSeriesData, expected);
 
@@ -2597,10 +2597,10 @@ public abstract class SQLSessionIT {
 
         showTimeSeriesData = "SELECT * FROM *;";
         expected = "ResultSets:\n" +
-            "+----+\n" +
-            "|Time|\n" +
-            "+----+\n" +
-            "+----+\n" +
+            "+---+\n" +
+            "|key|\n" +
+            "+---+\n" +
+            "+---+\n" +
             "Empty set.\n";
         executeAndCompare(showTimeSeriesData, expected);
 
@@ -2620,10 +2620,10 @@ public abstract class SQLSessionIT {
 
         String showTimeSeries = "SELECT * FROM *;";
         expected = "ResultSets:\n" +
-            "+----+\n" +
-            "|Time|\n" +
-            "+----+\n" +
-            "+----+\n" +
+            "+---+\n" +
+            "|key|\n" +
+            "+---+\n" +
+            "+---+\n" +
             "Empty set.\n";
         executeAndCompare(showTimeSeries, expected);
     }

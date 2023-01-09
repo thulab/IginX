@@ -34,8 +34,8 @@ public class BatchData {
         RootAllocator allocator = new RootAllocator(Long.MAX_VALUE);
 
         List<FieldVector> vectors = new ArrayList<>();
-        if (header.hasTimestamp()) {
-            vectors.add(new BigIntVector(Constants.TIMESTAMP, allocator));
+        if (header.hasKey()) {
+            vectors.add(new BigIntVector(Constants.KEY, allocator));
         }
         header.getFields().forEach(field -> {
             vectors.add(TypeUtils.getFieldVectorByType(field.getFullName(), field.getType(), allocator));
@@ -46,8 +46,8 @@ public class BatchData {
             Row row = rowList.get(i);
 
             int colOffset = 0;
-            if (header.hasTimestamp()) {
-                TypeUtils.setValue(vectors.get(colOffset), i, DataType.LONG, row.getTimestamp());
+            if (header.hasKey()) {
+                TypeUtils.setValue(vectors.get(colOffset), i, DataType.LONG, row.getKey());
                 colOffset++;
             }
 

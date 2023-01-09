@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -62,14 +61,15 @@ public class JoinLazyStream extends BinaryLazyStream {
         if (hasInitialized) {
             return;
         }
-        if (this.join.getJoinBy().equals(Constants.TIMESTAMP)) {
+        if (this.join.getJoinBy().equals(Constants.KEY)) {
             joinByTime = true;
         }
         if (this.join.getJoinBy().equals(Constants.ORDINAL)) {
             joinByOrdinal = true;
         }
         if (!joinByTime && !joinByOrdinal) {
-            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.KEY
+                + " and " + Constants.ORDINAL);
         }
         Header headerA = streamA.getHeader();
         Header headerB = streamB.getHeader();
@@ -101,12 +101,12 @@ public class JoinLazyStream extends BinaryLazyStream {
         }
 
         if (joinByTime) {
-            if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            if (!headerA.hasKey() || !headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
-            header = new Header(Field.TIME, newFields);
+            header = new Header(Field.KEY, newFields);
         } else {
-            if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
+            if (headerA.hasKey() || headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
             header = new Header(newFields);
@@ -160,11 +160,11 @@ public class JoinLazyStream extends BinaryLazyStream {
         }
         if (joinByTime) {
             Row row;
-            if (nextA.getTimestamp() == nextB.getTimestamp()) {
+            if (nextA.getKey() == nextB.getKey()) {
                 row = buildRow(nextA, nextB);
                 nextA = null;
                 nextB = null;
-            } else if (nextA.getTimestamp() < nextB.getTimestamp()) {
+            } else if (nextA.getKey() < nextB.getKey()) {
                 row = buildRow(nextA, null);
                 nextA = null;
             } else {
@@ -183,13 +183,13 @@ public class JoinLazyStream extends BinaryLazyStream {
             if (rowA != null && rowB != null) {
                 writeToNewRow(values, rowA);
                 writeToNewRow(values, rowB);
-                timestamp = rowA.getTimestamp();
+                timestamp = rowA.getKey();
             } else if (rowA != null) {
                 writeToNewRow(values, rowA);
-                timestamp = rowA.getTimestamp();
+                timestamp = rowA.getKey();
             } else {
                 writeToNewRow(values, rowB);
-                timestamp = rowB.getTimestamp();
+                timestamp = rowB.getKey();
             }
             return new Row(header, timestamp, values);
         }

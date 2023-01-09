@@ -53,12 +53,12 @@ public class FilterUtils {
             case Not:
                 NotFilter notFilter = (NotFilter) filter;
                 return !validate(notFilter.getChild(), row);
-            case Time:
-                TimeFilter timeFilter = (TimeFilter) filter;
-                if (row.getTimestamp() == Row.NON_EXISTED_TIMESTAMP) {
+            case Key:
+                KeyFilter keyFilter = (KeyFilter) filter;
+                if (row.getKey() == Row.NON_EXISTED_KEY) {
                     return false;
                 }
-                return validateTimeFilter(timeFilter, row);
+                return validateTimeFilter(keyFilter, row);
             case Value:
                 ValueFilter valueFilter = (ValueFilter) filter;
                 return validateValueFilter(valueFilter, row);
@@ -71,21 +71,21 @@ public class FilterUtils {
         return false;
     }
 
-    private static boolean validateTimeFilter(TimeFilter timeFilter, Row row) {
-        long timestamp = row.getTimestamp();
-        switch (timeFilter.getOp()) {
+    private static boolean validateTimeFilter(KeyFilter keyFilter, Row row) {
+        long timestamp = row.getKey();
+        switch (keyFilter.getOp()) {
             case E:
-                return timestamp == timeFilter.getValue();
+                return timestamp == keyFilter.getValue();
             case G:
-                return timestamp > timeFilter.getValue();
+                return timestamp > keyFilter.getValue();
             case L:
-                return timestamp < timeFilter.getValue();
+                return timestamp < keyFilter.getValue();
             case GE:
-                return timestamp >= timeFilter.getValue();
+                return timestamp >= keyFilter.getValue();
             case LE:
-                return timestamp <= timeFilter.getValue();
+                return timestamp <= keyFilter.getValue();
             case NE:
-                return timestamp != timeFilter.getValue();
+                return timestamp != keyFilter.getValue();
         }
         return false;
     }

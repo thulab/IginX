@@ -19,7 +19,6 @@ import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
-import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +84,7 @@ public class InsertGenerator extends AbstractGenerator {
     private DataView getDataSection(FragmentMeta meta, RawData rawData) {
         TimeInterval timeInterval = meta.getTimeInterval();
         TimeSeriesRange tsInterval = meta.getTsInterval();
-        List<Long> insertTimes = rawData.getTimestamps();
+        List<Long> insertTimes = rawData.getKeys();
         List<String> paths = rawData.getPaths();
 
         // time overlap doesn't exist.

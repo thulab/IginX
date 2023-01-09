@@ -41,7 +41,6 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -135,7 +134,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 }
             }
         }
-        Header targetHeader = new Header(header.getTime(), targetFields);
+        Header targetHeader = new Header(header.getKey(), targetFields);
         List<Row> targetRows = new ArrayList<>();
         while (table.hasNext()) {
             Row row = table.next();
@@ -143,8 +142,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             for (int i = 0; i < targetFields.size(); i++) {
                 objects[i] = row.getValue(targetFields.get(i));
             }
-            if (header.hasTimestamp()) {
-                targetRows.add(new Row(targetHeader, row.getTimestamp(), objects));
+            if (header.hasKey()) {
+                targetRows.add(new Row(targetHeader, row.getKey(), objects));
             } else {
                 targetRows.add(new Row(targetHeader, objects));
             }
@@ -165,8 +164,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeSort(Sort sort, Table table) throws PhysicalException {
-        if (!sort.getSortBy().equals(Constants.TIMESTAMP)) {
-            throw new InvalidOperatorParameterException("sort operator is not support for field " + sort.getSortBy() + " except for " + Constants.TIMESTAMP);
+        if (!sort.getSortBy().equals(Constants.KEY)) {
+            throw new InvalidOperatorParameterException("sort operator is not support for field " + sort.getSortBy() + " except for " + Constants.KEY);
         }
         if (sort.getSortType() == Sort.SortType.ASC) {
             // 在默认的实现中，每张表都是根据时间已经升序排好的，因此依据时间升序排列的话，已经不需要做任何额外的操作了
@@ -195,7 +194,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeDownsample(Downsample downsample, Table table) throws PhysicalException {
         Header header = table.getHeader();
-        if (!header.hasTimestamp()) {
+        if (!header.hasKey()) {
             throw new InvalidOperatorParameterException("downsample operator is not support for row stream without timestamps.");
         }
         List<Row> rows = table.getRows();
@@ -210,7 +209,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Map<String, Value> params = downsample.getFunctionCall().getParams();
         if (precision == slideDistance) {
             for (Row row : rows) {
-                long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
+                long timestamp = row.getKey() - (row.getKey() - bias) % precision;
                 groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
             }
         } else {
@@ -219,7 +218,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 timestamps[i] = bias + i * slideDistance;
             }
             for (Row row : rows) {
-                long rowTimestamp = row.getTimestamp();
+                long rowTimestamp = row.getKey();
                 for (int i = 0; i < n; i++) {
                     if (rowTimestamp - timestamps[i] >= 0 && rowTimestamp - timestamps[i] < precision) {
                         groups.compute(timestamps[i], (k, v) -> v == null ? new ArrayList<>() : v).add(row);
@@ -243,7 +242,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         if (transformedRawRows.size() == 0) {
             return Table.EMPTY_TABLE;
         }
-        Header newHeader = new Header(Field.TIME, transformedRawRows.get(0).v.getHeader().getFields());
+        Header newHeader = new Header(Field.KEY, transformedRawRows.get(0).v.getHeader().getFields());
         List<Row> transformedRows = new ArrayList<>();
         for (Pair<Long, Row> pair : transformedRawRows) {
             transformedRows.add(new Row(newHeader, pair.k, pair.v.getValues()));
@@ -319,12 +318,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         });
 
-        Header newHeader = new Header(header.getTime(), fields);
+        Header newHeader = new Header(header.getKey(), fields);
 
         List<Row> rows = new ArrayList<>();
         table.getRows().forEach(row -> {
-            if (newHeader.hasTimestamp()) {
-                rows.add(new Row(newHeader, row.getTimestamp(), row.getValues()));
+            if (newHeader.hasKey()) {
+                rows.add(new Row(newHeader, row.getKey(), row.getValues()));
             } else {
                 rows.add(new Row(newHeader, row.getValues()));
             }
@@ -365,15 +364,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
 
-        Header newHeader = new Header(header.getTime(), targetFields);
+        Header newHeader = new Header(header.getKey(), targetFields);
         List<Row> rows = new ArrayList<>();
         table.getRows().forEach(row -> {
             Object[] values = new Object[targetFields.size()];
             for (int i = 0; i < values.length; i++) {
                 values[i] = row.getValue(reorderMap.get(i));
             }
-            if (newHeader.hasTimestamp()) {
-                rows.add(new Row(newHeader, row.getTimestamp(), values));
+            if (newHeader.hasKey()) {
+                rows.add(new Row(newHeader, row.getKey(), values));
             } else {
                 rows.add(new Row(newHeader, values));
             }
@@ -396,15 +395,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             return executeIntersectJoin(join, tableA, tableB);
         }
         // 目前只支持使用时间戳和顺序
-        if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
+        if (join.getJoinBy().equals(Constants.KEY)) {
             // 检查时间戳
-            if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            if (!headerA.hasKey() || !headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
             List<Field> newFields = new ArrayList<>();
             newFields.addAll(headerA.getFields());
             newFields.addAll(headerB.getFields());
-            Header newHeader = new Header(Field.TIME, newFields);
+            Header newHeader = new Header(Field.KEY, newFields);
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
@@ -412,18 +411,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 long timestamp;
-                if (rowA.getTimestamp() == rowB.getTimestamp()) {
-                    timestamp = rowA.getTimestamp();
+                if (rowA.getKey() == rowB.getKey()) {
+                    timestamp = rowA.getKey();
                     System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
                     System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
                     index1++;
                     index2++;
-                } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
-                    timestamp = rowA.getTimestamp();
+                } else if (rowA.getKey() < rowB.getKey()) {
+                    timestamp = rowA.getKey();
                     System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
                     index1++;
                 } else {
-                    timestamp = rowB.getTimestamp();
+                    timestamp = rowB.getKey();
                     System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
                     index2++;
                 }
@@ -434,18 +433,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 Row rowA = tableA.getRow(index1);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
-                newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+                newRows.add(new Row(newHeader, rowA.getKey(), values));
             }
 
             for (; index2 < tableB.getRowSize(); index2++) {
                 Row rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
-                newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
+                newRows.add(new Row(newHeader, rowB.getKey(), values));
             }
             return new Table(newHeader, newRows);
         } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
-            if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
+            if (headerA.hasKey() || headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
             List<Field> newFields = new ArrayList<>();
@@ -479,7 +478,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
             return new Table(newHeader, newRows);
         } else {
-            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.KEY
+                + " and " + Constants.ORDINAL);
         }
     }
 
@@ -955,7 +955,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasKey() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -967,7 +967,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasKey() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1154,7 +1154,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasKey() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1166,7 +1166,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasKey() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1370,7 +1370,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
 
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = headerB.hasTimestamp() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
+            int anotherRowSize = headerB.hasKey() ? rowsB.get(0).getValues().length + 1 : rowsB.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1382,7 +1382,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = headerA.hasTimestamp() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
+            int anotherRowSize = headerA.hasKey() ? rowsA.get(0).getValues().length + 1 : rowsA.get(0).getValues().length;
             if (filter == null) {
                 anotherRowSize -= joinColumns.size();
             }
@@ -1427,12 +1427,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
 
         // 目前只支持使用时间戳和顺序
-        if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
+        if (join.getJoinBy().equals(Constants.KEY)) {
             // 检查时间戳
-            if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            if (!headerA.hasKey() || !headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
-            Header newHeader = new Header(Field.TIME, newFields);
+            Header newHeader = new Header(Field.KEY, newFields);
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
@@ -1440,18 +1440,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 long timestamp;
-                if (rowA.getTimestamp() == rowB.getTimestamp()) {
-                    timestamp = rowA.getTimestamp();
+                if (rowA.getKey() == rowB.getKey()) {
+                    timestamp = rowA.getKey();
                     writeToNewRow(values, rowA, fieldIndices);
                     writeToNewRow(values, rowB, fieldIndices);
                     index1++;
                     index2++;
-                } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
-                    timestamp = rowA.getTimestamp();
+                } else if (rowA.getKey() < rowB.getKey()) {
+                    timestamp = rowA.getKey();
                     writeToNewRow(values, rowA, fieldIndices);
                     index1++;
                 } else {
-                    timestamp = rowB.getTimestamp();
+                    timestamp = rowB.getKey();
                     writeToNewRow(values, rowB, fieldIndices);
                     index2++;
                 }
@@ -1462,18 +1462,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 Row rowA = tableA.getRow(index1);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 writeToNewRow(values, rowA, fieldIndices);
-                newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+                newRows.add(new Row(newHeader, rowA.getKey(), values));
             }
 
             for (; index2 < tableB.getRowSize(); index2++) {
                 Row rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 writeToNewRow(values, rowB, fieldIndices);
-                newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
+                newRows.add(new Row(newHeader, rowB.getKey(), values));
             }
             return new Table(newHeader, newRows);
         } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
-            if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
+            if (headerA.hasKey() || headerB.hasKey()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
             Header newHeader = new Header(newFields);
@@ -1504,7 +1504,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
             return new Table(newHeader, newRows);
         } else {
-            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.KEY
+                + " and " + Constants.ORDINAL);
         }
     }
 
@@ -1512,10 +1513,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         // 检查时间是否一致
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
-        if (headerA.hasTimestamp() ^ headerB.hasTimestamp()) {
+        if (headerA.hasKey() ^ headerB.hasKey()) {
             throw new InvalidOperatorParameterException("row stream to be union must have same fields");
         }
-        boolean hasTimestamp = headerA.hasTimestamp();
+        boolean hasTimestamp = headerA.hasKey();
         Set<Field> targetFieldSet = new HashSet<>();
         targetFieldSet.addAll(headerA.getFields());
         targetFieldSet.addAll(headerB.getFields());
@@ -1531,12 +1532,12 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 rows.add(RowUtils.transform(row, targetHeader));
             }
         } else {
-            targetHeader = new Header(Field.TIME, targetFields);
+            targetHeader = new Header(Field.KEY, targetFields);
             int index1 = 0, index2 = 0;
             while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row row1 = tableA.getRow(index1);
                 Row row2 = tableB.getRow(index2);
-                if (row1.getTimestamp() <= row2.getTimestamp()) {
+                if (row1.getKey() <= row2.getKey()) {
                     rows.add(RowUtils.transform(row1, targetHeader));
                     index1++;
                 } else {

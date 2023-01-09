@@ -153,7 +153,7 @@ public class TransformCompare {
     }
 
     private static void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO test.compare (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO test.compare (key, s1, s2, s3, s4) values ";
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 
