@@ -492,4 +492,41 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
+
+    @Test
+    public void testAddSameDataPrefixWithDiffSchemaPrefix() throws Exception {
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, schema_prefix:p1, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, schema_prefix:p2, is_read_only:true\");");
+
+        String statement = "select * from p1.test";
+        String expect = "ResultSets:\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "|Time|p1.test.wf03.wt01.status|p1.test.wf03.wt01.temperature|\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "|  77|                    true|                         null|\n" +
+                "| 200|                   false|                        77.71|\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "Total line number = 2\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        statement = "select * from p2.test";
+        expect = "ResultSets:\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "|Time|p2.test.wf03.wt01.status|p2.test.wf03.wt01.temperature|\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "|  77|                    true|                         null|\n" +
+                "| 200|                   false|                        77.71|\n" +
+                "+----+------------------------+-----------------------------+\n" +
+                "Total line number = 2\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        statement = "select * from test";
+        expect = "ResultSets:\n" +
+                "+----+\n" +
+                "|Time|\n" +
+                "+----+\n" +
+                "+----+\n" +
+                "Empty set.\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+    }
 }

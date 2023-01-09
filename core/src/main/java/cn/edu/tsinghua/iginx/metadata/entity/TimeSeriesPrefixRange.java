@@ -18,6 +18,11 @@ public class TimeSeriesPrefixRange implements TimeSeriesRange {
         this.timeSeries = timeSeries;
     }
 
+    public TimeSeriesPrefixRange(String timeSeries, String schemaPrefix) {
+        this.timeSeries = timeSeries;
+        this.schemaPrefix = schemaPrefix;
+    }
+
     public TimeSeriesPrefixRange(String timeSeries, boolean isClosed) {
         this.timeSeries = timeSeries;
         this.isClosed = isClosed;
@@ -43,16 +48,6 @@ public class TimeSeriesPrefixRange implements TimeSeriesRange {
 
         return (tsInterval.getStartTimeSeries() == null || timeSeries == null || StringUtils.compare(tsInterval.getStartTimeSeries(), timeSeries) <= 0)
                 && (tsInterval.getEndTimeSeries() == null || timeSeries == null || StringUtils.compare(tsInterval.getEndTimeSeries(), timeSeries) >= 0);
-    }
-
-    @Override
-    public boolean isCompletelyAfter(TimeSeriesRange tsInterval) {
-        return false;
-    }
-
-    @Override
-    public boolean isAfter(String tsName) {
-        return false;
     }
 
     @Override

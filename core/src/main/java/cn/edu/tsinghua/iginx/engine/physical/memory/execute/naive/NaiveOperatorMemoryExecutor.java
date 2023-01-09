@@ -822,7 +822,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                         valuesJoin[k++] = valuesB[j];
                     }
                     transformedRows.add(new Row(newHeader, valuesJoin));
-
                     int flagAEqualNextA = RowUtils.compareRowsSortedByColumns(rowsA.get(indexA), rowsA.get(indexA + 1), innerJoin.getPrefixA(), innerJoin.getPrefixA(), joinColumnsA, joinColumnsB);
                     int flagBEqualNextB = RowUtils.compareRowsSortedByColumns(rowsB.get(indexB), rowsB.get(indexB + 1), innerJoin.getPrefixB(), innerJoin.getPrefixB(), joinColumnsA, joinColumnsB);
                     if (flagBEqualNextB == 0) {

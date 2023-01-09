@@ -1,0 +1,8 @@
+distinctipy==1.2.2
+iginx==0.5.1
+kazoo==2.9.0
+matplotlib==3.3.4
+numpy==1.19.5
+Pillow==9.3.0
+pyparsing==3.0.9
+thrift==0.16.0
