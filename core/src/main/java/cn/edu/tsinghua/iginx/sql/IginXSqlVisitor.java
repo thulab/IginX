@@ -62,8 +62,12 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             insertStatement.setGlobalTags(globalTags);
         }
         // parse paths
+        Set<String> columnsSet = new HashSet<>();
         ctx.insertColumnsSpec().insertPath().forEach(e -> {
             String path = e.path().getText();
+            if (!columnsSet.add(path)) {
+                throw new SQLParserException("Insert statements should not contain duplicate paths.");
+            }
             Map<String, String> tags;
             if (e.tagList() != null) {
                 if (insertStatement.hasGlobalTags()) {
