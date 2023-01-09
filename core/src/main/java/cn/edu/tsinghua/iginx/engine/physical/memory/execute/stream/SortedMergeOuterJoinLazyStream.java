@@ -8,6 +8,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OuterJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
@@ -207,7 +208,7 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
 
     private void tryMatch() throws PhysicalException {
         Object curJoinColumnAValue = nextA.getValue(outerJoin.getPrefixA() + "." + joinColumnA);
-        int cmp = RowUtils.compareObjects(joinColumnDataType, curJoinColumnAValue, curJoinColumnBValue);
+        int cmp = ValueUtils.compare(curJoinColumnAValue, curJoinColumnBValue, joinColumnDataType);
         if (cmp < 0) {
             unmatchedStreamARows.add(nextA);
             nextA = null;

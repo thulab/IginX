@@ -35,6 +35,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
@@ -547,7 +548,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 flag:
                 for (Row rowB : rowsB) {
                     for (String joinColumn : joinColumns){
-                        if (!Objects.equals(rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumn), rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumn))) {
+                        if (ValueUtils.compare(rowA.getAsValue(innerJoin.getPrefixA() + '.' + joinColumn),
+                                rowB.getAsValue(innerJoin.getPrefixB() + '.' + joinColumn)) != 0) {
                             continue flag;
                         }
                     }
@@ -922,7 +924,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 for (int indexB = 0; indexB < rowsB.size(); indexB++) {
                     Row rowB = rowsB.get(indexB);
                     for (String joinColumn : joinColumns){
-                        if (!Objects.equals(rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumn), rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumn))) {
+                        if (ValueUtils.compare(rowA.getAsValue(outerJoin.getPrefixA() + '.' + joinColumn),
+                                rowB.getAsValue(outerJoin.getPrefixB() + '.' + joinColumn)) != 0) {
                             continue flag;
                         }
                     }

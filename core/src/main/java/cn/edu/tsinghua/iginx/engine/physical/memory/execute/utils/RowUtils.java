@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class RowUtils {
      * <tt>2</tt>: descending sorted
      */
     public static int checkRowsSortedByColumns(List<Row> rows, String prefix,
-        List<String> columns) {
+        List<String> columns) throws PhysicalException {
         int res = 0;
         int index = 0;
         while (index < rows.size() - 1) {
@@ -83,10 +84,10 @@ public class RowUtils {
      * <tt>1</tt>: row1 > row2
      */
     public static int compareRowsSortedByColumns(Row row1, Row row2, String prefix1, String prefix2,
-        List<String> columns1, List<String> columns2) {
+        List<String> columns1, List<String> columns2) throws PhysicalException {
         assert columns1.size() == columns2.size();
         int size = columns1.size();
-        for (int index = 0; index < columns1.size(); index++) {
+        for (int index = 0; index < size; index++) {
             Object value1 = row1.getValue(prefix1 + '.' + columns1.get(index));
             Object value2 = row2.getValue(prefix2 + '.' + columns2.get(index));
             if (value1 == null && value2 == null) {
@@ -96,45 +97,16 @@ public class RowUtils {
             } else if (value2 == null) {
                 return 1;
             }
-            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + columns1.get(index)))
+            DataType dataType1 = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + columns1.get(index)))
                 .getType();
-            int cmp = compareObjects(dataType, value1, value2);
+            DataType dataType2 = row2.getField(row2.getHeader().indexOf(prefix2 + '.' + columns2.get(index)))
+                .getType();
+            int cmp = ValueUtils.compare(value1, value2, dataType1, dataType2);
             if (cmp != 0) {
                 return cmp;
             }
         }
         return 0;
-    }
-
-    public static int compareObjects(DataType dataType, Object value1, Object value2) {
-        switch (dataType) {
-            case BOOLEAN:
-                boolean boolean1 = (boolean) value1;
-                boolean boolean2 = (boolean) value2;
-                return Boolean.compare(boolean1, boolean2);
-            case INTEGER:
-                int int1 = (int) value1;
-                int int2 = (int) value2;
-                return Integer.compare(int1, int2);
-            case LONG:
-                long long1 = (long) value1;
-                long long2 = (long) value2;
-                return Long.compare(long1, long2);
-            case FLOAT:
-                float float1 = (float) value1;
-                float float2 = (float) value2;
-                return Float.compare(float1, float2);
-            case DOUBLE:
-                double double1 = (double) value1;
-                double double2 = (double) value2;
-                return Double.compare(double1, double2);
-            case BINARY:
-                String string1 = (String) value1;
-                String string2 = (String) value2;
-                return string1.compareTo(string2);
-            default:
-                throw new IllegalArgumentException("unknown datatype: " + dataType);
-        }
     }
 
     public static Header constructNewHead(Header headerA, Header headerB, String prefixA,

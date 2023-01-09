@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system.utils;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -111,6 +113,20 @@ public class ValueUtils {
                 return (new String((byte[]) o1)).compareTo(new String((byte[]) o2));
         }
         return 0;
+    }
+    
+    public static int compare(Object o1, Object o2, DataType dataType1, DataType dataType2) throws PhysicalException {
+        if (dataType1 != dataType2) {
+            if (numericTypeSet.contains(dataType1) && numericTypeSet.contains(dataType2)) {
+                Value v1 = ValueUtils.transformToDouble(new Value(dataType1, o1));
+                Value v2 = ValueUtils.transformToDouble(new Value(dataType2, o2));
+                return compare(v1, v2);
+            } else {
+                throw new InvalidOperatorParameterException(dataType1.toString() + " and " + dataType2.toString() + " can't be compared");
+            }
+        } else {
+            return compare(o1, o2, dataType1);
+        }
     }
 
     public static String toString(Object value, DataType dataType) {
