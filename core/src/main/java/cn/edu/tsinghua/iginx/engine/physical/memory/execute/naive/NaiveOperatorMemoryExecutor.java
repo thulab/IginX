@@ -698,10 +698,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeSortedMergeInnerJoin(InnerJoin innerJoin, Table tableA, Table tableB) throws PhysicalException {
         Filter filter = innerJoin.getFilter();
-
-        List<Field> fieldsA = new ArrayList<>(tableA.getHeader().getFields());
-        List<Field> fieldsB = new ArrayList<>(tableB.getHeader().getFields());
-
         List<String> joinColumns = new ArrayList<>(innerJoin.getJoinColumns());
         if (innerJoin.isNaturalJoin()) {
             RowUtils.fillNaturalJoinColumns(joinColumns, tableA.getHeader(), tableB.getHeader(), innerJoin.getPrefixA(), innerJoin.getPrefixB());

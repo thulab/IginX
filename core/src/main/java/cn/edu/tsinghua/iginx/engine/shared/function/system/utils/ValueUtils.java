@@ -37,6 +37,10 @@ public class ValueUtils {
     public static boolean isNumericType(Value value) {
         return numericTypeSet.contains(value.getDataType());
     }
+    
+    public static boolean isNumericType(DataType dataType) {
+        return numericTypeSet.contains(dataType);
+    }
 
     public static Value transformToDouble(Value value) {
         DataType dataType = value.getDataType();
