@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
@@ -1070,6 +1071,16 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.client.close();
         this.client = null;
+    }
+
+    @Override
+    public void initProtocol(String category) {
+
+    }
+
+    @Override
+    public SyncProtocol getProtocol(String category) {
+        return null;
     }
 
 }

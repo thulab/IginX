@@ -28,9 +28,12 @@ import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
+import cn.edu.tsinghua.iginx.migration.MigrationManager;
+import cn.edu.tsinghua.iginx.migration.storage.StorageMigrationExecutor;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
@@ -44,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -181,6 +183,33 @@ public class IginxWorker implements IService.Iface {
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getQueryDataResp();
+    }
+
+    @Override
+    public Status removeStorageEngine(RemoveStorageEngineReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        long storageId = req.getStorageId();
+        StorageEngineMeta storageEngine = metaManager.getStorageEngine(storageId);
+        if (storageEngine == null) {
+            Status status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+            status.setMessage("storage engine is not exists.");
+            return status;
+        }
+        try {
+            if (StorageMigrationExecutor.getInstance().migration(storageId, req.sync)) {
+                return RpcUtils.SUCCESS;
+            }
+            Status status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+            status.setMessage("unexpected error during storage migration");
+            return status;
+        } catch (Exception e) {
+            logger.error("unexpected error during storage migration: ", e);
+            Status status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+            status.setMessage("unexpected error during storage migration: " + e.getMessage());
+            return status;
+        }
     }
 
     @Override

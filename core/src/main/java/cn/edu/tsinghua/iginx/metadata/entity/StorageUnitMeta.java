@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public final class StorageUnitMeta {
+public final class StorageUnitMeta implements Cloneable {
 
     private String id;
 
@@ -38,6 +38,10 @@ public final class StorageUnitMeta {
     private boolean initialStorageUnit = true;
 
     private boolean dummy = false;
+
+    private StorageUnitState state = StorageUnitState.NORMAL;
+
+    private String migrationTo = null;
 
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
@@ -73,6 +77,19 @@ public final class StorageUnitMeta {
         this.createdBy = createdBy;
         this.initialStorageUnit = initialStorageUnit;
         this.dummy = dummy;
+        this.replicas = replicas;
+    }
+
+    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, long createdBy, boolean initialStorageUnit, boolean dummy, StorageUnitState state, String migrationTo, List<StorageUnitMeta> replicas) {
+        this.id = id;
+        this.storageEngineId = storageEngineId;
+        this.masterId = masterId;
+        this.isMaster = isMaster;
+        this.createdBy = createdBy;
+        this.initialStorageUnit = initialStorageUnit;
+        this.dummy = dummy;
+        this.state = state;
+        this.migrationTo = migrationTo;
         this.replicas = replicas;
     }
 
@@ -126,6 +143,22 @@ public final class StorageUnitMeta {
         StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
         storageUnitMeta.setCreatedBy(createdBy);
         storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
+        return storageUnitMeta;
+    }
+
+    public StorageUnitMeta migrationStorageUnitMeta(String id, long migrationBy, long storageEngineId) {
+        String masterId = getMasterId();
+        if (isMaster) {
+            masterId = id;
+        }
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+        storageUnitMeta.setCreatedBy(migrationBy);
+        storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
+        storageUnitMeta.setState(StorageUnitState.CREATING);
+        storageUnitMeta.setReplicas(replicas);
+
+        this.setMigrationTo(id);
+        this.setState(StorageUnitState.MIGRATION);
         return storageUnitMeta;
     }
 
@@ -189,4 +222,30 @@ public final class StorageUnitMeta {
     public boolean isDummy() {
         return dummy;
     }
+
+    public StorageUnitState getState() {
+        return state;
+    }
+
+    public void setState(StorageUnitState state) {
+        this.state = state;
+    }
+
+    public String getMigrationTo() {
+        return migrationTo;
+    }
+
+    public void setMigrationTo(String migrationTo) {
+        this.migrationTo = migrationTo;
+    }
+
+    @Override
+    public StorageUnitMeta clone() {
+        try {
+            return (StorageUnitMeta) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
 }

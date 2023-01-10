@@ -19,6 +19,8 @@
 package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.ConnectionManager;
+import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.IStorageWrapper;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -46,6 +48,8 @@ public class StorageManager {
     private static final Map<String, String> drivers = new ConcurrentHashMap<>();
 
     private static final Map<Long, Pair<IStorage, ThreadPoolExecutor>> storageMap = new ConcurrentHashMap<>();
+
+    private static final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public StorageManager(List<StorageEngineMeta> metaList) {
         initClassLoaderAndDrivers();
@@ -93,18 +97,6 @@ public class StorageManager {
         return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
     }
 
-    private static String getDriverClassName(String storageEngine) {
-        String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String part : parts) {
-            String[] kAndV = part.split("=");
-            if (!kAndV[0].equals(storageEngine)) {
-                continue;
-            }
-            return kAndV[1];
-        }
-        throw new RuntimeException("cannot find driver for " + storageEngine + ", please check config.properties ");
-    }
-
     private boolean initStorage(StorageEngineMeta meta) {
         String engine = meta.getStorageEngine();
         String driver = drivers.get(engine);
@@ -114,11 +106,15 @@ public class StorageManager {
                 ClassLoader loader = classLoaders.get(engine);
                 IStorage storage = (IStorage) loader.loadClass(driver)
                         .getConstructor(StorageEngineMeta.class).newInstance(meta);
+                storage = new IStorageWrapper(storage);
                 // 启动一个派发线程池
                 ThreadPoolExecutor dispatcher = new ThreadPoolExecutor(ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
                         Integer.MAX_VALUE,
                         60L, TimeUnit.SECONDS, new SynchronousQueue<>());
                 storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
+                if (ConfigDescriptor.getInstance().getConfig().isEnableStorageHeartbeat()) {
+                    connectionManager.registerConnector(id, storage.getConnector());
+                }
             }
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);

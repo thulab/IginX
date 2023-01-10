@@ -46,17 +46,22 @@
         <dependency>
             <groupId>cn.edu.tsinghua</groupId>
             <artifactId>iginx-thrift</artifactId>
-            <version>${project.version}</version>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>cn.edu.tsinghua</groupId>
             <artifactId>iginx-shared</artifactId>
-            <version>${project.version}</version>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>cn.edu.tsinghua</groupId>
             <artifactId>iginx-session</artifactId>
-            <version>${project.version}</version>
+            <version>${parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.edu.tsinghua</groupId>
+            <artifactId>iginx-sync</artifactId>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>

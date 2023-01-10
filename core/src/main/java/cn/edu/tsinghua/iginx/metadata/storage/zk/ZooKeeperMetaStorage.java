@@ -23,6 +23,9 @@ import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
+import cn.edu.tsinghua.iginx.protocol.zk.ZooKeeperSyncProtocolImpl;
 import cn.edu.tsinghua.iginx.utils.JsonUtils;
 import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
@@ -40,7 +43,9 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class ZooKeeperMetaStorage implements IMetaStorage {
@@ -154,6 +159,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache versionCache;
 
     private TreeCache transformCache;
+
+    private Map<String, SyncProtocol> protocols = new HashMap<>();
+
+    private ReadWriteLock protocolLock = new ReentrantReadWriteLock();
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -1417,9 +1426,30 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerMaxActiveEndTimeStatisticsChangeHook(
-        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+    public void initProtocol(String category) throws NetworkException {
+        protocolLock.writeLock().lock();
+        try {
+            if (protocols.containsKey(category)) {
+                return;
+            }
+            SyncProtocol protocol = new ZooKeeperSyncProtocolImpl(category, client, null);
+            protocols.put(category, protocol);
+        } finally {
+            protocolLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
         this.maxActiveEndTimeStatisticsChangeHook = hook;
+    }
+
+    public SyncProtocol getProtocol(String category) {
+        SyncProtocol protocol;
+        protocolLock.readLock().lock();
+        protocol = protocols.get(category);
+        protocolLock.readLock().unlock();
+        return protocol;
     }
 
     public static boolean isNumeric(String str) {

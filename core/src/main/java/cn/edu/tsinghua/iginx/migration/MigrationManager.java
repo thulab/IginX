@@ -3,6 +3,10 @@ package cn.edu.tsinghua.iginx.migration;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import java.util.HashMap;
 import java.util.Map;
+
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+import cn.edu.tsinghua.iginx.migration.storage.GreedyStorageMigrationPolicy;
+import cn.edu.tsinghua.iginx.migration.storage.StorageMigrationPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,5 +44,9 @@ public class MigrationManager {
       }
     }
     return policy;
+  }
+
+  public StorageMigrationPolicy getStorageMigration() {
+    return new GreedyStorageMigrationPolicy(DefaultMetaManager.getInstance());
   }
 }

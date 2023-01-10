@@ -173,6 +173,47 @@ public class Config {
 
     private boolean isLocalParquetStorage = true;
 
+    ////////////////////
+    //   容错相关配置   //
+    ////////////////////
+
+    /**
+     * 是否开启存储活性检测
+     */
+    private boolean enableStorageHeartbeat = false;
+
+    /**
+     * 存储节点心跳包间隔，单位是 ms，如果为 0 表示不检测存储节点活性，默认为 10s
+     */
+    private long storageHeartbeatInterval = 10000;
+
+    /**
+     * 存储节点单个心跳包尝试发送的最大重试次数
+     */
+    private int storageHeartbeatMaxRetryTimes = 5;
+
+    /**
+     * 存储节点单个心跳包超时时间，单位 ms，默认为 1s
+     */
+    private long storageHeartbeatTimeout = 1000;
+
+    /**
+     * 存储节点宕机后重连的时间间隔，单位 ms，默认为 50s
+     */
+    private long storageRetryConnectInterval = 50000;
+
+    /**
+     * 存储节点心跳包线程池大小，默认为 10
+     */
+    private int storageHeartbeatThresholdPoolSize = 10;
+
+    /**
+     * 存储宕机后尝试重连概率，默认为0.05
+     */
+    private double storageRestoreHeartbeatProbability = 0.05;
+
+    private int migrationThreadPoolSize = 20;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -711,5 +752,69 @@ public class Config {
 
     public void setLocalParquetStorage(boolean localParquetStorage) {
         isLocalParquetStorage = localParquetStorage;
+    }
+
+    public boolean isEnableStorageHeartbeat() {
+        return enableStorageHeartbeat;
+    }
+
+    public void setEnableStorageHeartbeat(boolean enableStorageHeartbeat) {
+        this.enableStorageHeartbeat = enableStorageHeartbeat;
+    }
+
+    public long getStorageHeartbeatInterval() {
+        return storageHeartbeatInterval;
+    }
+
+    public void setStorageHeartbeatInterval(long storageHeartbeatInterval) {
+        this.storageHeartbeatInterval = storageHeartbeatInterval;
+    }
+
+    public int getStorageHeartbeatMaxRetryTimes() {
+        return storageHeartbeatMaxRetryTimes;
+    }
+
+    public void setStorageHeartbeatMaxRetryTimes(int storageHeartbeatMaxRetryTimes) {
+        this.storageHeartbeatMaxRetryTimes = storageHeartbeatMaxRetryTimes;
+    }
+
+    public long getStorageHeartbeatTimeout() {
+        return storageHeartbeatTimeout;
+    }
+
+    public void setStorageHeartbeatTimeout(long storageHeartbeatTimeout) {
+        this.storageHeartbeatTimeout = storageHeartbeatTimeout;
+    }
+
+    public long getStorageRetryConnectInterval() {
+        return storageRetryConnectInterval;
+    }
+
+    public void setStorageRetryConnectInterval(long storageRetryConnectInterval) {
+        this.storageRetryConnectInterval = storageRetryConnectInterval;
+    }
+
+    public int getStorageHeartbeatThresholdPoolSize() {
+        return storageHeartbeatThresholdPoolSize;
+    }
+
+    public void setStorageHeartbeatThresholdPoolSize(int storageHeartbeatThresholdPoolSize) {
+        this.storageHeartbeatThresholdPoolSize = storageHeartbeatThresholdPoolSize;
+    }
+
+    public double getStorageRestoreHeartbeatProbability() {
+        return storageRestoreHeartbeatProbability;
+    }
+
+    public void setStorageRestoreHeartbeatProbability(double storageRestoreHeartbeatProbability) {
+        this.storageRestoreHeartbeatProbability = storageRestoreHeartbeatProbability;
+    }
+
+    public int getMigrationThreadPoolSize() {
+        return migrationThreadPoolSize;
+    }
+
+    public void setMigrationThreadPoolSize(int migrationThreadPoolSize) {
+        this.migrationThreadPoolSize = migrationThreadPoolSize;
     }
 }

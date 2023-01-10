@@ -7,6 +7,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
 import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
+import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.Connector;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -170,4 +171,10 @@ public class ParquetStorage implements IStorage {
     public void release() throws PhysicalException {
         executor.close();
     }
+
+    @Override
+    public Connector getConnector() {
+        return null;
+    }
+
 }

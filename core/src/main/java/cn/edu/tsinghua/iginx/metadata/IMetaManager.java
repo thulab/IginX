@@ -25,7 +25,8 @@ import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.protocol.NetworkException;
+import cn.edu.tsinghua.iginx.protocol.SyncProtocol;
 
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
@@ -38,6 +39,10 @@ public interface IMetaManager {
      * 批量新增存储引擎节点
      */
     boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas);
+
+    Map<String, String> startMigrationStorageUnits(Map<String, Long> migrationMap);
+
+    boolean finishMigrationStorageUnit(String storageUnitId);
 
     /**
      * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
@@ -66,6 +71,8 @@ public interface IMetaManager {
      * 获取所有活跃的 iginx 节点的元信息
      */
     List<IginxMeta> getIginxList();
+
+    int getIginxClusterSize();
 
     /**
      * 获取当前 iginx 节点的 ID
@@ -254,4 +261,9 @@ public interface IMetaManager {
     long getMaxActiveEndTime();
 
     void submitMaxActiveEndTime();
+
+    void initProtocol(String category) throws NetworkException;
+
+    SyncProtocol getProtocol(String category);
+
 }
