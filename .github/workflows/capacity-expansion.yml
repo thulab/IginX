@@ -293,3 +293,55 @@ jobs:
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
             mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix -DfailIfNoTests=false
           fi
+
+  RemoveHistoryDataSource-Test-IotDB:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 8 ]
+        python-version: [ "3.7" ]
+        os: [ ubuntu-latest, macos-latest ]
+        DB-name: [ "iotdb11", "iotdb12" ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Environmet Dependence
+        uses: ./.github/actions/dependence
+        with:
+          python-version: ${{ matrix.python-version }}
+          java: ${{ matrix.java }}
+      - name: Run ZooKeeper
+        uses: ./.github/actions/zookeeperRunner
+      - name: Run IoTDB
+        uses: ./.github/actions/iotdbRunner
+        with:
+          version: ${{matrix.DB-name}}
+
+      - name: Change pom
+        run: |
+          mv test/pom.xml test/pom.xml.backup
+          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
+      - name: Install IginX with Maven
+        shell: bash
+        run: |
+          mvn clean package -DskipTests
+      - name: Prepare CapExp environment
+        uses: ./.github/actions/capacityExpansionUnionTest
+        with:
+          version: ${VERSION}
+          DB-name: ${{matrix.DB-name}}
+          Test-Way: oriNoDataExpHasData
+
+      - name: Write Extra Data to Expansion Node
+        uses: ./.github/actions/iotdbWriter
+        with:
+          Test-Way: extraDataWrite
+
+      - name: data prefix IT
+        run: |
+          if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#testRemoveHistoryDataSource -DfailIfNoTests=false
+          elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#testRemoveHistoryDataSource -DfailIfNoTests=false
+          fi
