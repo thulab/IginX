@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.metadata.cache;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.*;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
@@ -356,7 +357,7 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
         for (FragmentMeta fragmentMeta: dummyFragments) {
-            if (fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
+            if (fragmentMeta.isIfValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
                 results.add(fragmentMeta);
             }
         }
@@ -403,7 +404,7 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
         for (FragmentMeta fragmentMeta: dummyFragments) {
-            if (fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
+            if (fragmentMeta.isIfValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
                 results.add(fragmentMeta);
             }
         }
@@ -566,6 +567,34 @@ public class DefaultMetaCache implements IMetaCache {
         }
         fragmentLock.writeLock().unlock();
         storageUnitLock.writeLock().unlock();
+    }
+
+    @Override
+    public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngineMeta) {
+        storageUnitLock.writeLock().lock();
+        fragmentLock.writeLock().lock();
+
+        if (!storageEngineMetaMap.containsKey(storageEngineMeta.getId())) {
+            logger.error("No corresponding storage engine needs to be updated");
+            return false;
+        }
+        boolean ifOriHasData = storageEngineMetaMap.get(storageID).isHasData();
+        if (storageEngineMeta.isHasData()) { // 设置相关元数据信息
+            StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+            FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+            dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+            dummyStorageUnitMetaMap.put(dummyStorageUnit.getId(), dummyStorageUnit);
+            if (ifOriHasData) { // 更新 dummyFragments 数据
+                dummyFragments.removeIf(e -> e.getMasterStorageUnitId().equals(String.format(Constants.DUMMY + "%04d", (int) storageID)));
+            } else {
+                dummyFragments.add(dummyFragment);
+            }
+        }
+        storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
+
+        fragmentLock.writeLock().unlock();
+        storageUnitLock.writeLock().unlock();
+        return true;
     }
 
     @Override

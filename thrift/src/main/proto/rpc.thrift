@@ -581,6 +581,11 @@ struct DebugInfoResp {
     2: optional binary payload
 }
 
+struct RemoveHistoryDataSourceReq {
+    1: required i64 sessionId
+    2: required i64 dummyStorageId
+}
+
 service IService {
 
     OpenSessionResp openSession(1: OpenSessionReq req);
@@ -602,6 +607,8 @@ service IService {
     QueryDataResp queryData(1: QueryDataReq req);
 
     Status addStorageEngines(1: AddStorageEnginesReq req);
+
+    Status removeHistoryDataSource(1: RemoveHistoryDataSourceReq req);
 
     AggregateQueryResp aggregateQuery(1: AggregateQueryReq req);
 

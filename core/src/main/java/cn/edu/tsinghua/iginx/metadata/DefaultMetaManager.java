@@ -334,6 +334,27 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngineMeta) {
+        try {
+            storageEngineMeta.setId(storageID);
+            storage.updateStorageEngine(storageID, storageEngineMeta); // 如果删除成功，则后续更新对应的 dummyFragament 的元数据
+            if (storageEngineMeta.isHasData()) { // 确保内部数据的一致性
+                StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+                dummyStorageUnit.setStorageEngineId(storageID);
+                dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) storageID));
+                dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
+                FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+                dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+                dummyFragment.setMasterStorageUnitId(dummyStorageUnit.getId());
+            }
+            return cache.updateStorageEngine(storageID, storageEngineMeta);
+        } catch (MetaStorageException e) {
+            logger.error("update storage engines error:", e);
+        }
+        return false;
+    }
+
+    @Override
     public List<StorageEngineMeta> getStorageEngineList() {
         return new ArrayList<>(cache.getStorageEngineList());
     }

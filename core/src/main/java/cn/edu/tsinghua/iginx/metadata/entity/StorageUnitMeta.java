@@ -39,6 +39,8 @@ public final class StorageUnitMeta {
 
     private boolean dummy = false;
 
+    private boolean ifValid = true;
+
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
@@ -188,5 +190,17 @@ public final class StorageUnitMeta {
 
     public boolean isDummy() {
         return dummy;
+    }
+
+    public void setDummy(boolean dummy) {
+        this.dummy = dummy;
+    }
+
+    public boolean isIfValid() {
+        return ifValid;
+    }
+
+    public void setIfValid(boolean ifValid) {
+        this.ifValid = ifValid;
     }
 }

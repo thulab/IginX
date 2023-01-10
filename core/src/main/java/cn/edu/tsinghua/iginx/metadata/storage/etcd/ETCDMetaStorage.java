@@ -580,6 +580,11 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngine) throws MetaStorageException {
+        return false;
+    }
+
+    @Override
     public void registerStorageChangeHook(StorageChangeHook hook) {
         this.storageChangeHook = hook;
     }

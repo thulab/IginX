@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
@@ -181,6 +182,59 @@ public class IginxWorker implements IService.Iface {
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getQueryDataResp();
+    }
+
+    @Override
+    public Status removeHistoryDataSource(RemoveHistoryDataSourceReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        Status status = RpcUtils.SUCCESS;
+        long dummyStorageId = req.getDummyStorageId();
+        StorageEngineMeta storageEngineMeta = metaManager.getStorageEngine(dummyStorageId);
+        if (storageEngineMeta == null || storageEngineMeta.getDummyFragment() == null || storageEngineMeta.getDummyStorageUnit() == null) {
+            status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+            status.setMessage("storage engine is not exists.");
+            return status;
+        }
+        try {
+            // 设置对应的 dummyFragament 为 invalid 状态
+            storageEngineMeta.getDummyFragment().setIfValid(false);
+            storageEngineMeta.getDummyStorageUnit().setIfValid(false);
+
+            // 阻塞对应线程处理
+            // 修改需要更新的元数据信息 extraParams中的 has_data属性需要修改
+            StorageEngineMeta newMeta = storageEngineMeta.clone();
+            FragmentMeta dummyfragment = storageEngineMeta.getDummyFragment();
+            StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+            String dataPrefix = storageEngineMeta.getDataPrefix();
+            newMeta.setDummyFragment(null);
+
+            newMeta.setDummyStorageUnit(null);
+            newMeta.setDataPrefix(null);
+            newMeta.setHasData(false);
+
+            // 更新 zk 上元数据信息，以及 iginx 上元数据信息
+            if (!metaManager.updateStorageEngine(dummyStorageId, newMeta)) {
+                status = RpcUtils.FAILURE;
+                status.setMessage("unexpected error during storage update");
+            }
+
+            // 如果失败，则复原
+            if (status == RpcUtils.FAILURE) {
+                storageEngineMeta.setDummyFragment(dummyfragment);
+                storageEngineMeta.setDummyStorageUnit(dummyStorageUnit);
+                storageEngineMeta.setHasData(true);
+                storageEngineMeta.setDataPrefix(dataPrefix);
+                metaManager.updateStorageEngine(dummyStorageId, storageEngineMeta);
+            }
+            return status;
+        } catch (Exception e) {
+            logger.error("unexpected error during storage migration: ", e);
+            status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+            status.setMessage("unexpected error during removing history data source: " + e.getMessage());
+            return status;
+        }
     }
 
     @Override

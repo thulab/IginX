@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public final class StorageEngineMeta {
+public final class StorageEngineMeta implements Cloneable {
 
     /**
      * 数据库的 id
@@ -39,13 +39,13 @@ public final class StorageEngineMeta {
      */
     private final int port;
 
-    private final boolean hasData;
-
-    private final String dataPrefix;
+    private final boolean readOnly;
 
     private final String schemaPrefix;
 
-    private final boolean readOnly;
+    private String dataPrefix;
+
+    private boolean hasData;
 
     private StorageUnitMeta dummyStorageUnit;
 
@@ -201,6 +201,14 @@ public final class StorageEngineMeta {
         this.dummyFragment = dummyFragment;
     }
 
+    public void setHasData(boolean hasData) {
+        this.hasData = hasData;
+    }
+
+    public void setDataPrefix(String dataPrefix) {
+        this.dataPrefix = dataPrefix;
+    }
+
     public long getCreatedBy() {
         return createdBy;
     }
@@ -211,6 +219,11 @@ public final class StorageEngineMeta {
 
     public void setNeedReAllocate(boolean needReAllocate) {
         this.needReAllocate = needReAllocate;
+    }
+
+    @Override
+    public StorageEngineMeta clone() throws CloneNotSupportedException {
+        return (StorageEngineMeta)super.clone();
     }
 
     @Override
