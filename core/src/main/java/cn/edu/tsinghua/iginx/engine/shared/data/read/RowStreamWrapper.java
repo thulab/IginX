@@ -61,7 +61,7 @@ public class RowStreamWrapper implements RowStream {
         if (nextRow == null) { // 本地已经缓存了下一行
             nextRow = rowStream.next();
         }
-        return nextRow.getTimestamp();
+        return nextRow.getKey();
     }
 
 }

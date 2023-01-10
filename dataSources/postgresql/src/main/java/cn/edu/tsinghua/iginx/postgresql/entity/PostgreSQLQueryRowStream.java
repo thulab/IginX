@@ -22,7 +22,7 @@ public class PostgreSQLQueryRowStream implements RowStream {
 
   public PostgreSQLQueryRowStream(List<ResultSet> resultSets, List<Field> fields) {
     this.resultSets = resultSets;
-    this.header = new Header(Field.TIME, fields);
+    this.header = new Header(Field.KEY, fields);
     this.currTimestamps = new long[resultSets.size()];
     this.currValues = new Object[resultSets.size()];
     // 默认填充一下timestamp列表

@@ -42,7 +42,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.KeyFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
@@ -161,8 +161,8 @@ public class PostgreSQLStorage implements IStorage {
         filter = ((Select) operators.get(1)).getFilter();
       } else {
         filter = new AndFilter(Arrays
-            .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
-                new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
+            .asList(new KeyFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
+                new KeyFilter(Op.L, fragment.getTimeInterval().getEndTime())));
       }
       return executeProjectTask(project, filter);
     } else if (op.getType() == OperatorType.Insert) {
@@ -382,7 +382,7 @@ public class PostgreSQLStorage implements IStorage {
             Map<String, String> tags = data.getTags(i);
             createTimeSeriesIfNotExists(table, field, tags, dataType);
 
-            long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            long time = data.getKey(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value;
             if (data.getDataType(j) == DataType.BINARY) {
               value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
@@ -436,7 +436,7 @@ public class PostgreSQLStorage implements IStorage {
         int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
           if (bitmapView.get(j)) {
-            long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            long time = data.getKey(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value;
             if (data.getDataType(i) == DataType.BINARY) {
               value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)

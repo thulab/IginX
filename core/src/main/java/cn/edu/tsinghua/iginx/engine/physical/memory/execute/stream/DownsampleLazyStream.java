@@ -105,7 +105,7 @@ public class DownsampleLazyStream extends UnaryLazyStream {
                 throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
             }
         }
-        return row == null ? null : new Row(new Header(Field.TIME, row.getHeader().getFields()), timestamp, row.getValues());
+        return row == null ? null : new Row(new Header(Field.KEY, row.getHeader().getFields()), timestamp, row.getValues());
     }
 
     @Override

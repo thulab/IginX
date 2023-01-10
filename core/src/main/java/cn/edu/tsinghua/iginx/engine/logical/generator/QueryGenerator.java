@@ -328,7 +328,7 @@ public class QueryGenerator extends AbstractGenerator {
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
             dummyFragments.forEach(meta -> joinList.add(new Project(new FragmentSource(meta),
-                    pathMatchPrefix(pathList,meta.getTsInterval().getTimeSeries()), tagFilter)));
+                    pathMatchPrefix(pathList,meta.getTsInterval().getTimeSeries(), meta.getTsInterval().getSchemaPrefix()), tagFilter)));
             joinList.add(operator);
             operator = OperatorUtils.joinOperatorsByTime(joinList);
         }
@@ -346,11 +346,14 @@ public class QueryGenerator extends AbstractGenerator {
         return keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
     }
 
-    private List<String> pathMatchPrefix(List<String> pathList, String prefix) {
+    private List<String> pathMatchPrefix(List<String> pathList, String prefix, String schemaPrefix) {
         if (prefix == null) return pathList;
+        if (schemaPrefix != null) prefix = schemaPrefix + "." + prefix; // deal with the schemaPrefix
         List<String> ans = new ArrayList<>();
         for(String path : pathList) {
-            if (path.charAt(path.length()-1) == '*' && path.length() != 1) { // 通配符匹配，例如 a.b.*
+            if (path.equals("*.*")) {
+                ans.add(path);
+            } else if (path.charAt(path.length()-1) == '*' && path.length() != 1) { // 通配符匹配，例如 a.b.*
                 String queryPrefix = path.substring(0,path.length()-2) + ".(.*)";
                 if (prefix.matches(queryPrefix)) {
                     ans.add(path);
@@ -365,8 +368,6 @@ public class QueryGenerator extends AbstractGenerator {
                 if (path.matches(queryPrefix)) {
                     ans.add(path);
                 }
-            } else if (path.equals("*")) {
-                ans.add(path);
             }
         }
         return ans;

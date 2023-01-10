@@ -55,16 +55,16 @@ public class UnionLazyStream extends BinaryLazyStream {
         }
         Header headerA = streamA.getHeader();
         Header headerB = streamB.getHeader();
-        if (headerA.hasTimestamp() ^ headerB.hasTimestamp()) {
+        if (headerA.hasKey() ^ headerB.hasKey()) {
             throw new InvalidOperatorParameterException("row stream to be union must have same fields");
         }
-        boolean hasTimestamp = headerA.hasTimestamp();
+        boolean hasTimestamp = headerA.hasKey();
         Set<Field> targetFieldSet = new HashSet<>();
         targetFieldSet.addAll(headerA.getFields());
         targetFieldSet.addAll(headerB.getFields());
         List<Field> targetFields = new ArrayList<>(targetFieldSet);
         if (hasTimestamp) {
-            header = new Header(Field.TIME, targetFields);
+            header = new Header(Field.KEY, targetFields);
         } else {
             header = new Header(targetFields);
         }
@@ -92,7 +92,7 @@ public class UnionLazyStream extends BinaryLazyStream {
         if (!hasNext()) {
             throw new IllegalStateException("row stream doesn't have more data!");
         }
-        if (!header.hasTimestamp()) {
+        if (!header.hasKey()) {
             // 不包含时间戳，只需要迭代式的顺次访问两个 stream 即可
             if (streamA.hasNext()) {
                 return streamA.next();
@@ -115,7 +115,7 @@ public class UnionLazyStream extends BinaryLazyStream {
             nextA = null;
             return RowUtils.transform(row, header);
         }
-        if (nextA.getTimestamp() <= nextB.getTimestamp()) {
+        if (nextA.getKey() <= nextB.getKey()) {
             Row row = nextA;
             nextA = null;
             return RowUtils.transform(row, header);

@@ -27,7 +27,7 @@ public class ParquetSessionExample {
     }
 
     private static void insertData(long startTimestamp, long endTimestamp) throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 

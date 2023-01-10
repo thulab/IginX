@@ -63,11 +63,11 @@ public class ArithmeticExpr implements RowMappingFunction {
 
         Field targetField = new Field(expr.getColumnName(), ret.getDataType());
 
-        Header header = row.getHeader().hasTimestamp() ?
-            new Header(Field.TIME, Collections.singletonList(targetField)) :
+        Header header = row.getHeader().hasKey() ?
+            new Header(Field.KEY, Collections.singletonList(targetField)) :
             new Header(Collections.singletonList(targetField));
 
-        return new Row(header, row.getTimestamp(), new Object[]{ret.getValue()});
+        return new Row(header, row.getKey(), new Object[]{ret.getValue()});
     }
 
     private Value calculateExpr(Row row, Expression expr) {

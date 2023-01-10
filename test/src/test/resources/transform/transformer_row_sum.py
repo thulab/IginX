@@ -16,7 +16,7 @@ class RowSumTransformer:
             ret[index][0] = row[0]
             ret[index][1] = row_sum
 
-        df = pd.DataFrame(ret, columns=['time', 'sum'])
+        df = pd.DataFrame(ret, columns=['key', 'sum'])
         ret = df.values.tolist()
         ret.insert(0, df.keys().values.tolist())
         return ret

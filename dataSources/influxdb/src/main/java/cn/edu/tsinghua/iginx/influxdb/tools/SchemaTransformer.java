@@ -67,7 +67,7 @@ public class SchemaTransformer {
         if (index < parts.length) {
             // 接着处理 field
             String field = parts[index];
-            queryBuilder.append("r._field =~ /").append(InfluxDBSchema.transformField(field)).append("/");
+            queryBuilder.append(" and r._field =~ /").append(InfluxDBSchema.transformField(field)).append("/");
         }
         queryBuilder.append(")");
         return new Pair<>(bucketName, queryBuilder.toString());

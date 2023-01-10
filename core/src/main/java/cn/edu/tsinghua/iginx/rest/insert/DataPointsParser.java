@@ -107,7 +107,7 @@ public class DataPointsParser {
 
             JsonNode tim = node.get("timestamp"), val = node.get("value");
             if (tim != null && val != null) {
-                ret.addTimestamp(tim.asLong());
+                ret.addKey(tim.asLong());
                 ret.addValue(val.asText());
             }
             JsonNode dp = node.get("datapoints");
@@ -115,7 +115,7 @@ public class DataPointsParser {
                 if (dp.isArray()) {
                     for (JsonNode dpnode : dp) {
                         if (dpnode.isArray()) {
-                            ret.addTimestamp(dpnode.get(0).asLong());
+                            ret.addKey(dpnode.get(0).asLong());
                             ret.addValue(dpnode.get(1).asText());
                         }
                     }
@@ -314,7 +314,7 @@ public class DataPointsParser {
             List<String> paths = new ArrayList<>();
             paths.add(path.toString());
 
-            int size = metric.getTimestamps().size();
+            int size = metric.getKeys().size();
             List<DataType> type = new ArrayList<>();
             type.add(findType(metric.getValues()));
 
@@ -325,7 +325,7 @@ public class DataPointsParser {
             }
             valuesList[0] = values;
             try {
-                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
+                session.insertNonAlignedColumnRecords(paths, metric.getKeys().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
                 if (!metric.getAnno().isEmpty()) {
                     insertAnno(paths,tagsList,metric.getAnno(),type.get(0));
                 }
@@ -381,7 +381,7 @@ public class DataPointsParser {
         paths.add(path.toString());
         List<Map<String,String>> taglist = new ArrayList<>();
         taglist.add(metric.getTags());
-        int size = metric.getTimestamps().size();
+        int size = metric.getKeys().size();
         List<DataType> type = new ArrayList<>();
         type.add(findType(metric.getValues()));
         Object[] valuesList = new Object[1];
@@ -392,7 +392,7 @@ public class DataPointsParser {
         valuesList[0] = values;
         try {
             //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist, timePrecision);
+            session.insertNonAlignedColumnRecords(paths, metric.getKeys().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist, timePrecision);
             if (!metric.getAnno().isEmpty()) {
                 insertAnno(paths,taglist,metric.getAnno(),type.get(0));
             }
@@ -568,7 +568,7 @@ public class DataPointsParser {
             metric.addAnno("description", anno.getText());
         //添加数据点信息
         for(int tl = 0;tl<queryResultDataset.getTimeLists().get(pl).size();tl++) {
-            metric.addTimestamp(queryResultDataset.getTimeLists().get(pl).get(tl));
+            metric.addKey(queryResultDataset.getTimeLists().get(pl).get(tl));
             Object val = queryResultDataset.getValueLists().get(pl).get(tl);
             metric.addValue(getStringVal(val));
         }

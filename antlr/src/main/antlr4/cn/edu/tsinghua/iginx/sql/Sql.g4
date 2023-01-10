@@ -67,8 +67,8 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | path) comparisonOperator constant
-    | constant comparisonOperator (TIME | TIMESTAMP | path)
+    : (KEY | path) comparisonOperator constant
+    | constant comparisonOperator (KEY | path)
     | path comparisonOperator path
     | path OPERATOR_LIKE regex=stringLiteral
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
@@ -156,7 +156,7 @@ specialClause
     ;
 
 orderByClause
-    : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?
+    : ORDER BY (TIME | TIMESTAMP | KEY | path) (DESC | ASC)?
     ;
 
 groupByClause
@@ -202,7 +202,7 @@ comparisonOperator
     ;
 
 insertColumnsSpec
-    : LR_BRACKET (TIMESTAMP|TIME) (COMMA insertPath)+ RR_BRACKET
+    : LR_BRACKET KEY (COMMA insertPath)+ RR_BRACKET
     ;
 
 insertPath
@@ -283,6 +283,7 @@ keyWords
     | LIMIT
     | OFFSET
     | TIME
+    | KEY
     | SERIES
     | TIMESTAMP
     | GROUP
@@ -464,6 +465,10 @@ NOW
 
 TIME
     : T I M E
+    ;
+
+KEY
+    : K E Y
     ;
 
 TRUE

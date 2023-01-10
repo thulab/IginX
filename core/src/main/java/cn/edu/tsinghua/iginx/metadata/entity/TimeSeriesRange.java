@@ -90,9 +90,13 @@ public interface TimeSeriesRange extends Comparable<TimeSeriesRange> {
 
     public void setSchemaPrefix(String schemaPrefix);
 
-    public boolean isCompletelyAfter(TimeSeriesRange tsInterval);
+    default public boolean isCompletelyAfter(TimeSeriesRange tsInterval) {
+        return false;
+    }
 
-    public boolean isAfter(String tsName);
+    default public boolean isAfter(String tsName) {
+        return false;
+    }
 
     public boolean isClosed();
 

@@ -27,7 +27,7 @@ public class Join extends AbstractBinaryOperator {
     private final String joinBy;
 
     public Join(Source sourceA, Source sourceB) {
-        this(sourceA, sourceB, Constants.TIMESTAMP);
+        this(sourceA, sourceB, Constants.KEY);
     }
 
     public Join(Source sourceA, Source sourceB, String joinBy) {

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class Table {
 
-    private final List<Long> timestamps;
+    private final List<Long> keys;
 
     private final List<String> measurements;
 
@@ -37,8 +37,8 @@ public class Table {
 
     private final List<Object[]> valuesList;
 
-    private Table(List<Long> timestamps, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object[]> valuesList) {
-        this.timestamps = timestamps;
+    private Table(List<Long> keys, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object[]> valuesList) {
+        this.keys = keys;
         this.measurements = measurements;
         this.tagsList = tagsList;
         this.dataTypes = dataTypes;
@@ -49,8 +49,8 @@ public class Table {
         return new Table.Builder();
     }
 
-    public List<Long> getTimestamps() {
-        return timestamps;
+    public List<Long> getKeys() {
+        return keys;
     }
 
     public List<String> getMeasurements() {
@@ -70,11 +70,11 @@ public class Table {
     }
 
     public int getLength() {
-        return timestamps.size();
+        return keys.size();
     }
 
-    public long getTimestamp(int index) {
-        return timestamps.get(index);
+    public long getKey(int index) {
+        return keys.get(index);
     }
 
     public Object[] getValues(int index) {
@@ -94,10 +94,10 @@ public class Table {
         private final SortedMap<String, Integer> fieldIndexMap;
         private final List<DataType> dataTypes;
         private final List<Map<String, String>> tagsList;
-        private final List<Long> timestamps;
+        private final List<Long> keys;
         private final List<Map<Integer, Object>> valuesList;
         private String measurement;
-        private long currentTimestamp;
+        private long key;
 
         private Map<Integer, Object> currentValues;
 
@@ -106,10 +106,10 @@ public class Table {
             this.fieldIndexMap = new TreeMap<>();
             this.tagsList = new ArrayList<>();
             this.dataTypes = new ArrayList<>();
-            this.timestamps = new ArrayList<>();
+            this.keys = new ArrayList<>();
             this.valuesList = new ArrayList<>();
 
-            this.currentTimestamp = -1;
+            this.key = -1;
             this.currentValues = new HashMap<>();
         }
 
@@ -139,21 +139,21 @@ public class Table {
             return this;
         }
 
-        public Table.Builder timestamp(long timestamp) {
-            this.currentTimestamp = timestamp;
+        public Table.Builder key(long key) {
+            this.key = key;
             return this;
         }
 
         public Table.Builder next() {
-            if (currentTimestamp == -1) {
+            if (key == -1) {
                 throw new IllegalStateException("timestamp for current row hasn't set.");
             }
             if (currentValues.isEmpty()) {
                 throw new IllegalStateException("current row is empty.");
             }
-            this.timestamps.add(currentTimestamp);
+            this.keys.add(key);
             this.valuesList.add(currentValues);
-            this.currentTimestamp = -1;
+            this.key = -1;
             this.currentValues = new HashMap<>();
             return this;
         }
@@ -272,8 +272,8 @@ public class Table {
         }
 
         public Table build() {
-            if (currentTimestamp != -1 && !currentValues.isEmpty()) {
-                this.timestamps.add(currentTimestamp);
+            if (key != -1 && !currentValues.isEmpty()) {
+                this.keys.add(key);
                 this.valuesList.add(currentValues);
             }
             List<String> measurements = new ArrayList<>(fieldIndexMap.keySet());
@@ -298,7 +298,7 @@ public class Table {
                 }
                 valuesList.add(values);
             }
-            return new Table(this.timestamps, measurements, tagsList, dataTypes, valuesList);
+            return new Table(this.keys, measurements, tagsList, dataTypes, valuesList);
         }
 
     }

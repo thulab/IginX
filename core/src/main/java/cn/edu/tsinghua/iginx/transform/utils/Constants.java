@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Constants {
 
-    public static final String TIMESTAMP = "time";
+    public static final String KEY = "key";
 
     public static final String PARAM_PATHS = "param_paths";
     public static final String PARAM_LEVELS = "param_levels";
