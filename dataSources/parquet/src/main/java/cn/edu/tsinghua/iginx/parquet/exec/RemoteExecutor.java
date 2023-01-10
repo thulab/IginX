@@ -102,7 +102,7 @@ public class RemoteExecutor implements Executor {
                             parquetHeader.getTagsList().get(i))
                     );
                 }
-                Header header = parquetHeader.hasTime ? new Header(Field.TIME, fields) : new Header(fields);
+                Header header = parquetHeader.hasTime ? new Header(Field.KEY, fields) : new Header(fields);
 
                 List<Row> rowList = new ArrayList<>();
                 resp.getRows().forEach(parquetRow -> {
@@ -146,7 +146,7 @@ public class RemoteExecutor implements Executor {
 
         long[] times = new long[dataView.getTimeSize()];
         for (int i = 0; i < dataView.getTimeSize(); i++) {
-            times[i] = dataView.getTimestamp(i);
+            times[i] = dataView.getKey(i);
         }
 
         Pair<List<ByteBuffer>, List<ByteBuffer>> pair;

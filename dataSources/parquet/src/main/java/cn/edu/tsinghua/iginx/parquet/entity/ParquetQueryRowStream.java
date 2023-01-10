@@ -52,7 +52,7 @@ public class ParquetQueryRowStream implements RowStream {
         this.schemaPrefix = schemaPrefix;
 
         if (rs == null) {
-            this.header = new Header(Field.TIME, Collections.emptyList());
+            this.header = new Header(Field.KEY, Collections.emptyList());
             return;
         }
 
@@ -65,7 +65,7 @@ public class ParquetQueryRowStream implements RowStream {
             for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {  // start from index 1
                 String pathName = rsMetaData.getColumnName(i).replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR);
                 if (i == 1 && pathName.equals(COLUMN_TIME)) {
-                    time = Field.TIME;
+                    time = Field.KEY;
                     continue;
                 }
 
@@ -91,7 +91,7 @@ public class ParquetQueryRowStream implements RowStream {
         if (time == null) {
             this.header = new Header(fields);
         } else {
-            this.header = new Header(Field.TIME, fields);
+            this.header = new Header(Field.KEY, fields);
         }
     }
 

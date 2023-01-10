@@ -369,7 +369,7 @@ public class StatementExecutor {
         List<ByteBuffer> valuesList = new ArrayList<>();
         List<ByteBuffer> bitmapList = new ArrayList<>();
 
-        boolean hasTimestamp = stream.getHeader().hasTimestamp();
+        boolean hasTimestamp = stream.getHeader().hasKey();
         while (stream.hasNext()) {
             Row row = stream.next();
 
@@ -385,7 +385,7 @@ public class StatementExecutor {
             bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
 
             if (hasTimestamp) {
-                timestampList.add(row.getTimestamp());
+                timestampList.add(row.getKey());
             }
         }
 
@@ -490,8 +490,8 @@ public class StatementExecutor {
             }
             bitmaps.add(bitmap);
 
-            if (header.hasTimestamp()) {
-                times.add(row.getTimestamp() + offset);
+            if (header.hasKey()) {
+                times.add(row.getKey() + offset);
             } else {
                 times.add(i + offset);
             }

@@ -31,7 +31,7 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.*;
 
 public class SessionQueryDataSet {
 
-    private final long[] timestamps;
+    private final long[] keys;
     private List<String> paths;
     private List<Map<String, String>> tagsList;
     private List<List<Object>> values;
@@ -39,19 +39,19 @@ public class SessionQueryDataSet {
     public SessionQueryDataSet(LastQueryResp resp) {
         this.paths = resp.getPaths();
         this.tagsList = resp.getTagsList();
-        this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+        this.keys = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
         this.values = getValuesFromBufferAndBitmaps(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
     public SessionQueryDataSet(ShowColumnsResp resp) {
         this.paths = resp.getPaths();
-        this.timestamps = null;
+        this.keys = null;
     }
 
     public SessionQueryDataSet(QueryDataResp resp) {
         this.paths = resp.getPaths();
         this.tagsList = resp.getTagsList();
-        this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+        this.keys = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
         this.values = getValuesFromBufferAndBitmaps(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
@@ -59,10 +59,10 @@ public class SessionQueryDataSet {
         this.paths = resp.getPaths();
         this.tagsList = resp.getTagsList();
         if (resp.queryDataSet != null) {
-            this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+            this.keys = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
             this.values = getValuesFromBufferAndBitmaps(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         } else {
-            this.timestamps = new long[0];
+            this.keys = new long[0];
             values = new ArrayList<>();
         }
         if (this.paths == null) {
@@ -74,8 +74,8 @@ public class SessionQueryDataSet {
         return paths;
     }
 
-    public long[] getTimestamps() {
-        return timestamps;
+    public long[] getKeys() {
+        return keys;
     }
 
     public List<List<Object>> getValues() {
@@ -90,8 +90,8 @@ public class SessionQueryDataSet {
         }
         System.out.println();
 
-        for (int i = 0; i < timestamps.length; i++) {
-            System.out.print(timestamps[i] + "\t");
+        for (int i = 0; i < keys.length; i++) {
+            System.out.print(keys[i] + "\t");
             for (int j = 0; j < paths.size(); j++) {
                 if (values.get(i).get(j) instanceof byte[]) {
                     System.out.print(new String((byte[]) values.get(i).get(j)) + "\t");

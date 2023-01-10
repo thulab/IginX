@@ -41,7 +41,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.KeyFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -101,8 +101,8 @@ public class PhysicalEngineImpl implements PhysicalEngine {
 
                 List<Operator> selectOperators = new ArrayList<>();
                 List<Filter> selectTimeFilters = new ArrayList<>();
-                selectTimeFilters.add(new TimeFilter(Op.GE, timeInterval.getStartTime()));
-                selectTimeFilters.add(new TimeFilter(Op.L, timeInterval.getEndTime()));
+                selectTimeFilters.add(new KeyFilter(Op.GE, timeInterval.getStartTime()));
+                selectTimeFilters.add(new KeyFilter(Op.L, timeInterval.getEndTime()));
                 selectOperators
                     .add(new Select(new OperatorSource(project), new AndFilter(selectTimeFilters), null));
                 MemoryPhysicalTask selectPhysicalTask = new UnaryMemoryPhysicalTask(selectOperators,
@@ -126,7 +126,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
                 List<Bitmap> bitmapList = new ArrayList<>();
                 List<ByteBuffer> bitmapBufferList = new ArrayList<>();
 
-                boolean hasTimestamp = selectRowStream.getHeader().hasTimestamp();
+                boolean hasTimestamp = selectRowStream.getHeader().hasKey();
                 while (selectRowStream.hasNext()) {
                     Row row = selectRowStream.next();
                     Object[] rowValues = row.getValues();
@@ -140,7 +140,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
                     bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
                     bitmapList.add(bitmap);
                     if (hasTimestamp) {
-                        timestampList.add(row.getTimestamp());
+                        timestampList.add(row.getKey());
                     }
 
                     // 按行批量插入数据

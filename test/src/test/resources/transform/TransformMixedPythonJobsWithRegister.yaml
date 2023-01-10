@@ -6,7 +6,7 @@ taskList:
       - REGISTER TRANSFORM PYTHON TASK "RowSumTransformer" IN "test/src/test/resources/transform/transformer_row_sum.py" AS "RowSumTransformer";
       - REGISTER TRANSFORM PYTHON TASK "AddOneTransformer" IN "test/src/test/resources/transform/transformer_add_one.py" AS "AddOneTransformer";
       - REGISTER TRANSFORM PYTHON TASK "SumTransformer" IN "test/src/test/resources/transform/transformer_sum.py" AS "SumTransformer";
-      - SELECT s1, s2 FROM us.d1 WHERE time < 200;
+      - SELECT s1, s2 FROM us.d1 WHERE key < 200;
   - taskType: python
     dataFlowType: stream
     timeout: 10000000

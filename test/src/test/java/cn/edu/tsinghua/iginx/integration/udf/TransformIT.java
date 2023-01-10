@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.integration.udf;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
@@ -79,9 +80,9 @@ public class TransformIT {
 
     private static final String SHOW_TIME_SERIES_SQL = "SHOW TIME SERIES;";
 
-    private static final String QUERY_SQL_1 = "SELECT s2 FROM us.d1 WHERE time >= 14800;";
+    private static final String QUERY_SQL_1 = "SELECT s2 FROM us.d1 WHERE key >= 14800;";
 
-    private static final String QUERY_SQL_2 = "SELECT s1, s2 FROM us.d1 WHERE time < 200;";
+    private static final String QUERY_SQL_2 = "SELECT s1, s2 FROM us.d1 WHERE key < 200;";
 
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
@@ -112,7 +113,7 @@ public class TransformIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s1, s2, s3, s4) values ";
         StringBuilder builder = new StringBuilder(insertStrPrefix);
         int size = (int) (END_TIMESTAMP - START_TIMESTAMP);
 
@@ -217,7 +218,7 @@ public class TransformIT {
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
         List<String> sqlList = new ArrayList<>();
-        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s2) values ";
+        String insertStrPrefix = "INSERT INTO us.d1 (key, s2) values ";
         StringBuilder builder = new StringBuilder(insertStrPrefix);
         for (int i = 0; i < 100; i++) {
             builder.append("(");
@@ -265,7 +266,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("us.d1.s2", parts[1]);
 
         int index = 0;
@@ -335,7 +336,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         int index = 0;
@@ -425,13 +426,13 @@ public class TransformIT {
             verifyJobState(jobId);
 
             SessionExecuteSqlResult queryResult = session.executeSql("SELECT * FROM transform;");
-            int timeIndex = queryResult.getPaths().indexOf("transform.time");
+            int timeIndex = queryResult.getPaths().indexOf("transform.key");
             int sumIndex = queryResult.getPaths().indexOf("transform.sum");
             assertNotEquals(-1, timeIndex);
             assertNotEquals(-1, sumIndex);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName));
-            writer.write("time,sum\n");
+            writer.write("key,sum\n");
             for (List<Object> row : queryResult.getValues()) {
                 writer.write(row.get(timeIndex) + "," + row.get(sumIndex) + "\n");
             }
@@ -449,7 +450,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         int index = 0;
@@ -553,7 +554,7 @@ public class TransformIT {
         String line = reader.readLine();
         String[] parts = line.split(",");
 
-        assertEquals("time", parts[0]);
+        assertEquals(GlobalConstant.KEY_NAME, parts[0]);
         assertEquals("sum", parts[1]);
 
         line = reader.readLine();

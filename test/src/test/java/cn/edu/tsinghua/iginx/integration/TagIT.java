@@ -45,12 +45,12 @@ public class TagIT {
     @Before
     public void insertData() throws ExecutionException, SessionException {
         String[] insertStatements = (
-            "insert into ah.hr01 (time, s, v, s[t1=v1, t2=vv1], v[t1=v2, t2=vv1]) values (0, 1, 2, 3, 4), (1, 2, 3, 4, 5), (2, 3, 4, 5, 6), (3, 4, 5, 6, 7);\n" +
-            "insert into ah.hr02 (time, s, v) values (100, true, \"v1\");\n" +
-            "insert into ah.hr02[t1=v1] (time, s, v) values (400, false, \"v4\");\n" +
-            "insert into ah.hr02[t1=v1,t2=v2] (time, v) values (800, \"v8\");\n" +
-            "insert into ah.hr03 (time, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
-            "insert into ah.hr03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);"
+            "insert into ah.hr01 (key, s, v, s[t1=v1, t2=vv1], v[t1=v2, t2=vv1]) values (0, 1, 2, 3, 4), (1, 2, 3, 4, 5), (2, 3, 4, 5, 6), (3, 4, 5, 6, 7);\n" +
+            "insert into ah.hr02 (key, s, v) values (100, true, \"v1\");\n" +
+            "insert into ah.hr02[t1=v1] (key, s, v) values (400, false, \"v4\");\n" +
+            "insert into ah.hr02[t1=v1,t2=v2] (key, v) values (800, \"v8\");\n" +
+            "insert into ah.hr03 (key, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
+            "insert into ah.hr03 (key, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);"
         ).split("\n");
 
         for (String insertStatement : insertStatements) {
@@ -357,7 +357,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+-----------------------+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr01.v|ah.hr01.v{t1=v2,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr02.v|ah.hr02.v{t1=v1,t2=v2}|ah.hr02.v{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|ah.hr03.v{t1=v1}|ah.hr03.v{t1=vv11}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr01.v|ah.hr01.v{t1=v2,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr02.v|ah.hr02.v{t1=v1,t2=v2}|ah.hr02.v{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|ah.hr03.v{t1=v1}|ah.hr03.v{t1=vv11}|\n"
                         + "+----+---------+-----------------------+---------+-----------------------+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n"
                         + "|   0|        1|                      3|        2|                      4|     null|            null|     null|                  null|            null|                   null|                   null|            null|              null|\n"
                         + "|   1|        2|                      4|        3|                      5|     null|            null|     null|                  null|            null|                   null|                   null|            null|              null|\n"
@@ -379,7 +379,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -396,15 +396,15 @@ public class TagIT {
         statement = "SELECT s FROM ah.* WITHOUT TAG;";
         expected =
                 "ResultSets:\n"
-                        + "+----+---------+---------+\n"
-                        + "|Time|ah.hr01.s|ah.hr02.s|\n"
-                        + "+----+---------+---------+\n"
-                        + "|   0|        1|     null|\n"
-                        + "|   1|        2|     null|\n"
-                        + "|   2|        3|     null|\n"
-                        + "|   3|        4|     null|\n"
-                        + "| 100|     null|     true|\n"
-                        + "+----+---------+---------+\n"
+                        + "+---+---------+---------+\n"
+                        + "|key|ah.hr01.s|ah.hr02.s|\n"
+                        + "+---+---------+---------+\n"
+                        + "|  0|        1|     null|\n"
+                        + "|  1|        2|     null|\n"
+                        + "|  2|        3|     null|\n"
+                        + "|  3|        4|     null|\n"
+                        + "|100|     null|     true|\n"
+                        + "+---+---------+---------+\n"
                         + "Total line number = 5\n";
         executeAndCompare(statement, expected);
 
@@ -412,7 +412,7 @@ public class TagIT {
         expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------------+----------------+----------------+------------------+\n"
-                        + "|Time|ah.hr01.v|ah.hr01.v{t1=v2,t2=vv1}|ah.hr02.v|ah.hr02.v{t1=v1,t2=v2}|ah.hr02.v{t1=v1}|ah.hr03.v{t1=v1}|ah.hr03.v{t1=vv11}|\n"
+                        + "| key|ah.hr01.v|ah.hr01.v{t1=v2,t2=vv1}|ah.hr02.v|ah.hr02.v{t1=v1,t2=v2}|ah.hr02.v{t1=v1}|ah.hr03.v{t1=v1}|ah.hr03.v{t1=vv11}|\n"
                         + "+----+---------+-----------------------+---------+----------------------+----------------+----------------+------------------+\n"
                         + "|   0|        2|                      4|     null|                  null|            null|            null|              null|\n"
                         + "|   1|        3|                      5|     null|                  null|            null|            null|              null|\n"
@@ -430,15 +430,15 @@ public class TagIT {
         statement = "SELECT v FROM ah.* WITHOUT TAG;";
         expected =
                 "ResultSets:\n"
-                        + "+----+---------+---------+\n"
-                        + "|Time|ah.hr01.v|ah.hr02.v|\n"
-                        + "+----+---------+---------+\n"
-                        + "|   0|        2|     null|\n"
-                        + "|   1|        3|     null|\n"
-                        + "|   2|        4|     null|\n"
-                        + "|   3|        5|     null|\n"
-                        + "| 100|     null|       v1|\n"
-                        + "+----+---------+---------+\n"
+                        + "+---+---------+---------+\n"
+                        + "|key|ah.hr01.v|ah.hr02.v|\n"
+                        + "+---+---------+---------+\n"
+                        + "|  0|        2|     null|\n"
+                        + "|  1|        3|     null|\n"
+                        + "|  2|        4|     null|\n"
+                        + "|  3|        5|     null|\n"
+                        + "|100|     null|       v1|\n"
+                        + "+---+---------+---------+\n"
                         + "Total line number = 5\n";
         executeAndCompare(statement, expected);
     }
@@ -449,7 +449,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+-----------------------+----------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|\n"
+                        + "| key|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|\n"
                         + "+----+-----------------------+----------------+-----------------------+\n"
                         + "|   0|                      3|            null|                   null|\n"
                         + "|   1|                      4|            null|                   null|\n"
@@ -464,11 +464,11 @@ public class TagIT {
         statement = "SELECT s FROM ah.* with_precise t1=v1;";
         expected =
                 "ResultSets:\n"
-                        + "+----+----------------+\n"
-                        + "|Time|ah.hr02.s{t1=v1}|\n"
-                        + "+----+----------------+\n"
-                        + "| 400|           false|\n"
-                        + "+----+----------------+\n"
+                        + "+---+----------------+\n"
+                        + "|key|ah.hr02.s{t1=v1}|\n"
+                        + "+---+----------------+\n"
+                        + "|400|           false|\n"
+                        + "+---+----------------+\n"
                         + "Total line number = 1\n";
         executeAndCompare(statement, expected);
     }
@@ -479,7 +479,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+-----------------------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+-----------------------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|                      3|            null|                   null|                   null|\n"
                         + "|   1|                      4|            null|                   null|                   null|\n"
@@ -495,7 +495,7 @@ public class TagIT {
         statement = "SELECT s FROM ah.* with t1=v1 AND t2=vv2;";
         expected = "ResultSets:\n" +
                 "+----+-----------------------+\n" +
-                "|Time|ah.hr03.s{t1=v1,t2=vv2}|\n" +
+                "| key|ah.hr03.s{t1=v1,t2=vv2}|\n" +
                 "+----+-----------------------+\n" +
                 "|3200|                   true|\n" +
                 "+----+-----------------------+\n" +
@@ -506,7 +506,7 @@ public class TagIT {
         expected =
                 "ResultSets:\n"
                         + "+----+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+-----------------------+-----------------------+\n"
                         + "|1600|                   null|                   true|\n"
                         + "|3200|                   true|                   null|\n"
@@ -517,11 +517,11 @@ public class TagIT {
         statement = "SELECT s FROM ah.* with_precise t1=v1;";
         expected =
                 "ResultSets:\n"
-                        + "+----+----------------+\n"
-                        + "|Time|ah.hr02.s{t1=v1}|\n"
-                        + "+----+----------------+\n"
-                        + "| 400|           false|\n"
-                        + "+----+----------------+\n"
+                        + "+---+----------------+\n"
+                        + "|key|ah.hr02.s{t1=v1}|\n"
+                        + "+---+----------------+\n"
+                        + "|400|           false|\n"
+                        + "+---+----------------+\n"
                         + "Total line number = 1\n";
         executeAndCompare(statement, expected);
     }
@@ -532,7 +532,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -546,14 +546,14 @@ public class TagIT {
                         + "Total line number = 8\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
         expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -572,7 +572,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -586,14 +586,14 @@ public class TagIT {
                         + "Total line number = 8\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1 AND t2=vv2;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1 AND t2=vv2;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
         expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -606,14 +606,14 @@ public class TagIT {
                         + "Total line number = 7\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH_PRECISE t1=v1;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH_PRECISE t1=v1;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
         expected =
                 "ResultSets:\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
                         + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
@@ -625,21 +625,21 @@ public class TagIT {
                         + "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
-        statement = "DELETE FROM ah.*.s WHERE time > 10 WITH t1=v1 OR t2=v2;";
+        statement = "DELETE FROM ah.*.s WHERE key > 10 WITH t1=v1 OR t2=v2;";
         execute(statement);
 
         statement = "SELECT s FROM ah.*;";
         expected =
                 "ResultSets:\n"
-                        + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
-                        + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
-                        + "|   0|        1|                      3|     null|            null|                   null|                   null|\n"
-                        + "|   1|        2|                      4|     null|            null|                   null|                   null|\n"
-                        + "|   2|        3|                      5|     null|            null|                   null|                   null|\n"
-                        + "|   3|        4|                      6|     null|            null|                   null|                   null|\n"
-                        + "| 100|     null|                   null|     true|            null|                   null|                   null|\n"
-                        + "+----+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
+                        + "+---+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
+                        + "|key|ah.hr01.s|ah.hr01.s{t1=v1,t2=vv1}|ah.hr02.s|ah.hr02.s{t1=v1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "+---+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
+                        + "|  0|        1|                      3|     null|            null|                   null|                   null|\n"
+                        + "|  1|        2|                      4|     null|            null|                   null|                   null|\n"
+                        + "|  2|        3|                      5|     null|            null|                   null|                   null|\n"
+                        + "|  3|        4|                      6|     null|            null|                   null|                   null|\n"
+                        + "|100|     null|                   null|     true|            null|                   null|                   null|\n"
+                        + "+---+---------+-----------------------+---------+----------------+-----------------------+-----------------------+\n"
                         + "Total line number = 5\n";
         executeAndCompare(statement, expected);
 
@@ -695,10 +695,10 @@ public class TagIT {
 
         String showTimeSeriesData = "SELECT s FROM ah.* WITH t1=v1;";
         expected = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeriesData, expected);
 
@@ -726,11 +726,11 @@ public class TagIT {
         showTimeSeriesData = "SELECT v FROM ah.* WITH t1=v1;";
         expected =
                 "ResultSets:\n"
-                        + "+----+----------------------+\n"
-                        + "|Time|ah.hr02.v{t1=v1,t2=v2}|\n"
-                        + "+----+----------------------+\n"
-                        + "| 800|                    v8|\n"
-                        + "+----+----------------------+\n"
+                        + "+---+----------------------+\n"
+                        + "|key|ah.hr02.v{t1=v1,t2=v2}|\n"
+                        + "+---+----------------------+\n"
+                        + "|800|                    v8|\n"
+                        + "+---+----------------------+\n"
                         + "Total line number = 1\n";
         executeAndCompare(showTimeSeriesData, expected);
     }
@@ -787,10 +787,10 @@ public class TagIT {
 
         String showTimeSeriesData = "SELECT v FROM ah.* WITH t1=v1 AND t2=v2;";
         expected = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";;
         executeAndCompare(showTimeSeriesData, expected);
 
@@ -819,10 +819,10 @@ public class TagIT {
 
         showTimeSeriesData = "SELECT * FROM * WITH t1=v1 AND t2=vv2 OR t1=vv1 AND t2=v2;";
         expected = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";;
         executeAndCompare(showTimeSeriesData, expected);
     }
@@ -833,7 +833,7 @@ public class TagIT {
         String expected =
                 "ResultSets:\n"
                         + "+----+-----------------------+-----------------------+-----------------------+\n"
-                        + "|Time|ah.hr01.s{t1=v1,t2=vv1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
+                        + "| key|ah.hr01.s{t1=v1,t2=vv1}|ah.hr03.s{t1=v1,t2=vv2}|ah.hr03.s{t1=vv1,t2=v2}|\n"
                         + "+----+-----------------------+-----------------------+-----------------------+\n"
                         + "|   0|                      3|                   null|                   null|\n"
                         + "|   1|                      4|                   null|                   null|\n"
@@ -904,104 +904,104 @@ public class TagIT {
         String statement = "select last(s) from ah.hr01;";
         String expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   3|              ah.hr01.s|    4|\n"
-                        + "|   3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  3|              ah.hr01.s|    4|\n"
+                        + "|  3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "select last(v) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   3|              ah.hr01.v|    5|\n"
-                        + "|   3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  3|              ah.hr01.v|    5|\n"
+                        + "|  3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(s) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.s|    1|\n"
-                        + "|   0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.s|    1|\n"
+                        + "|  0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(v) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.v|    2|\n"
-                        + "|   0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.v|    2|\n"
+                        + "|  0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(s), last(v) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.s|    1|\n"
-                        + "|   0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
-                        + "|   3|              ah.hr01.v|    5|\n"
-                        + "|   3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.s|    1|\n"
+                        + "|  0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
+                        + "|  3|              ah.hr01.v|    5|\n"
+                        + "|  3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(v), last(s) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.v|    2|\n"
-                        + "|   0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
-                        + "|   3|              ah.hr01.s|    4|\n"
-                        + "|   3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.v|    2|\n"
+                        + "|  0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
+                        + "|  3|              ah.hr01.s|    4|\n"
+                        + "|  3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(v), last(v) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.v|    2|\n"
-                        + "|   0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
-                        + "|   3|              ah.hr01.v|    5|\n"
-                        + "|   3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.v|    2|\n"
+                        + "|  0|ah.hr01.v{t1=v2,t2=vv1}|    4|\n"
+                        + "|  3|              ah.hr01.v|    5|\n"
+                        + "|  3|ah.hr01.v{t1=v2,t2=vv1}|    7|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
         statement = "select first(s), last(s) from ah.hr01;";
         expected =
                 "ResultSets:\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|Time|                   path|value|\n"
-                        + "+----+-----------------------+-----+\n"
-                        + "|   0|              ah.hr01.s|    1|\n"
-                        + "|   0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
-                        + "|   3|              ah.hr01.s|    4|\n"
-                        + "|   3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
-                        + "+----+-----------------------+-----+\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|key|                   path|value|\n"
+                        + "+---+-----------------------+-----+\n"
+                        + "|  0|              ah.hr01.s|    1|\n"
+                        + "|  0|ah.hr01.s{t1=v1,t2=vv1}|    3|\n"
+                        + "|  3|              ah.hr01.s|    4|\n"
+                        + "|  3|ah.hr01.s{t1=v1,t2=vv1}|    6|\n"
+                        + "+---+-----------------------+-----+\n"
                         + "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
@@ -1086,7 +1086,7 @@ public class TagIT {
         expected =
                 "ResultSets:\n"
                         + "+----+------------------+-----+\n"
-                        + "|Time|              path|value|\n"
+                        + "| key|              path|value|\n"
                         + "+----+------------------+-----+\n"
                         + "|1600|ah.hr03.v{t1=vv11}|   16|\n"
                         + "|3200|  ah.hr03.v{t1=v1}|   16|\n"
@@ -1098,7 +1098,7 @@ public class TagIT {
         expected =
                 "ResultSets:\n"
                         + "+----+------------------+-----+\n"
-                        + "|Time|              path|value|\n"
+                        + "| key|              path|value|\n"
                         + "+----+------------------+-----+\n"
                         + "|3200|ah.hr03.v{t1=vv11}|   32|\n"
                         + "|3200|  ah.hr03.v{t1=v1}|   16|\n"
@@ -1188,34 +1188,34 @@ public class TagIT {
     public void testAlias() {
         String statement = "SELECT s AS ts FROM ah.hr02;";
         String expected = "ResultSets:\n" +
-                "+----+----+---------+\n" +
-                "|Time|  ts|ts{t1=v1}|\n" +
-                "+----+----+---------+\n" +
-                "| 100|true|     null|\n" +
-                "| 400|null|    false|\n" +
-                "+----+----+---------+\n" +
+                "+---+----+---------+\n" +
+                "|key|  ts|ts{t1=v1}|\n" +
+                "+---+----+---------+\n" +
+                "|100|true|     null|\n" +
+                "|400|null|    false|\n" +
+                "+---+----+---------+\n" +
                 "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s FROM ah.hr02 AS result_set;";
         expected = "ResultSets:\n" +
-                "+----+--------------------+---------------------------+\n" +
-                "|Time|result_set.ah.hr02.s|result_set.ah.hr02.s{t1=v1}|\n" +
-                "+----+--------------------+---------------------------+\n" +
-                "| 100|                true|                       null|\n" +
-                "| 400|                null|                      false|\n" +
-                "+----+--------------------+---------------------------+\n" +
+                "+---+--------------------+---------------------------+\n" +
+                "|key|result_set.ah.hr02.s|result_set.ah.hr02.s{t1=v1}|\n" +
+                "+---+--------------------+---------------------------+\n" +
+                "|100|                true|                       null|\n" +
+                "|400|                null|                      false|\n" +
+                "+---+--------------------+---------------------------+\n" +
                 "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "SELECT s AS ts FROM ah.hr02 AS result_set;";
         expected = "ResultSets:\n" +
-                "+----+-------------+--------------------+\n" +
-                "|Time|result_set.ts|result_set.ts{t1=v1}|\n" +
-                "+----+-------------+--------------------+\n" +
-                "| 100|         true|                null|\n" +
-                "| 400|         null|               false|\n" +
-                "+----+-------------+--------------------+\n" +
+                "+---+-------------+--------------------+\n" +
+                "|key|result_set.ts|result_set.ts{t1=v1}|\n" +
+                "+---+-------------+--------------------+\n" +
+                "|100|         true|                null|\n" +
+                "|400|         null|               false|\n" +
+                "+---+-------------+--------------------+\n" +
                 "Total line number = 2\n";
         executeAndCompare(statement, expected);
     }
@@ -1268,35 +1268,35 @@ public class TagIT {
         String query = "SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1;";
         String expected = "ResultSets:\n" +
                 "+----+-----------------+----------+\n" +
-                "|Time|ts1{t1=v1,t2=vv2}|ts2{t1=v1}|\n" +
+                "| key|ts1{t1=v1,t2=vv2}|ts2{t1=v1}|\n" +
                 "+----+-----------------+----------+\n" +
                 "|3200|             true|        16|\n" +
                 "+----+-----------------+----------+\n" +
                 "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        String insert = "INSERT INTO copy.ah.hr01(TIME, s, v) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
+        String insert = "INSERT INTO copy.ah.hr01(key, s, v) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr01;";
         expected =
                 "ResultSets:\n"
                         + "+----+----------------------------+---------------------+\n"
-                        + "|Time|copy.ah.hr01.s{t1=v1,t2=vv2}|copy.ah.hr01.v{t1=v1}|\n"
+                        + "| key|copy.ah.hr01.s{t1=v1,t2=vv2}|copy.ah.hr01.v{t1=v1}|\n"
                         + "+----+----------------------------+---------------------+\n"
                         + "|3200|                        true|                   16|\n"
                         + "+----+----------------------------+---------------------+\n"
                         + "Total line number = 1\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO copy.ah.hr02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
+        insert = "INSERT INTO copy.ah.hr02(key, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ah.hr03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ah.hr02;";
         expected =
                 "ResultSets:\n"
                         + "+----+----------------------------+---------------------------+\n"
-                        + "|Time|copy.ah.hr02.s{t1=v1,t2=vv2}|copy.ah.hr02.v{t1=v1,t2=v2}|\n"
+                        + "| key|copy.ah.hr02.s{t1=v1,t2=vv2}|copy.ah.hr02.v{t1=v1,t2=v2}|\n"
                         + "+----+----------------------------+---------------------------+\n"
                         + "|3200|                        true|                         16|\n"
                         + "+----+----------------------------+---------------------------+\n"
@@ -1315,10 +1315,10 @@ public class TagIT {
 
         String showTimeSeries = "SELECT * FROM *;";
         expected = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeries, expected);
     }

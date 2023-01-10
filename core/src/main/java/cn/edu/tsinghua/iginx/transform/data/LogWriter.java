@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.transform.data;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import java.util.ArrayList;
@@ -19,8 +20,8 @@ public class LogWriter extends ExportWriter {
         if (!hasWriteHeader) {
             Header header = batchData.getHeader();
             List<String> headerList = new ArrayList<>();
-            if (header.hasTimestamp()) {
-                headerList.add("time");
+            if (header.hasKey()) {
+                headerList.add(GlobalConstant.KEY_NAME);
             }
             header.getFields().forEach(field -> headerList.add(field.getFullName()));
             logger.info(String.join(",", headerList));

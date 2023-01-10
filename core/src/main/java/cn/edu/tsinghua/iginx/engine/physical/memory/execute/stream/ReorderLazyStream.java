@@ -63,7 +63,7 @@ public class ReorderLazyStream extends UnaryLazyStream {
                     });
                 }
             }
-            this.header = new Header(header.getTime(), targetFields);
+            this.header = new Header(header.getKey(), targetFields);
         }
         return this.header;
     }
@@ -85,8 +85,8 @@ public class ReorderLazyStream extends UnaryLazyStream {
             for (int i = 0; i < values.length; i++) {
                 values[i] = row.getValue(reorderMap.get(i));
             }
-            if (header.hasTimestamp()) {
-                return new Row(header, row.getTimestamp(), values);
+            if (header.hasKey()) {
+                return new Row(header, row.getKey(), values);
             } else {
                 return new Row(header, values);
             }

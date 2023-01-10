@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
@@ -38,8 +39,8 @@ public class RowUtils {
             values[i] = row.getValue(field);
         }
         Row targetRow;
-        if (targetHeader.hasTimestamp()) {
-            targetRow = new Row(targetHeader, row.getTimestamp(), values);
+        if (targetHeader.hasKey()) {
+            targetRow = new Row(targetHeader, row.getKey(), values);
         } else {
             targetRow = new Row(targetHeader, values);
         }
@@ -138,12 +139,12 @@ public class RowUtils {
     public static Header constructNewHead(Header headerA, Header headerB, String prefixA,
         String prefixB) {
         List<Field> fields = new ArrayList<>();
-        if (headerA.hasTimestamp()) {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        if (headerA.hasKey()) {
+            fields.add(new Field(prefixA + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         fields.addAll(headerA.getFields());
-        if (headerB.hasTimestamp()) {
-            fields.add(new Field(prefixB + ".key", DataType.LONG));
+        if (headerB.hasKey()) {
+            fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         fields.addAll(headerB.getFields());
         return new Header(fields);
@@ -156,13 +157,13 @@ public class RowUtils {
         int[] indexOfJoinColumnsInTable = new int[joinColumns.size()];
 
         List<Field> fields = new ArrayList<>();
-        if (headerA.hasTimestamp()) {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        if (headerA.hasKey()) {
+            fields.add(new Field(prefixA + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         if (cutRight) {
             fields.addAll(fieldsA);
-            if (headerB.hasTimestamp()) {
-                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            if (headerB.hasKey()) {
+                fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
             }
             int i = 0;
             flag:
@@ -187,8 +188,8 @@ public class RowUtils {
                 }
                 fields.add(fieldA);
             }
-            if (headerB.hasTimestamp()) {
-                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            if (headerB.hasKey()) {
+                fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
             }
             fields.addAll(fieldsB);
         }
@@ -199,21 +200,21 @@ public class RowUtils {
         boolean putLeft) {
 
         int size = halfRow.getValues().length + anotherRowSize;
-        if (halfRow.getHeader().hasTimestamp()) {
+        if (halfRow.getHeader().hasKey()) {
             size++;
         }
         Object[] valuesJoin = new Object[size];
 
         if (putLeft) {
-            if (halfRow.getHeader().hasTimestamp()) {
-                valuesJoin[0] = halfRow.getTimestamp();
+            if (halfRow.getHeader().hasKey()) {
+                valuesJoin[0] = halfRow.getKey();
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, 1, halfRow.getValues().length);
             } else {
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, 0, halfRow.getValues().length);
             }
         } else {
-            if (halfRow.getHeader().hasTimestamp()) {
-                valuesJoin[anotherRowSize] = halfRow.getTimestamp();
+            if (halfRow.getHeader().hasKey()) {
+                valuesJoin[anotherRowSize] = halfRow.getKey();
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize + 1, halfRow.getValues().length);
             } else {
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize, halfRow.getValues().length);
@@ -228,23 +229,23 @@ public class RowUtils {
 
         int size = valuesA.length + valuesB.length;
         int rowAStartIndex = 0, rowBStartIndex = valuesA.length;
-        if (rowA.getHeader().hasTimestamp()) {
+        if (rowA.getHeader().hasKey()) {
             size++;
             rowAStartIndex++;
             rowBStartIndex++;
         }
-        if (rowB.getHeader().hasTimestamp()) {
+        if (rowB.getHeader().hasKey()) {
             size++;
             rowBStartIndex++;
         }
 
         Object[] valuesJoin = new Object[size];
 
-        if (rowA.getHeader().hasTimestamp()) {
-            valuesJoin[0] = rowA.getTimestamp();
+        if (rowA.getHeader().hasKey()) {
+            valuesJoin[0] = rowA.getKey();
         }
-        if (rowB.getHeader().hasTimestamp()) {
-            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        if (rowB.getHeader().hasKey()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getKey();
         }
         System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);
         System.arraycopy(valuesB, 0, valuesJoin, rowBStartIndex, valuesB.length);
@@ -264,23 +265,23 @@ public class RowUtils {
             rowBStartIndex = valuesA.length - indexOfJoinColumnsInTable.length;
         }
 
-        if (rowA.getHeader().hasTimestamp()) {
+        if (rowA.getHeader().hasKey()) {
             size++;
             rowAStartIndex++;
             rowBStartIndex++;
         }
-        if (rowB.getHeader().hasTimestamp()) {
+        if (rowB.getHeader().hasKey()) {
             size++;
             rowBStartIndex++;
         }
 
         Object[] valuesJoin = new Object[size];
 
-        if (rowA.getHeader().hasTimestamp()) {
-            valuesJoin[0] = rowA.getTimestamp();
+        if (rowA.getHeader().hasKey()) {
+            valuesJoin[0] = rowA.getKey();
         }
-        if (rowB.getHeader().hasTimestamp()) {
-            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        if (rowB.getHeader().hasKey()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getKey();
         }
         if (cutRight) {
             System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);

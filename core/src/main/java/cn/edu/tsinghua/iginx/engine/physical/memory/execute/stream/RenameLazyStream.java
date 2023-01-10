@@ -47,7 +47,7 @@ public class RenameLazyStream extends UnaryLazyStream {
                 }
             });
 
-            this.header = new Header(header.getTime(), fields);
+            this.header = new Header(header.getKey(), fields);
         }
         return header;
     }
@@ -64,8 +64,8 @@ public class RenameLazyStream extends UnaryLazyStream {
         }
 
         Row row = stream.next();
-        if (header.hasTimestamp()) {
-            return new Row(header, row.getTimestamp(), row.getValues());
+        if (header.hasKey()) {
+            return new Row(header, row.getKey(), row.getValues());
         } else {
             return new Row(header, row.getValues());
         }

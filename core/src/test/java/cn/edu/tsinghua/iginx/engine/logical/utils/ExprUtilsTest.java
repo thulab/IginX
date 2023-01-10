@@ -27,8 +27,8 @@ class FilterTransformer {
                 return toString((NotFilter) filter);
             case Value:
                 return toString((ValueFilter) filter);
-            case Time:
-                return toString((TimeFilter) filter);
+            case Key:
+                return toString((KeyFilter) filter);
             default:
                 return "";
         }
@@ -42,7 +42,7 @@ class FilterTransformer {
         return "not " + filter.toString();
     }
 
-    private static String toString(TimeFilter filter) {
+    private static String toString(KeyFilter filter) {
         return "time " + Op.op2Str(filter.getOp()) + " " + filter.getValue();
     }
 

@@ -19,7 +19,6 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.tag.PreciseTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.WithoutTagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesRange;
 import cn.edu.tsinghua.iginx.parquet.exec.Executor;
 import cn.edu.tsinghua.iginx.parquet.thrift.DeleteReq;
@@ -98,7 +97,7 @@ public class ParquetWorker implements ParquetService.Iface {
         List<Map<String, String>> tagsList = new ArrayList<>();
         boolean hasTime;
         try {
-            hasTime = rowStream.getHeader().hasTimestamp();
+            hasTime = rowStream.getHeader().hasKey();
             rowStream.getHeader().getFields().forEach(field -> {
                 names.add(field.getName());
                 types.add(field.getType().toString());
@@ -127,7 +126,7 @@ public class ParquetWorker implements ParquetService.Iface {
                     ByteUtils.getRowByteBuffer(rowValues, dataTypes),
                     ByteBuffer.wrap(bitmap.getBytes()));
                 if (hasTime) {
-                    parquetRow.setTimestamp(row.getTimestamp());
+                    parquetRow.setTimestamp(row.getKey());
                 }
                 parquetRows.add(parquetRow);
             }
@@ -180,14 +179,14 @@ public class ParquetWorker implements ParquetService.Iface {
                 0,
                 rawData.getPaths().size(),
                 0,
-                rawData.getTimestamps().size());
+                rawData.getKeys().size());
         } else {
             dataView = new ColumnDataView(
                 rawData,
                 0,
                 rawData.getPaths().size(),
                 0,
-                rawData.getTimestamps().size());
+                rawData.getKeys().size());
         }
 
         TaskExecuteResult result = executor.executeInsertTask(dataView, req.getStorageUnit());

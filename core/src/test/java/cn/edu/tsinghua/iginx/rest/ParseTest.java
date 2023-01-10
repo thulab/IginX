@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.rest;
 
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
@@ -12,7 +11,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.*;
@@ -178,7 +176,7 @@ public class ParseTest {
         }
         JsonNode tim = node.get("timestamp"), val = node.get("value");
         if (tim != null && val != null) {
-            ret.addTimestamp(tim.asLong());
+            ret.addKey(tim.asLong());
             ret.addValue(val.asText());
         }
         JsonNode dp = node.get("datapoints");
@@ -186,9 +184,9 @@ public class ParseTest {
             if (dp.isArray()) {
                 for (JsonNode dpnode : dp) {
                     if (isAnnotation) {
-                        ret.addTimestamp(dpnode.asLong());
+                        ret.addKey(dpnode.asLong());
                     } else if (dpnode.isArray()) {
-                        ret.addTimestamp(dpnode.get(0).asLong());
+                        ret.addKey(dpnode.get(0).asLong());
                         ret.addValue(dpnode.get(1).asText());
                     }
                 }
@@ -271,12 +269,12 @@ public class ParseTest {
                     Long time0 = 1359788400000L;
                     Long time1 = 1359788300000L;
                     Long time2 = 1359788410000L;
-                    assertEquals(metric.getTimestamps().get(0), time0);
-                    assertEquals(metric.getTimestamps().get(1), time1);
-                    assertEquals(metric.getTimestamps().get(2), time2);
+                    assertEquals(metric.getKeys().get(0), time0);
+                    assertEquals(metric.getKeys().get(1), time1);
+                    assertEquals(metric.getKeys().get(2), time2);
                 }else{
                     Long time0 = 1359786400000L;
-                    assertEquals(metric.getTimestamps().get(0), time0);
+                    assertEquals(metric.getKeys().get(0), time0);
                 }
                 pos++;
             }

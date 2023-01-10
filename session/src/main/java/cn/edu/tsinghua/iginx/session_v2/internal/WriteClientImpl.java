@@ -82,7 +82,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
                 throw new IllegalArgumentException("measurement " + measurement + " has multi data type, which is invalid.");
             }
             measurementMap.putIfAbsent(measurement, dataType);
-            timestampSet.add(point.getTimestamp());
+            timestampSet.add(point.getKey());
         }
         List<String> measurements = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
@@ -107,7 +107,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         }
         for (Point point : points) {
             String measurement = point.getFullName();
-            long timestamp = point.getTimestamp();
+            long timestamp = point.getKey();
             int measurementIndex = measurementIndexMap.get(measurement);
             int timestampIndex = timestampIndexMap.get(timestamp);
             valuesList[measurementIndex][timestampIndex] = point.getValue();
@@ -165,7 +165,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
 
         SortedMap<Long, Object[]> valuesMap = new TreeMap<>();
         for (Record record : records) {
-            long timestamp = record.getTimestamp();
+            long timestamp = record.getKey();
             Object[] values = valuesMap.getOrDefault(timestamp, new Object[measurements.size()]);
             for (int i = 0; i < record.getValues().size(); i++) {
                 String measurement = record.getFullName(i);
@@ -223,7 +223,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         long[] timestamps = new long[table.getLength()];
         Object[][] valuesList = new Object[table.getLength()][];
         for (int i = 0; i < table.getLength(); i++) {
-            timestamps[i] = table.getTimestamp(i);
+            timestamps[i] = table.getKey(i);
             valuesList[i] = table.getValues(i);
         }
         List<String> measurements = table.getMeasurements();

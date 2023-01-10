@@ -62,6 +62,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             insertStatement.setGlobalTags(globalTags);
         }
         // parse paths
+        Set<Pair<String, Map<String, String>>> columnsSet = new HashSet<>();
         ctx.insertColumnsSpec().insertPath().forEach(e -> {
             String path = e.path().getText();
             Map<String, String> tags;
@@ -72,6 +73,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                 tags = parseTagList(e.tagList());
             } else {
                 tags = insertStatement.getGlobalTags();
+            }
+            if (!columnsSet.add(new Pair<>(path, tags))) {
+                throw new SQLParserException("Insert statements should not contain duplicate paths.");
             }
             insertStatement.setPath(path, tags);
         });
@@ -509,8 +513,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         selectStatement.setHasSlideWindow(false);
 
         // merge value filter and group time range filter
-        TimeFilter startTime = new TimeFilter(Op.GE, timeInterval.k);
-        TimeFilter endTime = new TimeFilter(Op.L, timeInterval.v);
+        KeyFilter startTime = new KeyFilter(Op.GE, timeInterval.k);
+        KeyFilter endTime = new KeyFilter(Op.L, timeInterval.v);
         Filter mergedFilter;
         if (selectStatement.hasValueFilter()) {
             mergedFilter = new AndFilter(new ArrayList<>(Arrays.asList(selectStatement.getFilter(), startTime, endTime)));
@@ -567,7 +571,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             }
             selectStatement.setOrderByPath(orderByPath);
         } else {
-            selectStatement.setOrderByPath(SQLConstant.TIME);
+            selectStatement.setOrderByPath(SQLConstant.KEY);
         }
         if (ctx.DESC() != null) {
             selectStatement.setAscending(false);
@@ -691,7 +695,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
             if (ctx.path().size() == 0) {
-                return parseTimeFilter(ctx);
+                return parseKeyFilter(ctx);
             } else {
                 StatementType type = statement.getType();
                 if (type != StatementType.SELECT) {
@@ -709,14 +713,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
-    private TimeFilter parseTimeFilter(PredicateContext ctx) {
+    private KeyFilter parseKeyFilter(PredicateContext ctx) {
         Op op = Op.str2Op(ctx.comparisonOperator().getText());
-        // deal with sub clause like 100 < time
+        // deal with sub clause like 100 < key
         if (ctx.children.get(0) instanceof ConstantContext) {
             op = Op.getDirectionOpposite(op);
         }
         long time = (long) parseValue(ctx.constant());
-        return new TimeFilter(op, time);
+        return new KeyFilter(op, time);
     }
 
     private Filter parseValueFilter(PredicateContext ctx, SelectStatement statement) {

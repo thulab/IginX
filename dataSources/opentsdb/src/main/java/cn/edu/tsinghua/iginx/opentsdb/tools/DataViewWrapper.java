@@ -68,7 +68,7 @@ public class DataViewWrapper {
     }
 
     public Long getTimestamp(int index) {
-        return dataView.getTimestamp(index);
+        return dataView.getKey(index);
     }
 
     public Object getValue(int index1, int index2) {

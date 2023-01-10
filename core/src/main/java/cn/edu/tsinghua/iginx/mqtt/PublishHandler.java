@@ -77,8 +77,8 @@ public class PublishHandler extends AbstractInterceptHandler {
 
         // 重排序数据，并过滤空事件
         events = events.stream().filter(Objects::nonNull).sorted((o1, o2) -> {
-            if (o1.getTimestamp() != o2.getTimestamp()) {
-                return Long.compare(o1.getTimestamp(), o2.getTimestamp());
+            if (o1.getKey() != o2.getKey()) {
+                return Long.compare(o1.getKey(), o2.getKey());
             }
             return o1.getPath().compareTo(o2.getPath());
         }).collect(Collectors.toList());
@@ -109,8 +109,8 @@ public class PublishHandler extends AbstractInterceptHandler {
         List<ByteBuffer> valuesList = new ArrayList<>();
         int from = 0, to = 0;
         while (from < events.size()) {
-            long timestamp = events.get(from).getTimestamp();
-            while (to < events.size() && events.get(to).getTimestamp() == timestamp) {
+            long timestamp = events.get(from).getKey();
+            while (to < events.size() && events.get(to).getKey() == timestamp) {
                 to++;
             }
             timestamps.add(timestamp);

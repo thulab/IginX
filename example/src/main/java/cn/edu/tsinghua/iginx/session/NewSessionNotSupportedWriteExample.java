@@ -55,7 +55,7 @@ public class NewSessionNotSupportedWriteExample {
         // 写入一些有相同时间戳的数据点
         writeClient.writeRecord(
                 Record.builder()
-                        .timestamp(System.currentTimeMillis())
+                        .key(System.currentTimeMillis())
                         .measurement("a.b")
                         .addIntField("a", 100)
                         .addLongField("b", 1000L)
@@ -73,11 +73,11 @@ public class NewSessionNotSupportedWriteExample {
                         .measurement("a.c")
                         .addField("a", DataType.INTEGER)
                         .addField("b", DataType.LONG) // 设置二维表中有哪些列
-                        .timestamp(System.currentTimeMillis()) // 设置第一行的时间戳
+                        .key(System.currentTimeMillis()) // 设置第一行的时间戳
                         .intValue("a", 1000) // 为第一行追加数据
                         .longValue("b", 232333L) // 为第一行追加数据
                         .next() // 开启新的一行
-                        .timestamp(System.currentTimeMillis() + 1000) // 设置第二行时间戳
+                        .key(System.currentTimeMillis() + 1000) // 设置第二行时间戳
                         .value("b", 200000L) // 为第二行追加数据
                         .build()
         );

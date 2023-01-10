@@ -20,14 +20,14 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 import java.util.Objects;
 
-public class TimeFilter implements Filter {
+public class KeyFilter implements Filter {
 
-    private final FilterType type = FilterType.Time;
+    private final FilterType type = FilterType.Key;
 
     private final long value;
     private Op op;
 
-    public TimeFilter(Op op, long value) {
+    public KeyFilter(Op op, long value) {
         this.op = op;
         this.value = value;
     }
@@ -56,12 +56,12 @@ public class TimeFilter implements Filter {
 
     @Override
     public Filter copy() {
-        return new TimeFilter(op, value);
+        return new KeyFilter(op, value);
     }
 
     @Override
     public String toString() {
-        return "time " + Op.op2Str(op) + " " + value;
+        return "key " + Op.op2Str(op) + " " + value;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class TimeFilter implements Filter {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        TimeFilter that = (TimeFilter) o;
+        KeyFilter that = (KeyFilter) o;
         return value == that.value && type == that.type && op == that.op;
     }
 

@@ -23,7 +23,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.KeyFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
 import java.util.stream.Collectors;
 
@@ -44,8 +44,8 @@ public class FilterTransformer {
                 return toString((NotFilter) filter);
             case Value:
                 return toString((ValueFilter) filter);
-            case Time:
-                return toString((TimeFilter) filter);
+            case Key:
+                return toString((KeyFilter) filter);
             default:
                 return "";
         }
@@ -59,7 +59,7 @@ public class FilterTransformer {
         return "not " + filter.toString();
     }
 
-    private static String toString(TimeFilter filter) {
+    private static String toString(KeyFilter filter) {
         return "time " + Op.op2Str(filter.getOp()) + " to_timestamp(" + Math.min(filter.getValue(), MAX_TIMESTAMP) + ")";
     }
 

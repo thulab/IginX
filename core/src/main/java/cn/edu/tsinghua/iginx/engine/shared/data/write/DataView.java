@@ -31,16 +31,16 @@ public abstract class DataView {
 
     protected final int endPathIndex;
 
-    protected final int startTimeIndex;
+    protected final int startKeyIndex;
 
-    protected final int endTimeIndex;
+    protected final int endKeyIndex;
 
-    public DataView(RawData data, int startPathIndex, int endPathIndex, int startTimeIndex, int endTimeIndex) {
+    public DataView(RawData data, int startPathIndex, int endPathIndex, int startKeyIndex, int endKeyIndex) {
         this.data = data;
         this.startPathIndex = startPathIndex;
         this.endPathIndex = endPathIndex;
-        this.startTimeIndex = startTimeIndex;
-        this.endTimeIndex = endTimeIndex;
+        this.startKeyIndex = startKeyIndex;
+        this.endKeyIndex = endKeyIndex;
     }
 
     protected void checkPathIndexRange(int index) {
@@ -54,8 +54,9 @@ public abstract class DataView {
     }
 
     protected void checkTimeIndexRange(int index) {
-        if (index < 0 || index >= endTimeIndex - startTimeIndex)
-            throw new IllegalArgumentException(String.format("time index out of range [%d, %d)", 0, endTimeIndex - startTimeIndex));
+        if (index < 0 || index >= endKeyIndex - startKeyIndex)
+            throw new IllegalArgumentException(String.format("time index out of range [%d, %d)", 0, endKeyIndex
+                - startKeyIndex));
     }
 
     public int getPathNum() {
@@ -63,7 +64,7 @@ public abstract class DataView {
     }
 
     public int getTimeSize() {
-        return endTimeIndex - startTimeIndex;
+        return endKeyIndex - startKeyIndex;
     }
 
     public boolean isRowData() {
@@ -92,13 +93,14 @@ public abstract class DataView {
         return data.getDataTypeList().get(startPathIndex + index);
     }
 
-    public int getTimestampIndex(long timestamp) {
-        return data.getTimestamps().contains(timestamp) ? data.getTimestamps().indexOf(timestamp) - startTimeIndex : -1;
+    public int getKeyIndex(long timestamp) {
+        return data.getKeys().contains(timestamp) ? data.getKeys().indexOf(timestamp) - startKeyIndex
+            : -1;
     }
 
-    public Long getTimestamp(int index) {
+    public Long getKey(int index) {
         checkTimeIndexRange(index);
-        return data.getTimestamps().get(startTimeIndex + index);
+        return data.getKeys().get(startKeyIndex + index);
     }
 
     public abstract Object getValue(int index1, int index2);

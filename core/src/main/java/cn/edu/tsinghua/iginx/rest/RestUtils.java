@@ -14,7 +14,7 @@ public class RestUtils {
     public static final String ANNOTAIONSEQUENCE = "TITLE.DESCRIPTION";
 
     public static DataType checkType(SessionQueryDataSet sessionQueryDataSet) {
-        int n = sessionQueryDataSet.getTimestamps().length;
+        int n = sessionQueryDataSet.getKeys().length;
         int m = sessionQueryDataSet.getPaths().size();
         int ret = 0;
         for (int i = 0; i < n; i++) {

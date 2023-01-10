@@ -23,7 +23,7 @@ public class ParquetServerExample {
 
         // local insert
         session1.executeSql(
-            "INSERT INTO test(TIME, s1, s2, s3) VALUES "
+            "INSERT INTO test(key, s1, s2, s3) VALUES "
                 + "(1, 1, 1.5, \"test1\"), "
                 + "(2, 2, 2.5, \"test2\"), "
                 + "(3, 3, 3.5, \"test3\"), "
@@ -54,7 +54,7 @@ public class ParquetServerExample {
         System.out.println("================================");
 
         // remote delete data and local query
-        session2.executeSql("DELETE FROM test.s3 WHERE time > 3");
+        session2.executeSql("DELETE FROM test.s3 WHERE key > 3");
 
         result1 = session1.executeSql("SELECT * FROM test");
         result1.print(false, "");
@@ -72,7 +72,7 @@ public class ParquetServerExample {
 
         System.out.println("================================");
 
-        session2.executeSql("INSERT INTO test(TIME, s4, s5) VALUES "
+        session2.executeSql("INSERT INTO test(key, s4, s5) VALUES "
             + "(6, 6.1, \"test6\"), "
             + "(7, 7.1, \"test7\"), "
             + "(8, 8.1, \"test8\")"
