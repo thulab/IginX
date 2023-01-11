@@ -338,7 +338,7 @@ jobs:
         with:
           Test-Way: extraDataWrite
 
-      - name: data prefix IT
+      - name: Remove History DataSource IT
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
             mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#testRemoveHistoryDataSource -DfailIfNoTests=false

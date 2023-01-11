@@ -43,9 +43,9 @@ public final class StorageEngineMeta implements Cloneable {
 
     private final String schemaPrefix;
 
-    private String dataPrefix;
+    private final String dataPrefix;
 
-    private boolean hasData;
+    private final boolean hasData;
 
     private StorageUnitMeta dummyStorageUnit;
 
@@ -199,14 +199,6 @@ public final class StorageEngineMeta implements Cloneable {
 
     public void setDummyFragment(FragmentMeta dummyFragment) {
         this.dummyFragment = dummyFragment;
-    }
-
-    public void setHasData(boolean hasData) {
-        this.hasData = hasData;
-    }
-
-    public void setDataPrefix(String dataPrefix) {
-        this.dataPrefix = dataPrefix;
     }
 
     public long getCreatedBy() {

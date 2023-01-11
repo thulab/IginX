@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
@@ -33,6 +34,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -335,6 +337,9 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngineMeta) {
+        if (getStorageEngine(storageID) == null) {
+            return false;
+        }
         try {
             storageEngineMeta.setId(storageID);
             storage.updateStorageEngine(storageID, storageEngineMeta); // 如果删除成功，则后续更新对应的 dummyFragament 的元数据

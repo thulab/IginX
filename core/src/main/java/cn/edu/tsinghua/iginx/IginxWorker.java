@@ -191,28 +191,34 @@ public class IginxWorker implements IService.Iface {
         }
         Status status = RpcUtils.SUCCESS;
         long dummyStorageId = req.getDummyStorageId();
-        StorageEngineMeta storageEngineMeta = metaManager.getStorageEngine(dummyStorageId);
-        if (storageEngineMeta == null || storageEngineMeta.getDummyFragment() == null || storageEngineMeta.getDummyStorageUnit() == null) {
+        StorageEngineMeta meta = metaManager.getStorageEngine(dummyStorageId);
+        if (meta == null || meta.getDummyFragment() == null || meta.getDummyStorageUnit() == null) {
             status = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
             status.setMessage("storage engine is not exists.");
             return status;
         }
         try {
             // 设置对应的 dummyFragament 为 invalid 状态
-            storageEngineMeta.getDummyFragment().setIfValid(false);
-            storageEngineMeta.getDummyStorageUnit().setIfValid(false);
+            meta.getDummyFragment().setIfValid(false);
+            meta.getDummyStorageUnit().setIfValid(false);
 
-            // 阻塞对应线程处理
             // 修改需要更新的元数据信息 extraParams中的 has_data属性需要修改
-            StorageEngineMeta newMeta = storageEngineMeta.clone();
-            FragmentMeta dummyfragment = storageEngineMeta.getDummyFragment();
-            StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
-            String dataPrefix = storageEngineMeta.getDataPrefix();
-            newMeta.setDummyFragment(null);
-
-            newMeta.setDummyStorageUnit(null);
-            newMeta.setDataPrefix(null);
-            newMeta.setHasData(false);
+            StorageEngineMeta newMeta = new StorageEngineMeta(
+                    meta.getId(),
+                    meta.getIp(),
+                    meta.getPort(),
+                    false,
+                    null,
+                    null,
+                    meta.isReadOnly(),
+                    null,
+                    null,
+                    meta.getExtraParams(),
+                    meta.getStorageEngine(),
+                    meta.getStorageUnitList(),
+                    meta.getCreatedBy(),
+                    meta.isNeedReAllocate()
+            );
 
             // 更新 zk 上元数据信息，以及 iginx 上元数据信息
             if (!metaManager.updateStorageEngine(dummyStorageId, newMeta)) {
@@ -220,14 +226,6 @@ public class IginxWorker implements IService.Iface {
                 status.setMessage("unexpected error during storage update");
             }
 
-            // 如果失败，则复原
-            if (status == RpcUtils.FAILURE) {
-                storageEngineMeta.setDummyFragment(dummyfragment);
-                storageEngineMeta.setDummyStorageUnit(dummyStorageUnit);
-                storageEngineMeta.setHasData(true);
-                storageEngineMeta.setDataPrefix(dataPrefix);
-                metaManager.updateStorageEngine(dummyStorageId, storageEngineMeta);
-            }
             return status;
         } catch (Exception e) {
             logger.error("unexpected error during storage migration: ", e);

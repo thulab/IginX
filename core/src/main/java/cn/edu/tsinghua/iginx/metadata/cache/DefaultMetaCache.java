@@ -574,10 +574,11 @@ public class DefaultMetaCache implements IMetaCache {
         storageUnitLock.writeLock().lock();
         fragmentLock.writeLock().lock();
 
-        if (!storageEngineMetaMap.containsKey(storageEngineMeta.getId())) {
+        if (!storageEngineMetaMap.containsKey(storageID)) {
             logger.error("No corresponding storage engine needs to be updated");
             return false;
         }
+        String dummyStorageUnitID = String.format(Constants.DUMMY + "%04d", (int) storageID);
         boolean ifOriHasData = storageEngineMetaMap.get(storageID).isHasData();
         if (storageEngineMeta.isHasData()) { // 设置相关元数据信息
             StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
@@ -585,10 +586,13 @@ public class DefaultMetaCache implements IMetaCache {
             dummyFragment.setMasterStorageUnit(dummyStorageUnit);
             dummyStorageUnitMetaMap.put(dummyStorageUnit.getId(), dummyStorageUnit);
             if (ifOriHasData) { // 更新 dummyFragments 数据
-                dummyFragments.removeIf(e -> e.getMasterStorageUnitId().equals(String.format(Constants.DUMMY + "%04d", (int) storageID)));
+                dummyFragments.removeIf(e -> e.getMasterStorageUnitId().equals(dummyStorageUnitID));
             } else {
                 dummyFragments.add(dummyFragment);
             }
+        } else if (ifOriHasData) { // 原来没有，则移除
+            dummyFragments.removeIf(e -> e.getMasterStorageUnitId().equals(dummyStorageUnitID));
+            dummyStorageUnitMetaMap.remove(dummyStorageUnitID);
         }
         storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
 
