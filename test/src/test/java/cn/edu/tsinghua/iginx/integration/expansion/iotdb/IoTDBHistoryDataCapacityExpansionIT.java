@@ -546,10 +546,10 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
         session.removeHistoryDataSource(1);
         statement = "select * from test";
         expect = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
                 "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
