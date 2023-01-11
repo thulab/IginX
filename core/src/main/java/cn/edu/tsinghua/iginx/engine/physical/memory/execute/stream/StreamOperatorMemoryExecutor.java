@@ -59,6 +59,8 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeRename((Rename) operator, stream);
             case Reorder:
                 return executeReorder((Reorder) operator, stream);
+            case AddSchemaPrefix:
+                return executeAddSchemaPrefix((AddSchemaPrefix) operator, stream);
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -126,6 +128,10 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeReorder(Reorder reorder, RowStream stream) {
         return new ReorderLazyStream(reorder, stream);
+    }
+
+    private RowStream executeAddSchemaPrefix(AddSchemaPrefix addSchemaPrefix, RowStream stream) {
+        return new AddSchemaPrefixLazyStream(addSchemaPrefix, stream);
     }
 
     private RowStream executeJoin(Join join, RowStream streamA, RowStream streamB) throws PhysicalException {

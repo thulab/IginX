@@ -55,7 +55,7 @@ public class StringUtils {
      * @param border  前缀式时间范围
      */
     public static int compare(String ts, String border) {
-        if (ts.indexOf(border) == 0) {
+        if (ts.indexOf(border) == 0 || ts.equals("*.*")) {
             return 0;
         }
         else

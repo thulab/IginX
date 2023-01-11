@@ -79,6 +79,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeRename((Rename) operator, transformToTable(stream));
             case Reorder:
                 return executeReorder((Reorder) operator, transformToTable(stream));
+            case AddSchemaPrefix:
+                return executeAddSchemaPrefix((AddSchemaPrefix) operator, transformToTable(stream));
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -315,6 +317,32 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             } else {
                 fields.add(new Field(alias, field.getType(), field.getTags()));
             }
+        });
+
+        Header newHeader = new Header(header.getKey(), fields);
+
+        List<Row> rows = new ArrayList<>();
+        table.getRows().forEach(row -> {
+            if (newHeader.hasKey()) {
+                rows.add(new Row(newHeader, row.getKey(), row.getValues()));
+            } else {
+                rows.add(new Row(newHeader, row.getValues()));
+            }
+        });
+
+        return new Table(newHeader, rows);
+    }
+
+    private RowStream executeAddSchemaPrefix(AddSchemaPrefix addSchemaPrefix, Table table) throws PhysicalException {
+        Header header = table.getHeader();
+        String schemaPrefix = addSchemaPrefix.getSchemaPrefix();
+
+        List<Field> fields = new ArrayList<>();
+        header.getFields().forEach(field -> {
+            if (schemaPrefix != null)
+                fields.add(new Field(schemaPrefix + "." + field.getFullName(), field.getType(), field.getTags()));
+            else
+                fields.add(new Field(field.getFullName(), field.getType(), field.getTags()));
         });
 
         Header newHeader = new Header(header.getKey(), fields);

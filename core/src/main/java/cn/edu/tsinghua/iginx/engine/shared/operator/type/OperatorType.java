@@ -41,6 +41,7 @@ public enum OperatorType {
     Rename,
 
     Reorder,
+    AddSchemaPrefix,
 
     Delete,
     Insert,
@@ -55,7 +56,7 @@ public enum OperatorType {
     }
 
     public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert || op == Rename || op == Reorder;
+        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert || op == Rename || op == Reorder || op == AddSchemaPrefix;
     }
 
     public static boolean isMultipleOperator(OperatorType op) {
