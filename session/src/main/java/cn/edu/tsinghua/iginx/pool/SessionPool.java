@@ -46,27 +46,27 @@ public class SessionPool {
     // whether the queue is closed.
     private boolean closed;
 
-    public SessionPool(String host, int port) {
+    public SessionPool(String host, int port) throws SessionException {
         this(host, port, USERNAME, PASSWORD, MAXSIZE);
     }
 
-    public SessionPool(String host, String port) {
+    public SessionPool(String host, String port) throws SessionException {
         this(host, port, USERNAME, PASSWORD);
     }
 
-    public SessionPool(String host, String portString, String username, String password) {
+    public SessionPool(String host, String portString, String username, String password) throws SessionException {
         this(host, Integer.parseInt(portString), username, password, MAXSIZE);
     }
 
-    public SessionPool(String host, String portString, String username, String password, int maxsize) {
+    public SessionPool(String host, String portString, String username, String password, int maxsize) throws SessionException {
         this(host, Integer.parseInt(portString), username, password, maxsize);
     }
 
-    public SessionPool(String host, String portString, String username, String password, int maxsize, long waitToGetSessionTimeoutInMs) {
+    public SessionPool(String host, String portString, String username, String password, int maxsize, long waitToGetSessionTimeoutInMs) throws SessionException {
         this(host, Integer.parseInt(portString), username, password, maxsize, waitToGetSessionTimeoutInMs);
     }
 
-    public SessionPool(String host, int port, String user, String password, int maxSize) {
+    public SessionPool(String host, int port, String user, String password, int maxSize) throws SessionException {
         this(
             host,
             port,
@@ -82,13 +82,18 @@ public class SessionPool {
             String user,
             String password,
             int maxSize,
-            long waitToGetSessionTimeoutInMs) {
+            long waitToGetSessionTimeoutInMs) throws SessionException {
         this.maxSize = maxSize;
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
         this.waitToGetSessionTimeoutInMs = waitToGetSessionTimeoutInMs;
+
+        if (maxSize <=0) {
+            logger.error("session pool maxSize value invalid");
+            throw new SessionException("session pool maxSize value invalid");
+        }
     }
 
     private Session constructNewSession() {
@@ -1097,7 +1102,7 @@ public class SessionPool {
             return this;
         }
 
-        public SessionPool build() {
+        public SessionPool build() throws SessionException {
             return new SessionPool(
                     host,
                     port,

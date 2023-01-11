@@ -27,7 +27,7 @@ public class IoTDBSessionPoolExample {
 
     private static SessionPool sessionPool;
 
-    private static void constructCustomSessionPool() {
+    private static void constructCustomSessionPool() throws SessionException {
         sessionPool =
                 new SessionPool.Builder()
                         .host("127.0.0.1")
