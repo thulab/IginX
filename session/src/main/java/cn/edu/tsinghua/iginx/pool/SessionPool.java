@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 
+import static java.lang.Math.max;
+
 public class SessionPool {
     private static final Logger logger = LoggerFactory.getLogger(SessionPool.class);
     public static final String SESSION_POOL_IS_CLOSED = "Session pool is closed";
@@ -46,27 +48,27 @@ public class SessionPool {
     // whether the queue is closed.
     private boolean closed;
 
-    public SessionPool(String host, int port) throws SessionException {
+    public SessionPool(String host, int port) {
         this(host, port, USERNAME, PASSWORD, MAXSIZE);
     }
 
-    public SessionPool(String host, String port) throws SessionException {
+    public SessionPool(String host, String port) {
         this(host, port, USERNAME, PASSWORD);
     }
 
-    public SessionPool(String host, String portString, String username, String password) throws SessionException {
+    public SessionPool(String host, String portString, String username, String password) {
         this(host, Integer.parseInt(portString), username, password, MAXSIZE);
     }
 
-    public SessionPool(String host, String portString, String username, String password, int maxsize) throws SessionException {
+    public SessionPool(String host, String portString, String username, String password, int maxsize) {
         this(host, Integer.parseInt(portString), username, password, maxsize);
     }
 
-    public SessionPool(String host, String portString, String username, String password, int maxsize, long waitToGetSessionTimeoutInMs) throws SessionException {
+    public SessionPool(String host, String portString, String username, String password, int maxsize, long waitToGetSessionTimeoutInMs) {
         this(host, Integer.parseInt(portString), username, password, maxsize, waitToGetSessionTimeoutInMs);
     }
 
-    public SessionPool(String host, int port, String user, String password, int maxSize) throws SessionException {
+    public SessionPool(String host, int port, String user, String password, int maxSize) {
         this(
             host,
             port,
@@ -82,18 +84,13 @@ public class SessionPool {
             String user,
             String password,
             int maxSize,
-            long waitToGetSessionTimeoutInMs) throws SessionException {
-        this.maxSize = maxSize;
+            long waitToGetSessionTimeoutInMs) {
+        this.maxSize = max(maxSize,0);
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
         this.waitToGetSessionTimeoutInMs = waitToGetSessionTimeoutInMs;
-
-        if (maxSize <=0) {
-            logger.error("session pool maxSize value invalid");
-            throw new SessionException("session pool maxSize value invalid");
-        }
     }
 
     private Session constructNewSession() {
@@ -1102,7 +1099,7 @@ public class SessionPool {
             return this;
         }
 
-        public SessionPool build() throws SessionException {
+        public SessionPool build() {
             return new SessionPool(
                     host,
                     port,

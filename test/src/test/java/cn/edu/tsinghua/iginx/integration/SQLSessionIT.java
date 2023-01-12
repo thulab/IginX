@@ -53,17 +53,13 @@ public abstract class SQLSessionIT {
             session = new MultiConnection(
                 new Session(defaultTestHost, defaultTestPort, defaultTestUser, defaultTestPass));
         } else if (isForSessionPool) {
-            try {
-                session = new MultiConnection(new SessionPool.Builder()
-                    .host(defaultTestHost)
-                    .port(defaultTestPort)
-                    .user(defaultTestUser)
-                    .password(defaultTestPass)
-                    .maxSize(MaxMultiThreadTaskNum)
-                    .build());
-            } catch (SessionException e) {
-                logger.error(e.getMessage());
-            }
+            session = new MultiConnection(new SessionPool.Builder()
+                .host(defaultTestHost)
+                .port(defaultTestPort)
+                .user(defaultTestUser)
+                .password(defaultTestPass)
+                .maxSize(MaxMultiThreadTaskNum)
+                .build());
         }
         try {
             session.openSession();
