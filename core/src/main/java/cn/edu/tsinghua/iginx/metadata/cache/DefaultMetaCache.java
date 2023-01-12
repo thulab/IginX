@@ -578,7 +578,7 @@ public class DefaultMetaCache implements IMetaCache {
             logger.error("No corresponding storage engine needs to be updated");
             return false;
         }
-        String dummyStorageUnitID = String.format(Constants.DUMMY + "%04d", (int) storageID);
+        String dummyStorageUnitID = StorageUnitMeta.generateDummyStorageUnitID(storageID);
         boolean ifOriHasData = storageEngineMetaMap.get(storageID).isHasData();
         if (storageEngineMeta.isHasData()) { // 设置相关元数据信息
             StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();

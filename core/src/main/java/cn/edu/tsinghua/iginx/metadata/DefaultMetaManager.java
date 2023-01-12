@@ -151,7 +151,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (storageEngine.isHasData()) {
                     StorageUnitMeta dummyStorageUnit = storageEngine.getDummyStorageUnit();
                     dummyStorageUnit.setStorageEngineId(id);
-                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(id));
                     dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
                     FragmentMeta dummyFragment = storageEngine.getDummyFragment();
                     dummyFragment.setMasterStorageUnit(dummyStorageUnit);
@@ -320,7 +320,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (storageEngineMeta.isHasData()) {
                     StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
                     dummyStorageUnit.setStorageEngineId(id);
-                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(id));
                     dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
                     FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
                     dummyFragment.setMasterStorageUnit(dummyStorageUnit);
@@ -346,7 +346,7 @@ public class DefaultMetaManager implements IMetaManager {
             if (storageEngineMeta.isHasData()) { // 确保内部数据的一致性
                 StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
                 dummyStorageUnit.setStorageEngineId(storageID);
-                dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) storageID));
+                dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(storageID));
                 dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
                 FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
                 dummyFragment.setMasterStorageUnit(dummyStorageUnit);
@@ -1075,7 +1075,7 @@ public class DefaultMetaManager implements IMetaManager {
             boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
             StorageEngineMeta storage = new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id);
             if (hasData) {
-                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", i), i);
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(StorageUnitMeta.generateDummyStorageUnitID(i), i);
                 Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(storage);
                 FragmentMeta dummyFragment;
                 if (dataPrefix == null) {

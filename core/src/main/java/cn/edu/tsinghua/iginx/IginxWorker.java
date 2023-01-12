@@ -297,7 +297,7 @@ public class IginxWorker implements IService.Iface {
             int index = 0;
             if (meta.isHasData()) {
                 String dataPrefix = meta.getDataPrefix();
-                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(StorageUnitMeta.generateDummyStorageUnitID(0), -1);
                 Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta, dataPrefix);
                 FragmentMeta dummyFragment;
                 String schemaPrefixTmp = null;
