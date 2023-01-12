@@ -66,10 +66,6 @@ public class IoTDBQueryRowStream implements RowStream {
     private State state;
 
     public IoTDBQueryRowStream(SessionDataSetWrapper dataset, boolean trimStorageUnit, Project project) {
-        this(dataset, trimStorageUnit, project, null);
-    }
-
-    public IoTDBQueryRowStream(SessionDataSetWrapper dataset, boolean trimStorageUnit, Project project, String prefix) {
         this.dataset = dataset;
         this.trimStorageUnit = trimStorageUnit;
         this.filterByTags = project.getTagFilter() != null;
@@ -91,7 +87,7 @@ public class IoTDBQueryRowStream implements RowStream {
             }
             name = transformColumnName(name);
             Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(name);
-            Field field = new Field(prefix==null? pair.getK() : prefix + "." + pair.getK(), DataTypeTransformer.fromIoTDB(type), pair.getV());
+            Field field = new Field(pair.getK(), DataTypeTransformer.fromIoTDB(type), pair.getV());
             if (!this.trimStorageUnit && field.getFullName().startsWith(UNIT)) {
                 filterList.add(true);
                 continue;
