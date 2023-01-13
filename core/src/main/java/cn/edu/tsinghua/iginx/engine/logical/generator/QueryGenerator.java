@@ -360,11 +360,7 @@ public class QueryGenerator extends AbstractGenerator {
                     ans.add(path);
                 } else if (path.indexOf(schemaPrefix) == 0) {
                     path = path.substring(schemaPrefix.length() + 1);
-                    if (path.equals("*")) {
-                        ans.add("*.*");
-                    } else {
-                        ans.add(path);
-                    }
+                    ans.add(path);
                 }
             }
             return ans;
