@@ -4,14 +4,17 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OuterJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +51,8 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
     private String joinColumnA;
 
     private String joinColumnB;
+    
+    private boolean needTypeCast = false;
 
     public HashOuterJoinLazyStream(OuterJoin outerJoin, RowStream streamA, RowStream streamB) {
         super(streamA, streamB);
@@ -103,24 +108,35 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
             }
         }
 
+        int indexAnother;
         if (outerJoinType == OuterJoinType.RIGHT) {
             this.index = headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumnA);
+            indexAnother = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
         } else {
             this.index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
+            indexAnother = headerA.indexOf(outerJoin.getPrefixA() + '.' + joinColumnA);
         }
 
+        DataType dataType1 = headerA.getField(indexAnother).getType();
+        DataType dataType2 = headerB.getField(index).getType();
+        if (ValueUtils.isNumericType(dataType1) && ValueUtils.isNumericType(dataType2)) {
+            this.needTypeCast = true;
+        }
 
         while (streamB.hasNext()) {
             Row rowB = streamB.next();
-            Object value = rowB.getValue(outerJoin.getPrefixB() + '.' + joinColumnB);
+            Value value = rowB.getAsValue(outerJoin.getPrefixB() + '.' + joinColumnB);
             if (value == null) {
                 continue;
             }
+            if (needTypeCast) {
+                value = ValueUtils.transformToDouble(value);
+            }
             int hash;
-            if (value instanceof byte[]) {
-                hash = Arrays.hashCode((byte[]) value);
+            if (value.getDataType() == DataType.BINARY) {
+                hash = Arrays.hashCode(value.getBinaryV());
             } else {
-                hash = value.hashCode();
+                hash = value.getValue().hashCode();
             }
             List<Row> rows = streamBHashMap.getOrDefault(hash, new ArrayList<>());
             rows.add(rowB);
@@ -203,16 +219,18 @@ public class HashOuterJoinLazyStream extends BinaryLazyStream {
     private void tryMatch() throws PhysicalException {
         Row rowA = streamA.next();
 
-        Object value = rowA.getValue(outerJoin.getPrefixA() + '.' + joinColumnA);
+        Value value = rowA.getAsValue(outerJoin.getPrefixA() + '.' + joinColumnA);
         if (value == null) {
             return;
         }
-
+        if (needTypeCast) {
+            value = ValueUtils.transformToDouble(value);
+        }
         int hash;
-        if (value instanceof byte[]) {
-            hash = Arrays.hashCode((byte[]) value);
+        if (value.getDataType() == DataType.BINARY) {
+            hash = Arrays.hashCode(value.getBinaryV());
         } else {
-            hash = value.hashCode();
+            hash = value.getValue().hashCode();
         }
 
         if (streamBHashMap.containsKey(hash)) {
