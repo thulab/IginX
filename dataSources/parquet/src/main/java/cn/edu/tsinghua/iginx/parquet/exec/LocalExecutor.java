@@ -110,7 +110,7 @@ public class LocalExecutor implements Executor {
 
     @Override
     public TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, boolean isDummyStorageUnit, String schemaPrefix) {
+        String filter, String storageUnit, boolean isDummyStorageUnit) {
         try {
             createDUDirectoryIfNotExists(storageUnit);
         } catch (PhysicalException e) {
@@ -118,7 +118,7 @@ public class LocalExecutor implements Executor {
         }
 
         if (isDummyStorageUnit) {
-            return executeDummyProjectTask(paths, tagFilter, filter, storageUnit, schemaPrefix);
+            return executeDummyProjectTask(paths, tagFilter, filter, storageUnit);
         }
 
         try {
@@ -154,22 +154,11 @@ public class LocalExecutor implements Executor {
     }
 
     private TaskExecuteResult executeDummyProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, String schemaPrefix) {
+        String filter, String storageUnit) {
         try {
             Connection conn = ((DuckDBConnection) connection).duplicate();
             Statement stmt = conn.createStatement();
-
-            // trim prefix
-            List<String> pathList = new ArrayList<>();
-            if (schemaPrefix != null && !schemaPrefix.equals("")) {
-                for (String path : paths) {
-                    if (path.contains(schemaPrefix)) {
-                        pathList.add(path.substring(path.indexOf(schemaPrefix) + schemaPrefix.length() + 1));
-                    } else if (path.equals("*")) {
-                        pathList.add(path);
-                    }
-                }
-            }
+            List<String> pathList = new ArrayList<>(paths);
 
             pathList = determinePathListWithTagFilter(storageUnit, pathList, tagFilter, true);
             if (pathList.isEmpty()) {
@@ -192,7 +181,7 @@ public class LocalExecutor implements Executor {
             conn.close();
 
             RowStream rowStream = new ClearEmptyRowStreamWrapper(
-                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter, schemaPrefix)));
+                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(rs, tagFilter)));
             return new TaskExecuteResult(rowStream);
         } catch (SQLException | PhysicalException e) {
             logger.error(e.getMessage());

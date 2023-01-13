@@ -74,16 +74,13 @@ public class RemoteExecutor implements Executor {
 
     @Override
     public TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter,
-        String filter, String storageUnit, boolean isDummyStorageUnit, String schemaPrefix) {
+        String filter, String storageUnit, boolean isDummyStorageUnit) {
         ProjectReq req = new ProjectReq(storageUnit, isDummyStorageUnit, paths);
         if (tagFilter != null) {
             req.setTagFilter(constructRawTagFilter(tagFilter));
         }
         if (filter != null && !filter.equals("")) {
             req.setFilter(filter);
-        }
-        if (schemaPrefix != null && !schemaPrefix.equals("")) {
-            req.setSchemaPrefix(schemaPrefix);
         }
 
         try {
