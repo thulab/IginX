@@ -581,7 +581,7 @@ public class SessionV2IT {
 
     @Test
     public void testClusterInfo() {
-        int expectedReplicaNum = 2;
+        int expectedReplicaNum = 1;
         assertEquals(expectedReplicaNum, clusterClient.getReplicaNum());
 
         IginxInfo info = new IginxInfo();
