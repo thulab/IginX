@@ -340,9 +340,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> fields = new ArrayList<>();
         header.getFields().forEach(field -> {
             if (schemaPrefix != null)
-                fields.add(new Field(schemaPrefix + "." + field.getFullName(), field.getType(), field.getTags()));
+                fields.add(new Field(schemaPrefix + "." + field.getName(), field.getType(), field.getTags()));
             else
-                fields.add(new Field(field.getFullName(), field.getType(), field.getTags()));
+                fields.add(new Field(field.getName(), field.getType(), field.getTags()));
         });
 
         Header newHeader = new Header(header.getKey(), fields);
