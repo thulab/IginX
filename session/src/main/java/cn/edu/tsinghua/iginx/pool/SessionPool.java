@@ -36,6 +36,8 @@ public class SessionPool {
 
     private static final String PASSWORD = "root";
 
+    private static final int THREAD_NUMBER_MINSIZE = 1;
+
     private static final int MAXSIZE = 10;
     private static long WAITTOGETSESSIONTIMEOUTINMS = 60_000;
 
@@ -85,7 +87,7 @@ public class SessionPool {
             String password,
             int maxSize,
             long waitToGetSessionTimeoutInMs) {
-        this.maxSize = max(maxSize,0);
+        this.maxSize = max(maxSize,THREAD_NUMBER_MINSIZE);
         this.host = host;
         this.port = port;
         this.user = user;
