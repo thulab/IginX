@@ -13,6 +13,7 @@ public class TagFilterUtils {
     return builder.toString();
   }
 
+
   private static void transformToFilterStr(TagFilter filter, StringBuilder builder) {
     switch (filter.getType()) {
       case And:
@@ -43,6 +44,8 @@ public class TagFilterUtils {
         builder.append("=");
         builder.append(baseFilter.getTagValue());
         break;
+      default:
+        System.out.println("filter none!!!!");
     }
   }
 }

@@ -1,0 +1,62 @@
+name: 'CapExp-Union-Test'
+description: 'steps to test the capacity expansion'
+inputs:
+  version:
+    description: 'iginx runner version'
+    required: false
+    default: 0.6.0-SNAPSHOT
+  DB-name:
+    description: 'the db version'
+    required: false
+    default: postgresql
+  Test-Way:
+    description: 'the way to test'
+    required: false
+    default: clearData
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - name: clear postgresql history data
+      uses: ./.github/actions/postgresqlWriter
+      with:
+        version: ${{inputs.DB-name}}
+        Test-Way: clearData
+
+    - name: Stop Iginx
+      uses: ./.github/actions/iginxRunner
+      with:
+        version: ${{inputs.version}}
+        if-stop: true
+
+    - name: Stop and Clear ZooKeeper
+      uses: ./.github/actions/zookeeperRunner
+      with:
+        if-stop: true
+
+    - name: Run ZooKeeper
+      uses: ./.github/actions/zookeeperRunner
+      with:
+        if-rerun: true
+
+    - name: Write PostgreSQL history data
+      uses: ./.github/actions/postgresqlWriter
+      with:
+        version: ${{inputs.DB-name}}
+        Test-Way: ${{inputs.Test-Way}}
+
+    - name: Change IginX Config
+      uses: ./.github/actions/confWriter
+      with:
+        Test-Way: ${{inputs.Test-Way}}
+        if-CapExp: true
+
+    - name: Set The DB Name
+      uses: ./.github/actions/confWriter_pg
+      with:
+        confFile: DBName
+        DB-name: ${{inputs.DB-name}}
+
+    - name: Start IginX
+      uses: ./.github/actions/iginxRunner
+      with:
+        version: ${{inputs.version}}

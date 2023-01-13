@@ -1,0 +1,46 @@
+name: 'conf-writer'
+description: 'conf-writer'
+inputs:
+  confFile:
+    description: 'the conf that you want to write'
+    required: false
+    default: "iginxConf"
+  if-CapExp:
+    description: 'if you need capacity expansion'
+    required: false
+    default: "false"
+  Test-Way:
+    description: 'the way to imp'
+    required: false
+    default: clearData
+  DB-name:
+    description: 'PostgreSQL version'
+    required: false
+    default: postgresql
+
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - if: inputs.if-CapExp=='true'
+      name: Change conf/config.properties
+      shell: bash
+      run: |
+        if [[ "${{inputs.Test-Way}}" == "oriHasDataExpHasData" || "${{inputs.Test-Way}}" == "oriHasDataExpNoData" ]]; then
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sed -i "s/has_data=false/has_data=true/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            sed -i "" "s/has_data=false/has_data=true/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          fi
+        elif [[ "${{inputs.Test-Way}}" == "oriNoDataExpHasData" || "${{inputs.Test-Way}}" == "oriNoDataExpNoData" ]]; then
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sed -i "s/has_data=true/has_data=false/g" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            sed -i "" "s/has_data=true/has_data=false/" ${GITHUB_WORKSPACE}/core/target/iginx-core-0.6.0-SNAPSHOT/conf/config.properties
+          fi
+        fi
+
+    - if: inputs.confFile=='DBName'
+      name: Change conf/config.properties
+      shell: bash
+      run: |
+        echo "${{inputs.DB-name}}" > ${GITHUB_WORKSPACE}/test/src/test/java/cn/edu/tsinghua/iginx/integration/DBConf.txt

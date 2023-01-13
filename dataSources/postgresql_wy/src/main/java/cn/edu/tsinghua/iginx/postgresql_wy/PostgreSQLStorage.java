@@ -107,9 +107,41 @@ public class PostgreSQLStorage implements IStorage {
         String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
         String connUrl = String.format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),username, password);
         try {
-            connection = DriverManager.getConnection(connUrl);
+            System.out.println("init----------------------");
+          connection = DriverManager.getConnection(connUrl);
+          Statement stmt = connection.createStatement();
+          ResultSet tableSet = stmt.executeQuery("select * from pg_tables");
+          String s="";
+          while (tableSet.next()) {
+            String table=tableSet.getString(2);
+            if (hasNoTime(connection,table)) {
+              stmt = connection.createStatement();
+              s = String.format("alter table %s add time timestamp", table);
+              stmt.execute(s);
+            }
+          }
+          System.out.println("init end---------------------------");
         } catch (SQLException e) {
-            throw new StorageInitializationException("cannot connect to " + meta.toString());
+          throw new StorageInitializationException("cannot connect to " + meta.toString());
+        }
+    }
+
+    private boolean hasNoTime(Connection connection,String table) {
+        try {
+            boolean flag=true;
+            DatabaseMetaData databaseMetaData=connection.getMetaData();
+            ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, "%");
+            while (columnSet.next()) {
+                String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
+                System.out.println(table+"   "+columnName)
+                if (columnName == "time") {
+                    flag = false;
+                    break;
+                }
+            }
+            return flag;
+        } catch (SQLException e) {
+            return true;
         }
     }
 
@@ -129,6 +161,19 @@ public class PostgreSQLStorage implements IStorage {
 
     @Override
     public TaskExecuteResult execute(StoragePhysicalTask task) {
+        System.out.println("init----------------------");
+//        connection = DriverManager.getConnection(connUrl);
+        Statement stmt = connection.createStatement();
+        ResultSet tableSet = stmt.executeQuery("select * from pg_tables");
+        String s="";
+        while (tableSet.next()) {
+            String table=tableSet.getString(2);
+            if (hasNoTime(connection,table)) {
+                stmt = connection.createStatement();
+                s = String.format("alter table %s add time timestamp", table);
+                stmt.execute(s);
+            }}
+        System.out.println("init end----------------------");
         List<Operator> operators = task.getOperators();
         if (operators.size() != 1) {
             return new TaskExecuteResult(
@@ -254,6 +299,19 @@ public class PostgreSQLStorage implements IStorage {
 
     @Override
     public List<Timeseries> getTimeSeries() throws PhysicalException {
+        System.out.println("init----------------------");
+//        connection = DriverManager.getConnection(connUrl);
+        Statement stmt = connection.createStatement();
+        ResultSet tableSet = stmt.executeQuery("select * from pg_tables");
+        String s="";
+        while (tableSet.next()) {
+            String table=tableSet.getString(2);
+            if (hasNoTime(connection,table)) {
+                stmt = connection.createStatement();
+                s = String.format("alter table %s add time timestamp", table);
+                stmt.execute(s);
+            }}
+        System.out.println("init end----------------------");
         List<Timeseries> timeseries = new ArrayList<>();
         String primaryColumnName="";
         try {

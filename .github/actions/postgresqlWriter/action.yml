@@ -1,0 +1,19 @@
+name: 'postgresql-writer'
+description: 'pgsql writer'
+inputs:
+  version:
+    description: 'PostgreSQL version'
+    required: false
+    default: postgresql
+  Test-Way:
+    description: 'the way to imp'
+    required: false
+    default: clearData
+runs:
+  using: "composite" # Mandatory parameter
+  steps:
+    - name: Write history Data
+      shell: bash
+      run: |
+        mvn test -q -Dtest=PostgreSQLHistoryDataGenerator#${{inputs.Test-Way}} -DfailIfNoTests=false
+        sleep 5

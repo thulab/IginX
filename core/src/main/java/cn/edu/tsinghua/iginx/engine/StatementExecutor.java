@@ -385,7 +385,9 @@ public class StatementExecutor {
             bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
 
             if (hasTimestamp) {
+                logger.info("test hasTimestamp!!!");
                 timestampList.add(row.getTimestamp());
+
             }
         }
 
