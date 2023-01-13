@@ -357,7 +357,7 @@ public class QueryGenerator extends AbstractGenerator {
         if (prefix == null) { // deal with the schemaPrefix
             for(String path : pathList) {
                 if (path.equals("*.*") || path.equals("*")) {
-                    ans.add("*.*");
+                    ans.add(path);
                 } else if (path.indexOf(schemaPrefix) == 0) {
                     path = path.substring(schemaPrefix.length() + 1);
                     if (path.equals("*")) {
