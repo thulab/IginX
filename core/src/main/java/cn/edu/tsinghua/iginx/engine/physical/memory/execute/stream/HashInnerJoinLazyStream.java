@@ -4,7 +4,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
@@ -12,7 +12,9 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.InnerJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +40,8 @@ public class HashInnerJoinLazyStream extends BinaryLazyStream {
     private String joinColumnA;
 
     private String joinColumnB;
+    
+    private boolean needTypeCast = false;
 
     public HashInnerJoinLazyStream(InnerJoin innerJoin, RowStream streamA, RowStream streamB) {
         super(streamA, streamB);
@@ -89,18 +93,28 @@ public class HashInnerJoinLazyStream extends BinaryLazyStream {
             }
         }
         this.index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
+    
+        int indexA = headerA.indexOf(innerJoin.getPrefixA() + '.' + joinColumnA);
+        DataType dataTypeA = headerA.getField(indexA).getType();
+        DataType dataTypeB = headerB.getField(index).getType();
+        if (ValueUtils.isNumericType(dataTypeA) && ValueUtils.isNumericType(dataTypeB)) {
+            this.needTypeCast = true;
+        }
 
         while (streamB.hasNext()) {
             Row rowB = streamB.next();
-            Object value = rowB.getValue(innerJoin.getPrefixB() + '.' + joinColumnB);
+            Value value = rowB.getAsValue(innerJoin.getPrefixB() + '.' + joinColumnB);
             if (value == null) {
                 continue;
             }
+            if (needTypeCast) {
+                value = ValueUtils.transformToDouble(value);
+            }
             int hash;
-            if (value instanceof byte[]) {
-                hash = Arrays.hashCode((byte[]) value);
+            if (value.getDataType() == DataType.BINARY) {
+                hash = Arrays.hashCode(value.getBinaryV());
             } else {
-                hash = value.hashCode();
+                hash = value.getValue().hashCode();
             }
             List<Row> rows = streamBHashMap.getOrDefault(hash, new ArrayList<>());
             rows.add(rowB);
@@ -139,16 +153,18 @@ public class HashInnerJoinLazyStream extends BinaryLazyStream {
     private void tryMatch() throws PhysicalException {
         Row rowA = streamA.next();
 
-        Object value = rowA.getValue(innerJoin.getPrefixA() + '.' + joinColumnA);
+        Value value = rowA.getAsValue(innerJoin.getPrefixA() + '.' + joinColumnA);
         if (value == null) {
             return;
         }
-
+        if (needTypeCast) {
+            value = ValueUtils.transformToDouble(value);
+        }
         int hash;
-        if (value instanceof byte[]) {
-            hash = Arrays.hashCode((byte[]) value);
+        if (value.getDataType() == DataType.BINARY) {
+            hash = Arrays.hashCode(value.getBinaryV());
         } else {
-            hash = value.hashCode();
+            hash = value.getValue().hashCode();
         }
 
         if (streamBHashMap.containsKey(hash)) {
