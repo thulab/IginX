@@ -207,6 +207,6 @@ public final class StorageUnitMeta {
     }
 
     public static String generateDummyStorageUnitID(long id) {
-        return String.format(Constants.DUMMY + "%04d", (int) id);
+        return String.format(Constants.DUMMY + "%010d", (int)id);
     }
 }
