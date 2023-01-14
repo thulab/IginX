@@ -357,7 +357,7 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
         for (FragmentMeta fragmentMeta: dummyFragments) {
-            if (fragmentMeta.isIfValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
+            if (fragmentMeta.isValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
                 results.add(fragmentMeta);
             }
         }
@@ -404,7 +404,7 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.readLock().lock();
         List<FragmentMeta> results = new ArrayList<>();
         for (FragmentMeta fragmentMeta: dummyFragments) {
-            if (fragmentMeta.isIfValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
+            if (fragmentMeta.isValid() && fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
                 results.add(fragmentMeta);
             }
         }

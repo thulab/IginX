@@ -328,7 +328,7 @@ public class QueryGenerator extends AbstractGenerator {
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
             dummyFragments.forEach(meta -> {
-                if (meta.isIfValid())
+                if (meta.isValid())
                     joinList.add(new Project(new FragmentSource(meta),
                             pathMatchPrefix(pathList,meta.getTsInterval().getTimeSeries(), meta.getTsInterval().getSchemaPrefix()), tagFilter));
             });
