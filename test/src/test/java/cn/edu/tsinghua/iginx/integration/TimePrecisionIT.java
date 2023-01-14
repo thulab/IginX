@@ -2,13 +2,11 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.pool.SessionPool;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.TimePrecision;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +106,7 @@ public class TimePrecisionIT {
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime, null, TimePrecision.S);
         dataSet.print();
 
-        long[] timeList = dataSet.getTimestamps();
+        long[] timeList = dataSet.getKeys();
         for (int i=0; i<4; i++) {
             if (timeList[i] == 100 && i == 0 || timeList[i] == 100000 && i == 1 || timeList[i] == 100000000 && i == 2 || timeList[i] == 100000000000L && i == 3) {}
             else
@@ -129,7 +127,7 @@ public class TimePrecisionIT {
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime, null, TimePrecision.MS);
         dataSet.print();
 
-        long[] timeList = dataSet.getTimestamps();
+        long[] timeList = dataSet.getKeys();
         for (int i=0; i<4; i++) {
             if (timeList.length <= i || timeList[i] == 100 && i == 0 || timeList[i] == 100000 && i == 1 || timeList[i] == 100000000 && i == 2) {}
             else
@@ -150,7 +148,7 @@ public class TimePrecisionIT {
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime, null, TimePrecision.US);
         dataSet.print();
 
-        long[] timeList = dataSet.getTimestamps();
+        long[] timeList = dataSet.getKeys();
         for (int i=0; i<4; i++) {
             if (timeList.length <= i || timeList[i] == 100 && i == 0 || timeList[i] == 100000 && i == 1) {}
             else
@@ -171,7 +169,7 @@ public class TimePrecisionIT {
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime, null, TimePrecision.NS);
         dataSet.print();
 
-        long[] timeList = dataSet.getTimestamps();
+        long[] timeList = dataSet.getKeys();
         for (int i=0; i<4; i++) {
             if (timeList.length <= i || timeList[i] == 100 && i == 0) {}
             else

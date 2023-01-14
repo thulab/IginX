@@ -58,7 +58,7 @@ public class InfluxDBQueryRowStream implements RowStream {
             DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
             fields.add(new Field(path, dataType));
         }
-        this.header = new Header(Field.TIME, fields);
+        this.header = new Header(Field.KEY, fields);
         this.indices = new int[this.tables.size()];
 
         this.hasMoreRecords = this.tables.size();

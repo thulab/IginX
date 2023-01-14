@@ -39,7 +39,7 @@ public class ArrowReader implements Reader {
         boolean hasTime = false;
         List<cn.edu.tsinghua.iginx.engine.shared.data.read.Field> fieldList = new ArrayList<>();
         for (Field field : schema.getFields()) {
-            if (field.getName().equals(Constants.TIMESTAMP)) {
+            if (field.getName().equals(Constants.KEY)) {
                 hasTime = true;
             } else {
                 fieldList.add(
@@ -51,7 +51,7 @@ public class ArrowReader implements Reader {
         }
 
         if (hasTime) {
-            return new Header(cn.edu.tsinghua.iginx.engine.shared.data.read.Field.TIME, fieldList);
+            return new Header(cn.edu.tsinghua.iginx.engine.shared.data.read.Field.KEY, fieldList);
         } else {
             return new Header(fieldList);
         }
@@ -61,8 +61,8 @@ public class ArrowReader implements Reader {
         List<Row> rowList = new ArrayList<>();
 
         BigIntVector bigIntVector = null;
-        if (header.hasTimestamp()) {
-            bigIntVector = (BigIntVector) root.getVector(Constants.TIMESTAMP);
+        if (header.hasKey()) {
+            bigIntVector = (BigIntVector) root.getVector(Constants.KEY);
         }
 
         for (int i = 0; i < root.getRowCount(); i++) {
@@ -72,7 +72,7 @@ public class ArrowReader implements Reader {
                 objects[j] = root.getVector(vectorName).getObject(i);
             }
 
-            if (header.hasTimestamp()) {
+            if (header.hasKey()) {
                 assert bigIntVector != null;
                 rowList.add(new Row(header, bigIntVector.get(i), objects));
             } else {

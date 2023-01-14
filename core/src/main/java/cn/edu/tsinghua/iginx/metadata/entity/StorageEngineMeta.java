@@ -43,6 +43,8 @@ public final class StorageEngineMeta {
 
     private final String dataPrefix;
 
+    private final String schemaPrefix;
+
     private final boolean readOnly;
 
     private StorageUnitMeta dummyStorageUnit;
@@ -69,15 +71,20 @@ public final class StorageEngineMeta {
     private boolean needReAllocate;
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy) {
-        this(id, ip, port, false, null, false, extraParams, storageEngine, createdBy);
+        this(id, ip, port, false, null, null, false, extraParams, storageEngine, createdBy);
     }
 
     public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly,
                              Map<String, String> extraParams, String storageEngine, long createdBy) {
-        this(id, ip, port, hasData, dataPrefix, readOnly, null, null, extraParams, storageEngine, createdBy, false);
+        this(id, ip, port, hasData, dataPrefix, null, readOnly, null, null, extraParams, storageEngine, createdBy, false);
     }
 
-    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment,
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, String schemaPrefix, boolean readOnly,
+                             Map<String, String> extraParams, String storageEngine, long createdBy) {
+        this(id, ip, port, hasData, dataPrefix, schemaPrefix, readOnly, null, null, extraParams, storageEngine, createdBy, false);
+    }
+
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, String schemaPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment,
                              Map<String, String> extraParams, String storageEngine,
                              long createdBy, boolean needReAllocate) {
         this.id = id;
@@ -92,11 +99,12 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
         this.createdBy = createdBy;
         this.needReAllocate = needReAllocate;
+        this.schemaPrefix = schemaPrefix;
     }
 
 
 
-    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment, Map<String, String> extraParams, String storageEngine, List<StorageUnitMeta> storageUnitList, long createdBy, boolean needReAllocate) {
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, String schemaPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment, Map<String, String> extraParams, String storageEngine, List<StorageUnitMeta> storageUnitList, long createdBy, boolean needReAllocate) {
         this.id = id;
         this.ip = ip;
         this.port = port;
@@ -110,6 +118,11 @@ public final class StorageEngineMeta {
         this.storageUnitList = storageUnitList;
         this.createdBy = createdBy;
         this.needReAllocate = needReAllocate;
+        this.schemaPrefix = schemaPrefix;
+    }
+
+    public String getSchemaPrefix() {
+        return schemaPrefix;
     }
 
     public long getId() {

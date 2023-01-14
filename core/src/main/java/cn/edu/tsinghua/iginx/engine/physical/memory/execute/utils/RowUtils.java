@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
+import cn.edu.tsinghua.iginx.constant.GlobalConstant;
 import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
@@ -38,8 +40,8 @@ public class RowUtils {
             values[i] = row.getValue(field);
         }
         Row targetRow;
-        if (targetHeader.hasTimestamp()) {
-            targetRow = new Row(targetHeader, row.getTimestamp(), values);
+        if (targetHeader.hasKey()) {
+            targetRow = new Row(targetHeader, row.getKey(), values);
         } else {
             targetRow = new Row(targetHeader, values);
         }
@@ -53,12 +55,12 @@ public class RowUtils {
      * <tt>2</tt>: descending sorted
      */
     public static int checkRowsSortedByColumns(List<Row> rows, String prefix,
-        List<String> columns) {
+        List<String> columns) throws PhysicalException {
         int res = 0;
         int index = 0;
         while (index < rows.size() - 1) {
             int mark = compareRowsSortedByColumns(rows.get(index), rows.get(index + 1), prefix,
-                prefix, columns);
+                prefix, columns, columns);
             if (mark == -1) {
                 if (res == 0) {
                     res = 1;
@@ -83,10 +85,12 @@ public class RowUtils {
      * <tt>1</tt>: row1 > row2
      */
     public static int compareRowsSortedByColumns(Row row1, Row row2, String prefix1, String prefix2,
-        List<String> columns) {
-        for (String column : columns) {
-            Object value1 = row1.getValue(prefix1 + '.' + column);
-            Object value2 = row2.getValue(prefix2 + '.' + column);
+        List<String> columns1, List<String> columns2) throws PhysicalException {
+        assert columns1.size() == columns2.size();
+        int size = columns1.size();
+        for (int index = 0; index < size; index++) {
+            Object value1 = row1.getValue(prefix1 + '.' + columns1.get(index));
+            Object value2 = row2.getValue(prefix2 + '.' + columns2.get(index));
             if (value1 == null && value2 == null) {
                 return 0;
             } else if (value1 == null) {
@@ -94,9 +98,11 @@ public class RowUtils {
             } else if (value2 == null) {
                 return 1;
             }
-            DataType dataType = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + column))
+            DataType dataType1 = row1.getField(row1.getHeader().indexOf(prefix1 + '.' + columns1.get(index)))
                 .getType();
-            int cmp = compareObjects(dataType, value1, value2);
+            DataType dataType2 = row2.getField(row2.getHeader().indexOf(prefix2 + '.' + columns2.get(index)))
+                .getType();
+            int cmp = ValueUtils.compare(value1, value2, dataType1, dataType2);
             if (cmp != 0) {
                 return cmp;
             }
@@ -104,46 +110,15 @@ public class RowUtils {
         return 0;
     }
 
-    public static int compareObjects(DataType dataType, Object value1, Object value2) {
-        switch (dataType) {
-            case BOOLEAN:
-                boolean boolean1 = (boolean) value1;
-                boolean boolean2 = (boolean) value2;
-                return Boolean.compare(boolean1, boolean2);
-            case INTEGER:
-                int int1 = (int) value1;
-                int int2 = (int) value2;
-                return Integer.compare(int1, int2);
-            case LONG:
-                long long1 = (long) value1;
-                long long2 = (long) value2;
-                return Long.compare(long1, long2);
-            case FLOAT:
-                float float1 = (float) value1;
-                float float2 = (float) value2;
-                return Float.compare(float1, float2);
-            case DOUBLE:
-                double double1 = (double) value1;
-                double double2 = (double) value2;
-                return Double.compare(double1, double2);
-            case BINARY:
-                String string1 = (String) value1;
-                String string2 = (String) value2;
-                return string1.compareTo(string2);
-            default:
-                throw new IllegalArgumentException("unknown datatype: " + dataType);
-        }
-    }
-
     public static Header constructNewHead(Header headerA, Header headerB, String prefixA,
         String prefixB) {
         List<Field> fields = new ArrayList<>();
-        if (headerA.hasTimestamp()) {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        if (headerA.hasKey()) {
+            fields.add(new Field(prefixA + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         fields.addAll(headerA.getFields());
-        if (headerB.hasTimestamp()) {
-            fields.add(new Field(prefixB + ".key", DataType.LONG));
+        if (headerB.hasKey()) {
+            fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         fields.addAll(headerB.getFields());
         return new Header(fields);
@@ -156,13 +131,13 @@ public class RowUtils {
         int[] indexOfJoinColumnsInTable = new int[joinColumns.size()];
 
         List<Field> fields = new ArrayList<>();
-        if (headerA.hasTimestamp()) {
-            fields.add(new Field(prefixA + ".key", DataType.LONG));
+        if (headerA.hasKey()) {
+            fields.add(new Field(prefixA + "." + GlobalConstant.KEY_NAME, DataType.LONG));
         }
         if (cutRight) {
             fields.addAll(fieldsA);
-            if (headerB.hasTimestamp()) {
-                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            if (headerB.hasKey()) {
+                fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
             }
             int i = 0;
             flag:
@@ -187,8 +162,8 @@ public class RowUtils {
                 }
                 fields.add(fieldA);
             }
-            if (headerB.hasTimestamp()) {
-                fields.add(new Field(prefixB + ".key", DataType.LONG));
+            if (headerB.hasKey()) {
+                fields.add(new Field(prefixB + "." + GlobalConstant.KEY_NAME, DataType.LONG));
             }
             fields.addAll(fieldsB);
         }
@@ -199,21 +174,21 @@ public class RowUtils {
         boolean putLeft) {
 
         int size = halfRow.getValues().length + anotherRowSize;
-        if (halfRow.getHeader().hasTimestamp()) {
+        if (halfRow.getHeader().hasKey()) {
             size++;
         }
         Object[] valuesJoin = new Object[size];
 
         if (putLeft) {
-            if (halfRow.getHeader().hasTimestamp()) {
-                valuesJoin[0] = halfRow.getTimestamp();
+            if (halfRow.getHeader().hasKey()) {
+                valuesJoin[0] = halfRow.getKey();
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, 1, halfRow.getValues().length);
             } else {
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, 0, halfRow.getValues().length);
             }
         } else {
-            if (halfRow.getHeader().hasTimestamp()) {
-                valuesJoin[anotherRowSize] = halfRow.getTimestamp();
+            if (halfRow.getHeader().hasKey()) {
+                valuesJoin[anotherRowSize] = halfRow.getKey();
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize + 1, halfRow.getValues().length);
             } else {
                 System.arraycopy(halfRow.getValues(), 0, valuesJoin, anotherRowSize, halfRow.getValues().length);
@@ -228,23 +203,23 @@ public class RowUtils {
 
         int size = valuesA.length + valuesB.length;
         int rowAStartIndex = 0, rowBStartIndex = valuesA.length;
-        if (rowA.getHeader().hasTimestamp()) {
+        if (rowA.getHeader().hasKey()) {
             size++;
             rowAStartIndex++;
             rowBStartIndex++;
         }
-        if (rowB.getHeader().hasTimestamp()) {
+        if (rowB.getHeader().hasKey()) {
             size++;
             rowBStartIndex++;
         }
 
         Object[] valuesJoin = new Object[size];
 
-        if (rowA.getHeader().hasTimestamp()) {
-            valuesJoin[0] = rowA.getTimestamp();
+        if (rowA.getHeader().hasKey()) {
+            valuesJoin[0] = rowA.getKey();
         }
-        if (rowB.getHeader().hasTimestamp()) {
-            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        if (rowB.getHeader().hasKey()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getKey();
         }
         System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);
         System.arraycopy(valuesB, 0, valuesJoin, rowBStartIndex, valuesB.length);
@@ -264,23 +239,23 @@ public class RowUtils {
             rowBStartIndex = valuesA.length - indexOfJoinColumnsInTable.length;
         }
 
-        if (rowA.getHeader().hasTimestamp()) {
+        if (rowA.getHeader().hasKey()) {
             size++;
             rowAStartIndex++;
             rowBStartIndex++;
         }
-        if (rowB.getHeader().hasTimestamp()) {
+        if (rowB.getHeader().hasKey()) {
             size++;
             rowBStartIndex++;
         }
 
         Object[] valuesJoin = new Object[size];
 
-        if (rowA.getHeader().hasTimestamp()) {
-            valuesJoin[0] = rowA.getTimestamp();
+        if (rowA.getHeader().hasKey()) {
+            valuesJoin[0] = rowA.getKey();
         }
-        if (rowB.getHeader().hasTimestamp()) {
-            valuesJoin[rowBStartIndex - 1] = rowB.getTimestamp();
+        if (rowB.getHeader().hasKey()) {
+            valuesJoin[rowBStartIndex - 1] = rowB.getKey();
         }
         if (cutRight) {
             System.arraycopy(valuesA, 0, valuesJoin, rowAStartIndex, valuesA.length);

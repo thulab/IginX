@@ -28,23 +28,23 @@ import java.util.Objects;
 
 public class Row {
 
-    public static final long NON_EXISTED_TIMESTAMP = -1L;
+    public static final long NON_EXISTED_KEY = -1L;
 
     public static final Row EMPTY_ROW = new Row(Header.EMPTY_HEADER, new Object[0]);
 
     private final Header header;
 
-    private final long timestamp;
+    private final long key;
 
     private final Object[] values;
 
     public Row(Header header, Object[] values) {
-        this(header, NON_EXISTED_TIMESTAMP, values);
+        this(header, NON_EXISTED_KEY, values);
     }
 
-    public Row(Header header, long timestamp, Object[] values) {
+    public Row(Header header, long key, Object[] values) {
         this.header = header;
-        this.timestamp = timestamp;
+        this.key = key;
         this.values = values;
     }
 
@@ -52,8 +52,8 @@ public class Row {
         return header;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getKey() {
+        return key;
     }
 
     public Object[] getValues() {
@@ -115,8 +115,8 @@ public class Row {
 
     public String toCSVTypeString() {
         StringBuilder builder = new StringBuilder();
-        if (header.hasTimestamp()) {
-            builder.append(timestamp).append(",");
+        if (header.hasKey()) {
+            builder.append(key).append(",");
         }
         for (Object value : values) {
             if (value instanceof byte[]) {
@@ -134,7 +134,7 @@ public class Row {
     @Override
     public String toString() {
         return "Row{" +
-            "timestamp=" + timestamp +
+            "timestamp=" + key +
             ", values=" + Arrays.toString(values) +
             '}';
     }
@@ -144,7 +144,7 @@ public class Row {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Row row = (Row) o;
-        return timestamp == row.timestamp && Objects.equals(header, row.header) && Arrays.equals(values, row.values);
+        return key == row.key && Objects.equals(header, row.header) && Arrays.equals(values, row.values);
     }
 
     public boolean isEmpty() {
@@ -158,7 +158,7 @@ public class Row {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(header, timestamp);
+        int result = Objects.hash(header, key);
         result = 31 * result + Arrays.hashCode(values);
         return result;
     }

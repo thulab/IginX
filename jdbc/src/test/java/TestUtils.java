@@ -16,7 +16,7 @@ public class TestUtils {
         result.setSqlType(SqlType.Query);
 
         long[] timestamps = new long[]{1L, 2L, 3L, 4L, 5L, 6L, 7L};
-        result.setTimestamps(timestamps);
+        result.setKeys(timestamps);
 
         List<String> paths = new ArrayList<>(Arrays.asList(
             "test.result.set.boolean",

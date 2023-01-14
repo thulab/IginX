@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class Record {
 
-    private final long timestamp;
+    private final long key;
 
     private final List<String> measurements;
 
@@ -41,8 +41,8 @@ public class Record {
 
     private final List<Object> values;
 
-    private Record(long timestamp, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object> values) {
-        this.timestamp = timestamp;
+    private Record(long key, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object> values) {
+        this.key = key;
         this.measurements = Collections.unmodifiableList(measurements);
         this.tagsList = tagsList;
         this.dataTypes = Collections.unmodifiableList(dataTypes);
@@ -53,8 +53,8 @@ public class Record {
         return new Record.Builder();
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getKey() {
+        return key;
     }
 
     public List<String> getMeasurements() {
@@ -99,11 +99,11 @@ public class Record {
         private final List<String> fields;
 
         private final List<Map<String, String>> tagsList;
-        private long timestamp;
+        private long key;
         private String measurement;
 
         private Builder() {
-            this.timestamp = -1;
+            this.key = -1;
             this.measurement = null;
             this.fields = new ArrayList<>();
             this.values = new ArrayList<>();
@@ -112,13 +112,13 @@ public class Record {
             this.tagsList = new ArrayList<>();
         }
 
-        public Record.Builder timestamp(long timestamp) {
-            this.timestamp = timestamp;
+        public Record.Builder key(long key) {
+            this.key = key;
             return this;
         }
 
         public Record.Builder now() {
-            this.timestamp = System.currentTimeMillis();
+            this.key = System.currentTimeMillis();
             return this;
         }
 
@@ -255,14 +255,14 @@ public class Record {
         }
 
         public Record build() {
-            if (timestamp < 0) {
-                timestamp = System.currentTimeMillis();
+            if (key < 0) {
+                key = System.currentTimeMillis();
             }
             List<String> measurements = fields;
             if (measurement != null) {
                 measurements = fields.stream().map(e -> measurement + "." + e).collect(Collectors.toList());
             }
-            return new Record(timestamp, measurements, tagsList, dataTypes, values);
+            return new Record(key, measurements, tagsList, dataTypes, values);
         }
 
     }

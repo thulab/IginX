@@ -88,7 +88,7 @@ public class JsonPayloadFormatter implements IPayloadFormatter {
                 Message message = new Message();
                 message.setPath(path);
                 message.setDataType(dataType);
-                message.setTimestamp(timestamp);
+                message.setKey(timestamp);
                 message.setValue(value);
                 messages.add(message);
             }

@@ -9,7 +9,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 import java.util.ArrayList;
 import java.util.List;
 
-import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.KEY;
 
 public class OperatorUtils {
 
@@ -26,7 +26,7 @@ public class OperatorUtils {
     }
 
     public static Operator joinOperatorsByTime(List<Operator> operators) {
-        return joinOperators(operators, TIMESTAMP);
+        return joinOperators(operators, KEY);
     }
 
     public static Operator joinOperators(List<Operator> operators, String joinBy) {

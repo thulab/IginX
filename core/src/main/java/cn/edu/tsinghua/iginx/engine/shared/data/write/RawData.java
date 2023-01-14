@@ -12,7 +12,7 @@ public class RawData {
 
     private final List<Map<String, String>> tagsList;
 
-    private final List<Long> timestamps;
+    private final List<Long> keys;
 
     private final Object[] valuesList;
 
@@ -22,11 +22,11 @@ public class RawData {
 
     private final RawDataType type;
 
-    public RawData(List<String> paths, List<Map<String, String>> tagsList, List<Long> timestamps, Object[] valuesList,
+    public RawData(List<String> paths, List<Map<String, String>> tagsList, List<Long> keys, Object[] valuesList,
                    List<DataType> dataTypeList, List<Bitmap> bitmaps, RawDataType type) {
         this.paths = paths;
         this.tagsList = tagsList;
-        this.timestamps = timestamps;
+        this.keys = keys;
         this.valuesList = valuesList;
         this.dataTypeList = dataTypeList;
         this.bitmaps = bitmaps;
@@ -41,8 +41,8 @@ public class RawData {
         return tagsList;
     }
 
-    public List<Long> getTimestamps() {
-        return timestamps;
+    public List<Long> getKeys() {
+        return keys;
     }
 
     public Object[] getValuesList() {

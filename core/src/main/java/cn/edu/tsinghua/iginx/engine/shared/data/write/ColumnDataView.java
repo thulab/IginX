@@ -29,7 +29,7 @@ public final class ColumnDataView extends DataView {
         this.biases = new int[this.endPathIndex - this.startPathIndex];
         for (int i = this.startPathIndex; i < this.endPathIndex; i++) {
             Bitmap bitmap = data.getBitmaps().get(i);
-            for (int j = 0; j < this.startTimeIndex; j++) {
+            for (int j = 0; j < this.startKeyIndex; j++) {
                 if (bitmap.get(j)) {
                     biases[i - this.startPathIndex]++;
                 }
@@ -46,6 +46,7 @@ public final class ColumnDataView extends DataView {
     @Override
     public BitmapView getBitmapView(int index) { // 对于列数据来说，第一个维度为序列，所以要 checkPath
         checkPathIndexRange(index);
-        return new BitmapView(data.getBitmaps().get(startPathIndex + index), startTimeIndex, endTimeIndex);
+        return new BitmapView(data.getBitmaps().get(startPathIndex + index), startKeyIndex,
+            endKeyIndex);
     }
 }

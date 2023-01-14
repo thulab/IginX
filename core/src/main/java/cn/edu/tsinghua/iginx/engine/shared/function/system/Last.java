@@ -81,7 +81,7 @@ public class Last implements MappingFunction {
             throw new IllegalArgumentException("unexpected param type for last.");
         }
         String target = param.getBinaryVAsString();
-        Header header = new Header(Field.TIME, Arrays.asList(new Field(PATH, DataType.BINARY), new Field(VALUE, DataType.BINARY)));
+        Header header = new Header(Field.KEY, Arrays.asList(new Field(PATH, DataType.BINARY), new Field(VALUE, DataType.BINARY)));
         List<Row> resultRows = new ArrayList<>();
         Map<Integer, Pair<Long, Object>> valueMap = new HashMap<>();
         Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
@@ -101,10 +101,10 @@ public class Last implements MappingFunction {
                     continue;
                 }
                 if (!valueMap.containsKey(i)) {
-                    valueMap.put(i, new Pair<>(row.getTimestamp(), values[i]));
+                    valueMap.put(i, new Pair<>(row.getKey(), values[i]));
                 } else {
                     Pair<Long, Object> pair = valueMap.get(i);
-                    pair.k = row.getTimestamp();
+                    pair.k = row.getKey();
                     pair.v = values[i];
                 }
             }
@@ -113,7 +113,7 @@ public class Last implements MappingFunction {
             resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getFullName().getBytes(StandardCharsets.UTF_8),
                     ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
         }
-        resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
+        resultRows.sort(Comparator.comparingLong(Row::getKey));
         return new Table(header, resultRows);
     }
 

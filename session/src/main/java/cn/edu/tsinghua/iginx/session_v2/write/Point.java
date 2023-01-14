@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class Point {
 
-    private final long timestamp;
+    private final long key;
 
     private final Object value;
 
@@ -39,8 +39,8 @@ public class Point {
 
     private final String fullName;
 
-    public Point(long timestamp, Object value, DataType dataType, String measurement, Map<String, String> tags) {
-        this.timestamp = timestamp;
+    public Point(long key, Object value, DataType dataType, String measurement, Map<String, String> tags) {
+        this.key = key;
         this.value = value;
         this.dataType = dataType;
         this.measurement = measurement;
@@ -49,15 +49,15 @@ public class Point {
     }
 
     private Point(Point.Builder builder) {
-        this(builder.timestamp, builder.value, builder.dataType, builder.measurement, builder.tags);
+        this(builder.key, builder.value, builder.dataType, builder.measurement, builder.tags);
     }
 
     public static Point.Builder builder() {
         return new Point.Builder();
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getKey() {
+        return key;
     }
 
     public Object getValue() {
@@ -82,7 +82,7 @@ public class Point {
 
     public static class Builder {
 
-        private long timestamp = -1;
+        private long key = -1;
 
         private Object value;
 
@@ -96,13 +96,13 @@ public class Point {
 
         }
 
-        public Point.Builder timestamp(long timestamp) {
-            this.timestamp = timestamp;
+        public Point.Builder key(long key) {
+            this.key = key;
             return this;
         }
 
         public Point.Builder now() {
-            this.timestamp = System.currentTimeMillis();
+            this.key = System.currentTimeMillis();
             return this;
         }
 
@@ -170,8 +170,8 @@ public class Point {
             Arguments.checkNotNull(value, "value");
             Arguments.checkNotNull(dataType, "dataType");
             Arguments.checkDataType(value, dataType, "value");
-            if (timestamp < 0) {
-                timestamp = System.currentTimeMillis();
+            if (key < 0) {
+                key = System.currentTimeMillis();
             }
             return new Point(this);
         }

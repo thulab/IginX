@@ -8,7 +8,7 @@ public interface FilterVisitor {
 
     void visit(NotFilter filter);
 
-    void visit(TimeFilter filter);
+    void visit(KeyFilter filter);
 
     void visit(ValueFilter filter);
 

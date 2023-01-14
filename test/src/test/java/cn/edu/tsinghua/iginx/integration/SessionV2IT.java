@@ -66,33 +66,33 @@ public class SessionV2IT {
         List<Point> points = new ArrayList<>();
         for (long i = startTimestamp; i < endTimestamp; i++) {
             points.add(Point.builder()
-                .timestamp(i)
+                .key(i)
                 .measurement("test.session.v2.bool")
                 .booleanValue(i % 2 == 0)
                 .build());
             points.add(Point.builder()
-                .timestamp(i)
+                .key(i)
                 .measurement("test.session.v2.int")
                 .intValue((int) i)
                 .build());
             points.add(Point.builder()
-                .timestamp(i)
+                .key(i)
                 .measurement("test.session.v2.long")
                 .longValue(i)
                 .build());
             points.add(Point.builder()
-                .timestamp(i)
+                .key(i)
                 .measurement("test.session.v2.float")
                 .floatValue((float) (i + 0.1))
                 .build());
             points.add(Point.builder()
-                .timestamp(i)
+                .key(i)
                 .measurement("test.session.v2.double")
                 .doubleValue(i + 0.2)
                 .build());
             if (i % 2 == 0) {
                 points.add(Point.builder()
-                    .timestamp(i)
+                    .key(i)
                     .measurement("test.session.v2.string")
                     .binaryValue(String.valueOf(i).getBytes())
                     .build());
@@ -121,7 +121,7 @@ public class SessionV2IT {
         for (long i = startTimestamp; i < endTimestamp; i++) {
             Record.Builder builder = Record.builder()
                 .measurement("test.session.v2")
-                .timestamp(i)
+                .key(i)
                 .addBooleanField("bool", i % 2 == 0)
                 .addLongField("long", i)
                 .addFloatField("float", (float) (i + 0.1))
@@ -163,7 +163,7 @@ public class SessionV2IT {
             if (i % 2 == 0) {
                 builder = builder.binaryValue("string", String.valueOf(i).getBytes());
             }
-            builder = builder.timestamp(i)
+            builder = builder.key(i)
                 .boolValue("bool", i % 2 == 0)
                 .intValue("int", (int) i)
                 .longValue("long", i)
@@ -203,7 +203,7 @@ public class SessionV2IT {
             if (i % 2 == 0) {
                 builder = builder.binaryValue("string", String.valueOf(i).getBytes());
             }
-            builder = builder.timestamp(i)
+            builder = builder.key(i)
                 .boolValue("bool", i % 2 == 0)
                 .intValue("int", (int) i)
                 .longValue("long", i)
@@ -303,7 +303,7 @@ public class SessionV2IT {
         for (int i = 0; i < records.size(); i++) {
             IginXRecord record = records.get(i);
             long timestamp = endTimestamp - 1000 + i;
-            assertEquals(timestamp, record.getTimestamp());
+            assertEquals(timestamp, record.getKey());
             // 核验 bool 值
             boolean boolValue = (boolean) record.getValue("test.session.v2.bool");
             assertEquals(timestamp % 2 == 0, boolValue);
@@ -368,7 +368,7 @@ public class SessionV2IT {
         for (int i = 0; i < records.size(); i++) {
             IginXRecord record = records.get(i);
             long timestamp = endTimestamp - 1000 + i;
-            assertEquals(timestamp, record.getTimestamp());
+            assertEquals(timestamp, record.getKey());
             // 核验 bool 值
             boolean boolValue = (boolean) record.getValue("test.session.v3.bool{k1=v1}");
             assertEquals(timestamp % 2 == 0, boolValue);
@@ -416,7 +416,7 @@ public class SessionV2IT {
         for (int i = 0; i < records.size(); i++) {
             IginXRecord record = records.get(i);
             long timestamp = endTimestamp - 1000 + i;
-            assertEquals(timestamp, record.getTimestamp());
+            assertEquals(timestamp, record.getKey());
             // 核验 int 值
             int intValue = (int) record.getValue("test.session.v3.int{k1=v2}");
             assertEquals((int) timestamp, intValue);
@@ -495,10 +495,10 @@ public class SessionV2IT {
         for (IginXRecord record : records) {
             String value = new String((byte[]) record.getValue("value"));
             if ((new String((byte[]) record.getValue("path"))).equals("test.session.v2.string")) {
-                assertEquals(endTimestamp - 2, record.getTimestamp());
+                assertEquals(endTimestamp - 2, record.getKey());
                 assertEquals(String.valueOf(endTimestamp - 2), value);
             } else if ((new String((byte[]) record.getValue("path"))).equals("test.session.v2.int")) {
-                assertEquals(endTimestamp - 1, record.getTimestamp());
+                assertEquals(endTimestamp - 1, record.getKey());
                 assertEquals(String.valueOf(endTimestamp - 1), value);
             } else {
                 fail();
@@ -537,7 +537,7 @@ public class SessionV2IT {
         List<IginXRecord> records = table.getRecords();
         assertEquals(10, records.size());
         for (IginXRecord record : records) {
-            long timestamp = record.getTimestamp();
+            long timestamp = record.getKey();
             if (timestamp >= endTimestamp) {
                 fail();
             } else {

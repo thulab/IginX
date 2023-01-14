@@ -212,7 +212,7 @@ public class IginxWorker implements IService.Iface {
                 dataPrefix = extraParams.get(Constants.DATA_PREFIX);
             }
             boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
-            StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
+            StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, extraParams.get(SCHEMA_PREFIX), readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
             schemaPrefix.add(extraParams.get(SCHEMA_PREFIX)); // get the user defined schema prefix
@@ -248,12 +248,14 @@ public class IginxWorker implements IService.Iface {
                 StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
                 Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta, dataPrefix);
                 FragmentMeta dummyFragment;
+                String schemaPrefixTmp = null;
                 if (index < schemaPrefix.size() && schemaPrefix.get(index) != null) //set the virtual schema prefix
-                    boundary.k.setSchemaPrefix(schemaPrefix.get(index));
+                    schemaPrefixTmp = schemaPrefix.get(index);
                 if (dataPrefix == null) {
+                    boundary.k.setSchemaPrefix(schemaPrefixTmp);
                     dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
                 } else {
-                    dummyFragment = new FragmentMeta(new TimeSeriesPrefixRange(dataPrefix), boundary.v, dummyStorageUnit);
+                    dummyFragment = new FragmentMeta(new TimeSeriesPrefixRange(dataPrefix, schemaPrefixTmp), boundary.v, dummyStorageUnit);
                 }
                 dummyFragment.setDummyFragment(true);
                 meta.setDummyStorageUnit(dummyStorageUnit);
@@ -274,7 +276,9 @@ public class IginxWorker implements IService.Iface {
         if (!engine1.getStorageEngine().equals(engine2.getStorageEngine())) {
             return false;
         }
-        return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort();
+        return engine1.getIp().equals(engine2.getIp()) && engine1.getPort() == engine2.getPort()
+                && Objects.equals(engine1.getDataPrefix(), engine2.getDataPrefix())
+                && Objects.equals(engine1.getSchemaPrefix(), engine2.getSchemaPrefix());
     }
 
     @Override

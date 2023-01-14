@@ -4,23 +4,22 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OuterJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
 
@@ -36,13 +35,11 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
 
     private String joinColumnB;
 
-    private DataType joinColumnDataType;
-
     private Row nextA;
 
     private Row nextB;
 
-    private Object curJoinColumnBValue;  // 当前StreamB中join列的值，用于同值join
+    private Value curJoinColumnBValue;  // 当前StreamB中join列的值，用于同值join
 
     private final List<Row> sameValueStreamBRows;  // StreamB中join列的值相同的列缓存
 
@@ -114,13 +111,6 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
             this.index = headerB.indexOf(outerJoin.getPrefixB() + '.' + joinColumnB);
         }
 
-        DataType dataTypeA = headerA.getField(headerA.indexOf(outerJoin.getPrefixA() + "." + joinColumnA)).getType();
-        DataType dataTypeB = headerA.getField(headerA.indexOf(outerJoin.getPrefixA() + "." + joinColumnA)).getType();
-        if (!dataTypeA.equals(dataTypeB)) {
-            throw new InvalidOperatorParameterException("the datatype of join columns is different");
-        }
-        joinColumnDataType = dataTypeA;
-
         if (filter != null) {  // Join condition: on
             this.header = RowUtils.constructNewHead(headerA, headerB, outerJoin.getPrefixA(), outerJoin.getPrefixB());
         } else {               // Join condition: natural or using
@@ -164,7 +154,7 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
 
         OuterJoinType outerType = outerJoin.getOuterJoinType();
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.LEFT) {
-            int anotherRowSize = streamB.getHeader().hasTimestamp() ? streamB.getHeader().getFieldSize() + 1 : streamB.getHeader().getFieldSize();
+            int anotherRowSize = streamB.getHeader().hasKey() ? streamB.getHeader().getFieldSize() + 1 : streamB.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
                 anotherRowSize -= 1;
             }
@@ -174,7 +164,7 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
             }
         }
         if (outerType == OuterJoinType.FULL || outerType == OuterJoinType.RIGHT) {
-            int anotherRowSize = streamA.getHeader().hasTimestamp() ? streamA.getHeader().getFieldSize() + 1 : streamA.getHeader().getFieldSize();
+            int anotherRowSize = streamA.getHeader().hasKey() ? streamA.getHeader().getFieldSize() + 1 : streamA.getHeader().getFieldSize();
             if (outerJoin.getFilter() == null) {
                 anotherRowSize -= 1;
             }
@@ -206,8 +196,8 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
     }
 
     private void tryMatch() throws PhysicalException {
-        Object curJoinColumnAValue = nextA.getValue(outerJoin.getPrefixA() + "." + joinColumnA);
-        int cmp = RowUtils.compareObjects(joinColumnDataType, curJoinColumnAValue, curJoinColumnBValue);
+        Value curJoinColumnAValue = nextA.getAsValue(outerJoin.getPrefixA() + "." + joinColumnA);
+        int cmp = ValueUtils.compare(curJoinColumnAValue, curJoinColumnBValue);
         if (cmp < 0) {
             unmatchedStreamARows.add(nextA);
             nextA = null;
@@ -256,13 +246,13 @@ public class SortedMergeOuterJoinLazyStream extends BinaryLazyStream {
         }
         while (sameValueStreamBRows.isEmpty() && nextB != null) {
             sameValueStreamBRows.add(nextB);
-            curJoinColumnBValue = nextB.getValue(outerJoin.getPrefixB() + "." + joinColumnB);
+            curJoinColumnBValue = nextB.getAsValue(outerJoin.getPrefixB() + "." + joinColumnB);
             nextB = null;
 
             while (streamB.hasNext()) {
                 nextB = streamB.next();
-                Object joinColumnBValue = nextB.getValue(outerJoin.getPrefixB() + "." + joinColumnB);
-                if (Objects.equals(joinColumnBValue, curJoinColumnBValue)) {
+                Value joinColumnBValue = nextB.getAsValue(outerJoin.getPrefixB() + "." + joinColumnB);
+                if (ValueUtils.compare(joinColumnBValue, curJoinColumnBValue) == 0) {
                     sameValueStreamBRows.add(nextB);
                     nextB = null;
                 } else {

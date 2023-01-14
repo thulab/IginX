@@ -166,9 +166,9 @@ public class Result {
 
             Header header = resultStream.getHeader();
 
-            if (header.hasTimestamp()) {
-                paths.add(Field.TIME.getFullName());
-                types.add(Field.TIME.getType());
+            if (header.hasKey()) {
+                paths.add(Field.KEY.getFullName());
+                types.add(Field.KEY.getType());
                 tagsList.add(new HashMap<>());
             }
 
@@ -186,7 +186,7 @@ public class Result {
             List<ByteBuffer> bitmapList = new ArrayList<>();
 
             int cnt = 0;
-            boolean hasTimestamp = resultStream.getHeader().hasTimestamp();
+            boolean hasTimestamp = resultStream.getHeader().hasKey();
             while (resultStream.hasNext() && cnt < fetchSize) {
                 Row row = resultStream.next();
 
@@ -194,7 +194,7 @@ public class Result {
                 Object[] rowValues = rawValues;
                 if (hasTimestamp) {
                     rowValues = new Object[rawValues.length + 1];
-                    rowValues[0] = row.getTimestamp();
+                    rowValues[0] = row.getKey();
                     System.arraycopy(rawValues, 0, rowValues, 1, rawValues.length);
                 }
                 valuesList.add(ByteUtils.getRowByteBuffer(rowValues, types));
@@ -230,8 +230,8 @@ public class Result {
 
             Header header = resultStream.getHeader();
 
-            if (header.hasTimestamp()) {
-                types.add(Field.TIME.getType());
+            if (header.hasKey()) {
+                types.add(Field.KEY.getType());
             }
 
             resultStream.getHeader().getFields().forEach(field -> types.add(field.getType()));
@@ -240,7 +240,7 @@ public class Result {
             List<ByteBuffer> bitmapList = new ArrayList<>();
 
             int cnt = 0;
-            boolean hasTimestamp = resultStream.getHeader().hasTimestamp();
+            boolean hasTimestamp = resultStream.getHeader().hasKey();
             while (resultStream.hasNext() && cnt < fetchSize) {
                 Row row = resultStream.next();
 
@@ -248,7 +248,7 @@ public class Result {
                 Object[] rowValues = rawValues;
                 if (hasTimestamp) {
                     rowValues = new Object[rawValues.length + 1];
-                    rowValues[0] = row.getTimestamp();
+                    rowValues[0] = row.getKey();
                     System.arraycopy(rawValues, 0, rowValues, 1, rawValues.length);
                 }
                 valuesList.add(ByteUtils.getRowByteBuffer(rowValues, types));

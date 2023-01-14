@@ -14,14 +14,14 @@ public class SessionAggregateQueryDataSet {
 
     private List<String> paths;
 
-    private long[] timestamps;
+    private long[] keys;
 
     private final Object[] values;
 
     public SessionAggregateQueryDataSet(AggregateQueryResp resp, AggregateType type) {
         this.paths = resp.getPaths();
         if (resp.timestamps != null) {
-            this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
+            this.keys = getLongArrayFromByteBuffer(resp.timestamps);
         }
         this.values = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
         this.type = type;
@@ -35,8 +35,8 @@ public class SessionAggregateQueryDataSet {
         this.paths = paths;
     }
 
-    public long[] getTimestamps() {
-        return timestamps;
+    public long[] getKeys() {
+        return keys;
     }
 
     public Object[] getValues() {
@@ -45,7 +45,7 @@ public class SessionAggregateQueryDataSet {
 
     public void print() {
         System.out.println("Start to Print ResultSets:");
-        if (timestamps == null) {
+        if (keys == null) {
             for (String path : paths) {
                 System.out.print(path + "\t");
             }
@@ -59,11 +59,11 @@ public class SessionAggregateQueryDataSet {
             }
             System.out.println();
         } else {
-            for (int i = 0; i < timestamps.length; i++) {
+            for (int i = 0; i < keys.length; i++) {
                 System.out.print("Time\t");
                 System.out.print(paths.get(i) + "\t");
                 System.out.println();
-                System.out.print(timestamps[i] + "\t");
+                System.out.print(keys[i] + "\t");
                 if (values[i] instanceof byte[]) {
                     System.out.print(new String((byte[]) values[i]) + "\t");
                 } else {
