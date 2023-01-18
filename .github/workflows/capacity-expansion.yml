@@ -242,7 +242,7 @@ jobs:
         run: |
           mvn test -q -Dtest=InfluxDBHistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix -DfailIfNoTests=false
 
-  DataPrefixWithMultiSchemaPrefix-Test-IotDB:
+  DataPrefixWithMultiSchemaPrefix_AND_RemoveHistoryDataSource-Test-IotDB:
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -289,7 +289,7 @@ jobs:
       - name: data prefix IT
         run: |
           if [ "${{matrix.DB-name}}" == "iotdb11" ]; then
-            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix_AND_testRemoveHistoryDataSource -DfailIfNoTests=false
           elif [ "${{matrix.DB-name}}" == "iotdb12" ]; then
-            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix -DfailIfNoTests=false
+            mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT#testAddSameDataPrefixWithDiffSchemaPrefix_AND_testRemoveHistoryDataSource -DfailIfNoTests=false
           fi
