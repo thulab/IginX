@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
@@ -33,6 +34,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -149,7 +151,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (storageEngine.isHasData()) {
                     StorageUnitMeta dummyStorageUnit = storageEngine.getDummyStorageUnit();
                     dummyStorageUnit.setStorageEngineId(id);
-                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(id));
                     dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
                     FragmentMeta dummyFragment = storageEngine.getDummyFragment();
                     dummyFragment.setMasterStorageUnit(dummyStorageUnit);
@@ -318,7 +320,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (storageEngineMeta.isHasData()) {
                     StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
                     dummyStorageUnit.setStorageEngineId(id);
-                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(id));
                     dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
                     FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
                     dummyFragment.setMasterStorageUnit(dummyStorageUnit);
@@ -329,6 +331,30 @@ public class DefaultMetaManager implements IMetaManager {
             return true;
         } catch (MetaStorageException e) {
             logger.error("add storage engines error:", e);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngineMeta) {
+        if (getStorageEngine(storageID) == null) {
+            return false;
+        }
+        try {
+            storageEngineMeta.setId(storageID);
+            storage.updateStorageEngine(storageID, storageEngineMeta); // 如果删除成功，则后续更新对应的 dummyFragament 的元数据
+            if (storageEngineMeta.isHasData()) { // 确保内部数据的一致性
+                StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+                dummyStorageUnit.setStorageEngineId(storageID);
+                dummyStorageUnit.setId(StorageUnitMeta.generateDummyStorageUnitID(storageID));
+                dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
+                FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+                dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+                dummyFragment.setMasterStorageUnitId(dummyStorageUnit.getId());
+            }
+            return cache.updateStorageEngine(storageID, storageEngineMeta);
+        } catch (MetaStorageException e) {
+            logger.error("update storage engines error:", e);
         }
         return false;
     }
@@ -1049,7 +1075,7 @@ public class DefaultMetaManager implements IMetaManager {
             boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
             StorageEngineMeta storage = new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id);
             if (hasData) {
-                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", i), i);
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(StorageUnitMeta.generateDummyStorageUnitID(i), i);
                 Pair<TimeSeriesRange, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(storage);
                 FragmentMeta dummyFragment;
                 if (dataPrefix == null) {

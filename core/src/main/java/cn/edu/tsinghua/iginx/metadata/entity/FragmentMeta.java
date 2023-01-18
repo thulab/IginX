@@ -58,6 +58,8 @@ public final class FragmentMeta {
 
     private boolean dummyFragment = false;
 
+    private boolean valid = true;
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -157,6 +159,14 @@ public final class FragmentMeta {
 
     public void setMasterStorageUnitId(String masterStorageUnitId) {
         this.masterStorageUnitId = masterStorageUnitId;
+    }
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setIfValid(boolean ifValid) {
+        this.valid = ifValid;
     }
 
     @Override

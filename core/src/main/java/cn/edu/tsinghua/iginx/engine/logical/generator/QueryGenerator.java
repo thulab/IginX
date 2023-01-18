@@ -328,9 +328,11 @@ public class QueryGenerator extends AbstractGenerator {
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
             dummyFragments.forEach(meta -> {
-                String schemaPrefix = meta.getTsInterval().getSchemaPrefix();
-                joinList.add(new AddSchemaPrefix(new OperatorSource(new Project(new FragmentSource(meta),
+                if (meta.isValid()) {
+                    String schemaPrefix = meta.getTsInterval().getSchemaPrefix();
+                    joinList.add(new AddSchemaPrefix(new OperatorSource(new Project(new FragmentSource(meta),
                         pathMatchPrefix(pathList, meta.getTsInterval().getTimeSeries(), schemaPrefix), tagFilter)), schemaPrefix));
+                }
             });
             joinList.add(operator);
             operator = OperatorUtils.joinOperatorsByTime(joinList);

@@ -4,16 +4,15 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.InnerJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class NestedLoopInnerJoinLazyStream extends BinaryLazyStream {
 
@@ -131,7 +130,8 @@ public class NestedLoopInnerJoinLazyStream extends BinaryLazyStream {
             }
         } else {                              // Join condition: natural or using
             for (String joinColumn : joinColumns) {
-                if (!Objects.equals(nextA.getValue(innerJoin.getPrefixA() + '.' + joinColumn), nextB.getValue(innerJoin.getPrefixB() + '.' + joinColumn))) {
+                if (ValueUtils.compare(nextA.getAsValue(innerJoin.getPrefixA() + '.' + joinColumn),
+                        nextB.getAsValue(innerJoin.getPrefixB() + '.' + joinColumn)) != 0) {
                     nextB = null;
                     return null;
                 }

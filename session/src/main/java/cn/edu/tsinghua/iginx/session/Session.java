@@ -1259,4 +1259,22 @@ public class Session {
         }
         return new CurveMatchResult(resp.getMatchedTimestamp(), resp.getMatchedPath());
     }
+
+    public void removeHistoryDataSource(long id) throws SessionException, ExecutionException {
+        RemoveHistoryDataSourceReq req = new RemoveHistoryDataSourceReq(sessionId, id);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.removeHistoryDataSource(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
 }
