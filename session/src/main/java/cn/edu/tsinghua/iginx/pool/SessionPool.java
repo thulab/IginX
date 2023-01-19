@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 
+import static java.lang.Math.max;
+
 public class SessionPool {
     private static final Logger logger = LoggerFactory.getLogger(SessionPool.class);
     public static final String SESSION_POOL_IS_CLOSED = "Session pool is closed";
@@ -33,6 +35,8 @@ public class SessionPool {
     private static final String USERNAME = "root";
 
     private static final String PASSWORD = "root";
+
+    private static final int THREAD_NUMBER_MINSIZE = 1;
 
     private static final int MAXSIZE = 10;
     private static long WAITTOGETSESSIONTIMEOUTINMS = 60_000;
@@ -83,7 +87,7 @@ public class SessionPool {
             String password,
             int maxSize,
             long waitToGetSessionTimeoutInMs) {
-        this.maxSize = maxSize;
+        this.maxSize = max(maxSize,THREAD_NUMBER_MINSIZE);
         this.host = host;
         this.port = port;
         this.user = user;
