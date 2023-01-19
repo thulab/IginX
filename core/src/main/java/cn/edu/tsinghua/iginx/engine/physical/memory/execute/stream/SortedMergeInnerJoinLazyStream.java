@@ -4,22 +4,21 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.InnerJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.PathFilter;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * input two stream must be ascending order.
@@ -36,15 +35,13 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
 
     private String joinColumnB;
 
-    private DataType joinColumnDataType;
-
     private Row nextA;
 
     private Row nextB;
 
     private int index;
 
-    private Object curJoinColumnBValue;  // 当前StreamB中join列的值，用于同值join
+    private Value curJoinColumnBValue;  // 当前StreamB中join列的值，用于同值join
 
     private final List<Row> sameValueStreamBRows;  // StreamB中join列的值相同的列缓存
 
@@ -101,13 +98,6 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
         }
         this.index = headerB.indexOf(innerJoin.getPrefixB() + '.' + joinColumnB);
 
-        DataType dataTypeA = headerA.getField(headerA.indexOf(innerJoin.getPrefixA() + "." + joinColumnA)).getType();
-        DataType dataTypeB = headerA.getField(headerA.indexOf(innerJoin.getPrefixA() + "." + joinColumnA)).getType();
-        if (!dataTypeA.equals(dataTypeB)) {
-            throw new InvalidOperatorParameterException("the datatype of join columns is different");
-        }
-        joinColumnDataType = dataTypeA;
-
         if (filter != null) {  // Join condition: on
             this.header = RowUtils.constructNewHead(headerA, headerB, innerJoin.getPrefixA(), innerJoin.getPrefixB());
         } else {               // Join condition: natural or using
@@ -135,8 +125,8 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
     }
 
     private void tryMatch() throws PhysicalException {
-        Object curJoinColumnAValue = nextA.getValue(innerJoin.getPrefixA() + "." + joinColumnA);
-        int cmp = RowUtils.compareObjects(joinColumnDataType, curJoinColumnAValue, curJoinColumnBValue);
+        Value curJoinColumnAValue = nextA.getAsValue(innerJoin.getPrefixA() + "." + joinColumnA);
+        int cmp = ValueUtils.compare(curJoinColumnAValue, curJoinColumnBValue);
         if (cmp < 0) {
             nextA = null;
         } else if (cmp > 0) {
@@ -169,13 +159,13 @@ public class SortedMergeInnerJoinLazyStream extends BinaryLazyStream {
         }
         while (sameValueStreamBRows.isEmpty() && nextB != null) {
             sameValueStreamBRows.add(nextB);
-            curJoinColumnBValue = nextB.getValue(innerJoin.getPrefixB() + "." + joinColumnB);
+            curJoinColumnBValue = nextB.getAsValue(innerJoin.getPrefixB() + "." + joinColumnB);
             nextB = null;
 
             while (streamB.hasNext()) {
                 nextB = streamB.next();
-                Object joinColumnBValue = nextB.getValue(innerJoin.getPrefixB() + "." + joinColumnB);
-                if (Objects.equals(joinColumnBValue, curJoinColumnBValue)) {
+                Value joinColumnBValue = nextB.getAsValue(innerJoin.getPrefixB() + "." + joinColumnB);
+                if (ValueUtils.compare(joinColumnBValue, curJoinColumnBValue) == 0) {
                     sameValueStreamBRows.add(nextB);
                     nextB = null;
                 } else {

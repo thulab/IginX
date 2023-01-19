@@ -7,6 +7,7 @@ import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OuterJoin;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.type.OuterJoinType;
@@ -14,7 +15,6 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
@@ -205,7 +205,8 @@ public class NestedLoopOuterJoinLazyStream extends BinaryLazyStream {
             }
         } else {                              // Join condition: natural or using
             for (String joinColumn : joinColumns) {
-                if (!Objects.equals(nextA.getValue(outerJoin.getPrefixA() + '.' + joinColumn), nextB.getValue(outerJoin.getPrefixB() + '.' + joinColumn))) {
+                if (ValueUtils.compare(nextA.getAsValue(outerJoin.getPrefixA() + '.' + joinColumn),
+                        nextB.getAsValue(outerJoin.getPrefixB() + '.' + joinColumn)) != 0) {
                     nextB = null;
                     return null;
                 }
