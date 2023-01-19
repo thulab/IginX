@@ -580,6 +580,24 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngine) throws MetaStorageException {
+        try {
+            lockStorage();
+            this.client.getKVClient()
+                    .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", storageID)).getBytes()),
+                            ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when add storage: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (storageLease != -1) {
+                releaseStorage();
+            }
+        }
+        return true;
+    }
+
+    @Override
     public void registerStorageChangeHook(StorageChangeHook hook) {
         this.storageChangeHook = hook;
     }

@@ -104,7 +104,7 @@ public class FilterFragmentOptimizer implements Optimizer {
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
             dummyFragments.forEach(meta -> {
-                if (hasTimeRangeOverlap(meta, timeRanges)) {
+                if (meta.isValid() && hasTimeRangeOverlap(meta, timeRanges)) {
                     joinList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
                 }
             });

@@ -90,6 +90,9 @@ public interface IMetaCache {
     // 数据后端相关的缓存读写接口
     void addStorageEngine(StorageEngineMeta storageEngineMeta);
 
+    // 更新对应节点的元数据信息。如果对应节点的 dummy 元数据被移除，则需要删除相应的 dummy 元数据信息
+    boolean updateStorageEngine(long storageID, StorageEngineMeta storageEngineMeta);
+
     List<StorageEngineMeta> getStorageEngineList();
 
     StorageEngineMeta getStorageEngine(long id);
