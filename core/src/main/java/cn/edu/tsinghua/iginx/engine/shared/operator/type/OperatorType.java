@@ -30,24 +30,22 @@ public enum OperatorType {
     ShowTimeSeries(20),
     Migration,
 
-    //isNeedBroadcasting[30,39]
-    Delete(30),
-    Insert,
-
-    // BinaryOperator[40,49]
-    Join(40),
+    // BinaryOperator[30,39]
+    Join(30),
+    Union,
     InnerJoin,
     OuterJoin,
     CrossJoin,
 
 
-    // isUnaryOperator >= 50
-    Binary(50),
+    // isUnaryOperator >= 40
+    Binary(40),
     Unary,
+    Delete,
+    Insert,
     Multiple,
     Project,
     Select,
-    Union,
     Sort,
     Limit,
     Downsample,
@@ -80,11 +78,11 @@ public enum OperatorType {
     }
 
     public static boolean isBinaryOperator(OperatorType op) {
-        return 40 < op.value && op.value < 49;
+        return op.value >= 30 && op.value <= 39;
     }
 
     public static boolean isUnaryOperator(OperatorType op) {
-        return op.value >= 50;
+        return op.value >= 40;
     }
 
     public static boolean isMultipleOperator(OperatorType op) {
