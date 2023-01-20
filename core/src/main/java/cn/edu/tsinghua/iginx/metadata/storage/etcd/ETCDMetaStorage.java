@@ -65,6 +65,18 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String TRANSFORM_LOCK = "/lock/transform/";
 
+    private static final String RESHARD_STATUS_LOCK_NODE = "/lock/status/reshard";
+
+    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
+
+    private static final String ACTIVE_END_TIME_COUNTER_LOCK_NODE = "/lock/counter/end/time/active/max";
+
+    private static final String LATENCY_COUNTER_LOCK_NODE = "/lock/counter/latency";
+
+    private static final String FRAGMENT_HEAT_COUNTER_LOCK_NODE = "/lock/counter/fragment/heat";
+
+    private static final String TIMESERIES_HEAT_COUNTER_LOCK_NODE = "/lock/counter/timeseries/heat";
+
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
     private static final String IGINX_PREFIX = "/iginx/";
@@ -76,6 +88,36 @@ public class ETCDMetaStorage implements IMetaStorage {
     private static final String FRAGMENT_PREFIX = "/fragment/";
 
     private static final String USER_PREFIX = "/user/";
+
+    private static final String STATISTICS_FRAGMENT_POINTS_PREFIX = "/statistics/fragment/points";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_PREFIX_WRITE = "/statistics/fragment/requests/write";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_PREFIX_READ = "/statistics/fragment/requests/read";
+
+    private static final String STATISTICS_MONITOR_CLEAR_COUNTER_PREFIX = "/statistics/monitor/clear/counter";
+
+    private static final String STATISTICS_FRAGMENT_REQUESTS_COUNTER_PREFIX = "/statistics/fragment/requests/counter";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE = "/statistics/fragment/heat/write";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_PREFIX_READ = "/statistics/fragment/heat/read";
+
+    private static final String STATISTICS_FRAGMENT_HEAT_COUNTER_PREFIX = "/statistics/fragment/heat/counter";
+
+    private static final String STATISTICS_TIMESERIES_HEAT_PREFIX = "/statistics/timeseries/heat";
+
+    private static final String STATISTICS_TIMESERIES_HEAT_COUNTER_PREFIX = "/statistics/timeseries/heat/counter";
+
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE = "/statistics/end/time/active/max/node";
+
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX = "/statistics/end/time/active/max";
+
+    private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
+
+    private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
+
+    private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
 
     private static final String TRANSFORM_PREFIX = "/transform/";
 
@@ -90,6 +132,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     private final Lock fragmentLeaseLock = new ReentrantLock();
     private final Lock userLeaseLock = new ReentrantLock();
     private final Lock transformLeaseLock = new ReentrantLock();
+    private final Lock fragmentRequestsCounterLeaseLock = new ReentrantLock();
+    private final Lock fragmentHeatCounterLeaseLock = new ReentrantLock();
+    private final Lock timeseriesHeatCounterLeaseLock = new ReentrantLock();
+    private final Lock reshardStatusLeaseLock = new ReentrantLock();
+    private final Lock reshardCounterLeaseLock = new ReentrantLock();
+    private final Lock maxActiveEndTimeStatisticsLeaseLock = new ReentrantLock();
 
     private Client client;
 
@@ -112,6 +160,15 @@ public class ETCDMetaStorage implements IMetaStorage {
     private Watch.Watcher transformWatcher;
     private TransformChangeHook transformChangeHook = null;
     private long transformLease = -1L;
+    private Watch.Watcher reshardStatusWatcher;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
+    private long reshardStatusLease = -1L;
+    private Watch.Watcher reshardCounterWatcher;
+    private ReshardCounterChangeHook reshardCounterChangeHook = null;
+    private long reshardCounterLease = -1L;
+    private Watch.Watcher maxActiveEndTimeStatisticsWatcher;
+    private MaxActiveEndTimeStatisticsChangeHook maxActiveEndTimeStatisticsChangeHook = null;
+    private long  maxActiveEndTimeStatisticsLease = -1L;
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -381,6 +438,120 @@ public class ETCDMetaStorage implements IMetaStorage {
 
                 }
             });
+
+        // 注册 reshardStatus 的监听
+        this.reshardStatusWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_STATUS_NODE_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_STATUS_NODE_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.reshardStatusChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event : watchResponse.getEvents()) {
+                            ReshardStatus status;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    status = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), ReshardStatus.class);
+                                    reshardStatusChangeHook.onChange(status);
+                                    break;
+                                case DELETE:
+                                    status = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), ReshardStatus.class);
+                                    reshardStatusChangeHook.onChange(status);
+                                    break;
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+
+        // 注册 reshardCounter 的监听
+        this.reshardCounterWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_COUNTER_NODE_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_COUNTER_NODE_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.reshardCounterChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event : watchResponse.getEvents()) {
+                            int counter;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    counter = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Integer.class);
+                                    reshardCounterChangeHook.onChange(counter);
+                                    break;
+                                case DELETE:
+                                    counter = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), Integer.class);
+                                    reshardCounterChangeHook.onChange(counter);
+                                    break;
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+
+        // 注册 maxActiveEndTimeStatistics 的监听
+        this.maxActiveEndTimeStatisticsWatcher = client.getWatchClient().watch(ByteSequence.from(MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.maxActiveEndTimeStatisticsChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event : watchResponse.getEvents()) {
+                            long endTime;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    endTime = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Long.class);
+                                    maxActiveEndTimeStatisticsChangeHook.onChange(endTime);
+                                    break;
+                                case DELETE:
+                                    endTime = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), Long.class);
+                                    maxActiveEndTimeStatisticsChangeHook.onChange(endTime);
+                                    break;
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
     }
 
     public static ETCDMetaStorage getInstance() {
@@ -762,7 +933,21 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public void updateFragmentByTsInterval(TimeSeriesRange tsInterval, FragmentMeta fragmentMeta)
         throws MetaStorageException {
-
+        try {
+            client.getKVClient().delete(ByteSequence.from((FRAGMENT_PREFIX + tsInterval.toString() + "/" + fragmentMeta.getTimeInterval().toString()).getBytes()));
+            List<String> timeIntervalNames = new ArrayList<>();
+            GetResponse response = this.client.getKVClient()
+                    .get(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
+                            GetOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).build())
+                    .get();
+            response.getKvs().forEach(e -> {
+                String schema = e.getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
+                Map<String, Integer> schemaMapping = JsonUtils.transform(e.getValue().toString(StandardCharsets.UTF_8));
+                schemaMappings.put(schema, schemaMapping);
+            });
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MetaStorageException("update storage unit error: ", e);
+        }
     }
 
     @Override
