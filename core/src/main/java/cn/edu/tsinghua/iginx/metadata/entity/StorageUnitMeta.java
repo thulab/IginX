@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.conf.Constants;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +40,8 @@ public final class StorageUnitMeta {
     private boolean initialStorageUnit = true;
 
     private boolean dummy = false;
+
+    private boolean ifValid = true;
 
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
@@ -188,5 +192,21 @@ public final class StorageUnitMeta {
 
     public boolean isDummy() {
         return dummy;
+    }
+
+    public void setDummy(boolean dummy) {
+        this.dummy = dummy;
+    }
+
+    public boolean isIfValid() {
+        return ifValid;
+    }
+
+    public void setIfValid(boolean ifValid) {
+        this.ifValid = ifValid;
+    }
+
+    public static String generateDummyStorageUnitID(long id) {
+        return String.format(Constants.DUMMY + "%010d", (int)id);
     }
 }

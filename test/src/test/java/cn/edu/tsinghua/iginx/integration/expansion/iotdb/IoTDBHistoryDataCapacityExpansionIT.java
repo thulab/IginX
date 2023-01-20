@@ -494,7 +494,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     }
 
     @Test
-    public void testAddSameDataPrefixWithDiffSchemaPrefix() throws Exception {
+    public void testAddSameDataPrefixWithDiffSchemaPrefix_AND_testRemoveHistoryDataSource() throws Exception {
         session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, schema_prefix:p1, is_read_only:true\");");
         session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, schema_prefix:p2, is_read_only:true\");");
 
@@ -520,6 +520,27 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
+        statement = "select * from test";
+        expect = "ResultSets:\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
+                "Empty set.\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, data_prefix:test, is_read_only:false\");");
+        statement = "select * from test";
+        expect = "ResultSets:\n" +
+                "+---+---------------------+--------------------------+\n" +
+                "|key|test.wf03.wt01.status|test.wf03.wt01.temperature|\n" +
+                "+---+---------------------+--------------------------+\n" +
+                "| 77|                 true|                      null|\n" +
+                "|200|                false|                     77.71|\n" +
+                "+---+---------------------+--------------------------+\n" +
+                "Total line number = 2\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+        session.removeHistoryDataSource(3);
         statement = "select * from test";
         expect = "ResultSets:\n" +
                 "+---+\n" +
