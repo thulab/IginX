@@ -266,9 +266,11 @@ public abstract class MigrationPolicy {
                     fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
             logger.info("timeseries split new fragment=" + newFragment.toString());
             DefaultMetaManager.getInstance().addFragment(newFragment);
+            DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
             logger.info("start to add old fragment");
             DefaultMetaManager.getInstance()
                     .endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
+            DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
         } finally {
             migrationLogger.logMigrationExecuteTaskEnd();
         }
@@ -278,8 +280,11 @@ public abstract class MigrationPolicy {
      * 在时间序列层面将分片在同一个du下分为两块（已知时间序列）
      */
     public void reshardQueryByTimeseries(FragmentMeta fragmentMeta,
-                                         Map<String, Long> timeseriesLoadMap) {
+                                         Map<String, Long> timeseriesLoadMap, long points) {
         try {
+            if (fragmentMeta.getTsInterval().getStartTimeSeries().equals(fragmentMeta.getTsInterval().getEndTimeSeries())) {
+                return;
+            }
             migrationLogger.logMigrationExecuteTaskStart(
                     new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
                             MigrationExecuteType.RESHARD_TIME_SERIES));
@@ -305,9 +310,10 @@ public abstract class MigrationPolicy {
                     fragmentMeta.getTimeInterval().getStartTime(),
                     fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
             DefaultMetaManager.getInstance().addFragment(newFragment);
+            DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
             DefaultMetaManager.getInstance()
                     .endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
-            DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+            DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
         } finally {
             migrationLogger.logMigrationExecuteTaskEnd();
         }
@@ -425,19 +431,21 @@ public abstract class MigrationPolicy {
                             MigrationExecuteType.MIGRATION));
 
             Set<String> pathRegexSet = new HashSet<>();
-            ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(), pathRegexSet, null,
-                    Integer.MAX_VALUE, 0);
+            ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
+                    pathRegexSet, null, Integer.MAX_VALUE, 0);
             RowStream rowStream = physicalEngine.execute(showTimeSeries);
             SortedSet<String> pathSet = new TreeSet<>();
-            rowStream.getHeader().getFields().forEach(field -> {
-                String timeSeries = field.getName();
+            while (rowStream.hasNext()) {
+                Row row = rowStream.next();
+                String timeSeries = new String((byte[]) row.getValue(0));
                 if (timeSeries.contains("{") && timeSeries.contains("}")) {
                     timeSeries = timeSeries.split("\\{")[0];
                 }
                 if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
                     pathSet.add(timeSeries);
                 }
-            });
+            }
+
             // 开始迁移数据
             Migration migration = new Migration(new GlobalSource(), sourceStorageId, targetStorageId,
                     fragmentMeta, new ArrayList<>(pathSet), storageUnitMeta);

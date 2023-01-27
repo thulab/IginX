@@ -40,7 +40,7 @@ public class TimeseriesMonitor implements IMonitor {
 
     public void recordAfter(long taskId, TaskExecuteResult result, OperatorType operatorType) {
         try {
-            if (isEnableMonitor && isStartTimeseriesMonitor && operatorType == OperatorType.Project) {
+            if (isEnableMonitor && isStartTimeseriesMonitor && operatorType == OperatorType.Project && result.getRowStream().hasNext()) {
                 // 构建本次访问的timeseries列表
                 List<String> timeseriesList = new ArrayList<>();
                 for (Field field : result.getRowStream().getHeader().getFields()) {

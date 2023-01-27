@@ -366,7 +366,6 @@ public class DefaultMetaCache implements IMetaCache {
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
-        logger.error("===sortedFragmentMetaLists==={}", sortedFragmentMetaLists);
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> resultMap.put(e.k, e.v));
         fragmentLock.readLock().unlock();
         return resultMap;
