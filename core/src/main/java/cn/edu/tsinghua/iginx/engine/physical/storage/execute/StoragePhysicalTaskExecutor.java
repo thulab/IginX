@@ -33,10 +33,16 @@ import cn.edu.tsinghua.iginx.engine.physical.task.GlobalPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
-import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
@@ -115,26 +121,34 @@ public class StoragePhysicalTaskExecutor {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
                         task.setDummyStorageUnit(isDummy);
-//                        logger.info("take out new task: " + task);
                         if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
                             task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
                             continue;
                         }
                         allRequests.incrementAndGet();
                         pair.v.submit(() -> {
-                            TaskExecuteResult result = null;
-                            long startTime = System.nanoTime();
+                            TaskExecuteResult result;
                             long taskId = System.nanoTime();
                             submittedRequests.incrementAndGet();
                             try {
+                                // 如果是查询请求，可能有可配置化副本，随机发送到任何一个副本上
+                                Operator op = task.getOperators().get(0);
+                                if (op.getType() == OperatorType.Project) {
+                                    FragmentMeta fragment = task.getTargetFragment();
+                                    if (fragment != null) {
+                                        List<FragmentMeta> fragmentMetas = DefaultMetaCache.getInstance().getCustomizableReplicaFragmentList(fragment);
+                                        if (!fragmentMetas.isEmpty()) {
+                                            int randomIndex = new Random().nextInt(fragmentMetas.size());
+                                            task.setTargetFragment(fragmentMetas.get(randomIndex));
+                                        }
+                                    }
+                                }
                                 result = pair.k.execute(task);
                             } catch (Exception e) {
                                 logger.error("execute task error: " + e);
                                 result = new TaskExecuteResult(new PhysicalException(e));
                             }
-//                            logger.error("PhysicalTaskExecutor time: {}", System.nanoTime() - startTime);
                             completedRequests.incrementAndGet();
-                            startTime = System.nanoTime();
                             try {
                                 HotSpotMonitor.getInstance()
                                         .recordAfter(taskId, task.getTargetFragment(),
@@ -173,7 +187,6 @@ public class StoragePhysicalTaskExecutor {
                                     }
                                 }
                             }
-//                            logger.error("PhysicalTaskExecutor memory time: {}", System.nanoTime() - startTime);
                         });
                     }
                 });

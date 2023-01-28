@@ -130,6 +130,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX = "/statistics/end/time/active/max";
 
+    private static final String CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX = "/fragment/customizable/replica";
+
     private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
 
     private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
@@ -1761,22 +1763,18 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat(
             IMetaCache cache)
             throws Exception {
-        logger.error("===loadFragmentHeat===");
         Map<FragmentMeta, Long> writeHotspotMap = new HashMap<>();
         if (this.client.checkExists().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE) != null) {
             List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE);
             for (String child : children) {
-                logger.error("===child==={}", child);
                 TimeSeriesInterval timeSeriesInterval = TimeSeriesInterval.fromString(child);
                 Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMapOfTimeSeriesInterval = cache
                         .getFragmentMapByTimeSeriesInterval(timeSeriesInterval);
                 List<FragmentMeta> fragmentMetas = fragmentMapOfTimeSeriesInterval.get(timeSeriesInterval);
 
-                logger.error("===fragmentMetas==={}", fragmentMetas);
                 if (fragmentMetas != null) {
                     List<String> timeIntervals = client.getChildren()
                             .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child);
-                    logger.error("timeIntervals={}", timeIntervals);
                     for (String timeInterval : timeIntervals) {
                         long startTime = Long.parseLong(timeInterval);
                         for (FragmentMeta fragmentMeta : fragmentMetas) {
@@ -2172,6 +2170,56 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void registerMaxActiveEndTimeStatisticsChangeHook(
             MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
         this.maxActiveEndTimeStatisticsChangeHook = hook;
+    }
+
+    @Override
+    public void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX + "/" + sourceFragment.getTsInterval().toString() + "/" + sourceFragment.getTimeInterval().toString() + "/source", JsonUtils.toJson(sourceFragment));
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX + "/" + sourceFragment.getTsInterval().toString() + "/" + sourceFragment.getTimeInterval().toString() + "/replica", JsonUtils.toJson(replicaFragment));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when add customizable replica fragment", e);
+        }
+    }
+
+    @Override
+    public void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) throws MetaStorageException {
+        try {
+            String path = CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX + "/" + sourceFragment.getTsInterval().toString() + "/" + sourceFragment.getTimeInterval().toString();
+            if (this.client.checkExists().forPath(path) != null) {
+                this.client.delete().deletingChildrenIfNeeded().forPath(path);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when removing customizable replica fragment: ", e);
+        }
+    }
+
+    @Override
+    public Map<FragmentMeta, List<FragmentMeta>> getCustomizableReplicaFragmentMetaList() throws MetaStorageException {
+        try {
+            Map<FragmentMeta, List<FragmentMeta>> fragmentListMap = new HashMap<>();
+            if (this.client.checkExists().forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                this.client.create().withMode(CreateMode.PERSISTENT).forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX);
+            } else {
+                List<String> tsIntervalNames = this.client.getChildren().forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX);
+                for (String tsIntervalName : tsIntervalNames) {
+                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
+                    for (String timeIntervalName : timeIntervalNames) {
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
+                                .forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName + "/source"), FragmentMeta.class);
+                        List<FragmentMeta> replicaFragment = JsonUtils.fromJson(this.client.getData()
+                                .forPath(CUSTOMIZABLE_REPLICA_FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName + "/replica"), List.class);
+                        fragmentListMap.put(fragmentMeta, replicaFragment);
+                    }
+                }
+            }
+            return fragmentListMap;
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when get customizable replica fragment", e);
+        }
     }
 
     private void registerReshardCounterListener() throws Exception {

@@ -63,6 +63,14 @@ public interface IMetaCache {
 
     List<FragmentMeta> getFragmentListByStorageUnitId(String storageUnitId);
 
+    void initCustomizableReplicaFragmentMeta(Map<FragmentMeta, List<FragmentMeta>> fragmentListMap);
+
+    void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment);
+
+    void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment);
+
+    List<FragmentMeta> getCustomizableReplicaFragmentList(FragmentMeta sourceFragment);
+
     boolean hasFragment();
 
     long getFragmentMinTimestamp();

@@ -748,6 +748,29 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
+    public void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) {
+        try {
+            // 不需要加锁，因为原则上整个集群中只有一个线程在进行负载均衡
+            cache.addCustomizableReplicaFragmentMeta(sourceFragment, replicaFragment);
+            storage.addCustomizableReplicaFragmentMeta(sourceFragment, replicaFragment);
+        } catch (Exception e) {
+            logger.error("add customizable replica fragment error: ", e);
+        }
+    }
+
+    public void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) {
+        try {
+            cache.removeCustomizableReplicaFragmentMeta(sourceFragment);
+            storage.removeCustomizableReplicaFragmentMeta(sourceFragment);
+        } catch (Exception e) {
+            logger.error("remove customizable replica fragment error: ", e);
+        }
+    }
+
+    public List<FragmentMeta> getCustomizableReplicaFragmentList(FragmentMeta sourceFragment) {
+        return cache.getCustomizableReplicaFragmentList(sourceFragment);
+    }
+
     @Override
     public boolean hasFragment() {
         return cache.hasFragment();
@@ -784,6 +807,7 @@ public class DefaultMetaManager implements IMetaManager {
                 // 再初始化缓存
                 cache.initStorageUnit(globalStorageUnits);
                 cache.initFragment(globalFragmentMap);
+                initCustomizableReplicaFragments();
                 return false;
             }
 
@@ -1448,6 +1472,15 @@ public class DefaultMetaManager implements IMetaManager {
         storage.lockReshardCounter();
         storage.removeReshardCounter();
         storage.releaseReshardCounter();
+    }
+
+    private void initCustomizableReplicaFragments() throws MetaStorageException {
+        try {
+            Map<FragmentMeta, List<FragmentMeta>> customizableReplicaFragmentsMap = storage.getCustomizableReplicaFragmentMetaList();
+            cache.initCustomizableReplicaFragmentMeta(customizableReplicaFragmentsMap);
+        } catch (MetaStorageException e) {
+            logger.error("encounter error when init customizable replica fragment: ", e);
+        }
     }
 
     private void recover() {

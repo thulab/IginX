@@ -27,7 +27,7 @@ import java.util.List;
 
 public class StoragePhysicalTask extends AbstractPhysicalTask {
 
-    private final FragmentMeta targetFragment;
+    private FragmentMeta targetFragment;
     private final boolean sync;
     private final boolean needBroadcasting;
     private String storageUnit;
@@ -51,6 +51,10 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     public FragmentMeta getTargetFragment() {
         return targetFragment;
+    }
+
+    public void setTargetFragment(FragmentMeta targetFragment) {
+        this.targetFragment = targetFragment;
     }
 
     public String getStorageUnit() {

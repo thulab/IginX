@@ -269,6 +269,12 @@ public interface IMetaManager {
 
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
+    void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment);
+
+    void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment);
+
+    List<FragmentMeta> getCustomizableReplicaFragmentList(FragmentMeta sourceFragment);
+
     void updateFragmentPoints(FragmentMeta fragmentMeta, long points);
 
     void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval);

@@ -1252,6 +1252,21 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     }
 
+    @Override
+    public void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) throws MetaStorageException {
+
+    }
+
+    @Override
+    public Map<FragmentMeta, List<FragmentMeta>> getCustomizableReplicaFragmentMetaList() throws MetaStorageException {
+        return null;
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;

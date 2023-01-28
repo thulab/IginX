@@ -48,6 +48,8 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
+    private final Map<FragmentMeta, List<FragmentMeta>> customizableReplicaFragmentMetaList;
+
     private final List<FragmentMeta> dummyFragments;
 
     private int fragmentCacheSize;
@@ -104,6 +106,7 @@ public class DefaultMetaCache implements IMetaCache {
         // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
+        customizableReplicaFragmentMetaList = new HashMap<>();
         dummyFragments = new ArrayList<>();
         fragmentLock = new ReentrantReadWriteLock();
         // 数据单元相关
@@ -478,6 +481,26 @@ public class DefaultMetaCache implements IMetaCache {
         resultList = searchFragmentList(fragmentMetas, storageUnitId);
         fragmentLock.readLock().unlock();
         return resultList;
+    }
+
+    @Override
+    public void initCustomizableReplicaFragmentMeta(Map<FragmentMeta, List<FragmentMeta>> customizableReplicaFragmentMap) {
+        customizableReplicaFragmentMetaList.forEach(customizableReplicaFragmentMap::put);
+    }
+
+    @Override
+    public void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) {
+        customizableReplicaFragmentMetaList.put(sourceFragment, replicaFragment);
+    }
+
+    @Override
+    public void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) {
+        customizableReplicaFragmentMetaList.remove(sourceFragment);
+    }
+
+    @Override
+    public List<FragmentMeta> getCustomizableReplicaFragmentList(FragmentMeta sourceFragment) {
+        return customizableReplicaFragmentMetaList.getOrDefault(sourceFragment, new ArrayList<>());
     }
 
     @Override

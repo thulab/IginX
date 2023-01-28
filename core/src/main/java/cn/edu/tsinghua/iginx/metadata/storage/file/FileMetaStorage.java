@@ -860,4 +860,19 @@ public class FileMetaStorage implements IMetaStorage {
         MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
 
     }
+
+    @Override
+    public void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) throws MetaStorageException {
+
+    }
+
+    @Override
+    public Map<FragmentMeta, List<FragmentMeta>> getCustomizableReplicaFragmentMetaList() throws MetaStorageException {
+        return null;
+    }
 }

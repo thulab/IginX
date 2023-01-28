@@ -205,4 +205,10 @@ public interface IMetaStorage {
     void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
 
     void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException;
+
+    void addCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment, List<FragmentMeta> replicaFragment) throws MetaStorageException;
+
+    void removeCustomizableReplicaFragmentMeta(FragmentMeta sourceFragment) throws MetaStorageException;
+
+    Map<FragmentMeta, List<FragmentMeta>> getCustomizableReplicaFragmentMetaList() throws MetaStorageException;
 }
