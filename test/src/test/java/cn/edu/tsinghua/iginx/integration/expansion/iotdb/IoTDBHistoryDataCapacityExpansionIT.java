@@ -11,6 +11,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
@@ -540,7 +543,9 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
                 "+---+---------------------+--------------------------+\n" +
                 "Total line number = 2\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
-        session.removeHistoryDataSource(3);
+        List<Long> idList = new ArrayList<>();
+        idList.add(3L);
+        session.removeHistoryDataSource(idList);
         statement = "select * from test";
         expect = "ResultSets:\n" +
                 "+---+\n" +
