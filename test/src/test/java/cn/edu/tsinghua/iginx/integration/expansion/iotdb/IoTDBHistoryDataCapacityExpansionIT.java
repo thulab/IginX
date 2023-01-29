@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.integration.SQLSessionIT;
 import cn.edu.tsinghua.iginx.integration.expansion.BaseCapacityExpansionIT;
 import cn.edu.tsinghua.iginx.integration.expansion.unit.SQLTestTools;
+import cn.edu.tsinghua.iginx.pool.SessionPool;
 import cn.edu.tsinghua.iginx.session.Session;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -20,6 +21,8 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
 
     private static Session session;
 
+    private static SessionPool sessionPool;
+
     private String ENGINE_TYPE;
 
     public IoTDBHistoryDataCapacityExpansionIT(String engineType) {
@@ -29,6 +32,14 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     @BeforeClass
     public static void setUp() {
         session = new Session("127.0.0.1", 6888, "root", "root");
+        sessionPool =
+                new SessionPool.Builder()
+                        .host("127.0.0.1")
+                        .port(6888)
+                        .user("root")
+                        .password("root")
+                        .maxSize(3)
+                        .build();
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -40,6 +51,7 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
     public static void tearDown() {
         try {
             session.closeSession();
+            sessionPool.close();
         } catch (SessionException e) {
             logger.error(e.getMessage());
         }
@@ -547,6 +559,27 @@ public class IoTDBHistoryDataCapacityExpansionIT implements BaseCapacityExpansio
         idList.add(3L);
         session.removeHistoryDataSource(idList);
         statement = "select * from test";
+        expect = "ResultSets:\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
+                "Empty set.\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        idList.set(0, 2L);
+        sessionPool.removeHistoryDataSource(idList);
+        statement = "select * from p2.test";
+        expect = "ResultSets:\n" +
+                "+---+\n" +
+                "|key|\n" +
+                "+---+\n" +
+                "+---+\n" +
+                "Empty set.\n";
+        SQLTestTools.executeAndCompare(session, statement, expect);
+
+        session.executeSql("remove historydataresource 1");
+        statement = "select * from p1.test";
         expect = "ResultSets:\n" +
                 "+---+\n" +
                 "|key|\n" +
