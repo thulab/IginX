@@ -328,9 +328,11 @@ public class QueryGenerator extends AbstractGenerator {
         if (!dummyFragments.isEmpty()) {
             List<Operator> joinList = new ArrayList<>();
             dummyFragments.forEach(meta -> {
-                if (meta.isValid())
-                    joinList.add(new Project(new FragmentSource(meta),
-                            pathMatchPrefix(pathList,meta.getTsInterval().getTimeSeries(), meta.getTsInterval().getSchemaPrefix()), tagFilter));
+                if (meta.isValid()) {
+                    String schemaPrefix = meta.getTsInterval().getSchemaPrefix();
+                    joinList.add(new AddSchemaPrefix(new OperatorSource(new Project(new FragmentSource(meta),
+                        pathMatchPrefix(pathList, meta.getTsInterval().getTimeSeries(), schemaPrefix), tagFilter)), schemaPrefix));
+                }
             });
             joinList.add(operator);
             operator = OperatorUtils.joinOperatorsByTime(joinList);
@@ -349,13 +351,30 @@ public class QueryGenerator extends AbstractGenerator {
         return keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
     }
 
+    // 筛选出满足 dataPrefix前缀，并且去除 schemaPrefix
     private List<String> pathMatchPrefix(List<String> pathList, String prefix, String schemaPrefix) {
-        if (prefix == null) return pathList;
-        if (schemaPrefix != null) prefix = schemaPrefix + "." + prefix; // deal with the schemaPrefix
+        if (prefix == null && schemaPrefix == null) return pathList;
         List<String> ans = new ArrayList<>();
+
+        if (prefix == null) { // deal with the schemaPrefix
+            for(String path : pathList) {
+                if (path.equals("*.*") || path.equals("*")) {
+                    ans.add(path);
+                } else if (path.indexOf(schemaPrefix) == 0) {
+                    path = path.substring(schemaPrefix.length() + 1);
+                    ans.add(path);
+                }
+            }
+            return ans;
+        }
+//        if (schemaPrefix != null) prefix = schemaPrefix + "." + prefix;
+
         for(String path : pathList) {
-            if (path.equals("*.*")) {
-                ans.add(path);
+            if (schemaPrefix != null && path.indexOf(schemaPrefix) == 0) {
+                path = path.substring(schemaPrefix.length() + 1);
+            }
+            if (path.equals("*.*") || path.equals("*")) {
+                ans.add(prefix + ".*");
             } else if (path.charAt(path.length()-1) == '*' && path.length() != 1) { // 通配符匹配，例如 a.b.*
                 String queryPrefix = path.substring(0,path.length()-2) + ".(.*)";
                 if (prefix.matches(queryPrefix)) {

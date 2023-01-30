@@ -45,11 +45,8 @@ public class InfluxDBHistoryQueryRowStream implements RowStream {
     private int hasMoreRecords;
 
     private int size;
-    public InfluxDBHistoryQueryRowStream(Map<String, List<FluxTable>> bucketQueryResults, List<String> patterns) {
-        this(bucketQueryResults, patterns, null);
-    }
 
-    public InfluxDBHistoryQueryRowStream(Map<String, List<FluxTable>> bucketQueryResults, List<String> patterns, String prefix) {
+    public InfluxDBHistoryQueryRowStream(Map<String, List<FluxTable>> bucketQueryResults, List<String> patterns) {
         this.bucketQueryResults = new ArrayList<>(bucketQueryResults.entrySet());
         this.indexList = new ArrayList<>();
         List<Field> fields = new ArrayList<>();
@@ -58,7 +55,7 @@ public class InfluxDBHistoryQueryRowStream implements RowStream {
             List<FluxTable> tables = this.bucketQueryResults.get(i).getValue();
             this.indexList.add(new int[tables.size()]);
             for (FluxTable table: tables) {
-                fields.add(SchemaTransformer.toField(bucket, table, prefix));
+                fields.add(SchemaTransformer.toField(bucket, table));
                 this.hasMoreRecords++;
                 this.size++;
             }

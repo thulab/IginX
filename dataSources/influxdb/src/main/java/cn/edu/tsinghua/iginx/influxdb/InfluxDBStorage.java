@@ -236,18 +236,11 @@ public class InfluxDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    private String getRealPathWithoutPrefix(String oriPath, String prefix) {
-        if (prefix != null && !prefix.isEmpty() && oriPath.contains(prefix)) {
-            return oriPath.substring(oriPath.indexOf(prefix) + prefix.length() + 1);
-        }
-        return oriPath;
-    }
-
     private TaskExecuteResult executeHistoryProjectTask(TimeSeriesRange timeSeriesInterval, TimeInterval timeInterval, Project project) {
         Map<String, String> bucketQueries = new HashMap<>();
         TagFilter tagFilter = project.getTagFilter();
         for (String pattern: project.getPatterns()) {
-            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(getRealPathWithoutPrefix(pattern, timeSeriesInterval.getSchemaPrefix()), tagFilter);
+            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern, tagFilter);
             String bucketName = pair.k;
             String query = pair.v;
             String fullQuery = "";
@@ -276,7 +269,7 @@ public class InfluxDBStorage implements IStorage {
             bucketQueryResults.put(bucket, client.getQueryApi().query(statement, organization.getId()));
         }
 
-        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns(), timeSeriesInterval.getSchemaPrefix());
+        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns());
         return new TaskExecuteResult(rowStream);
     }
 

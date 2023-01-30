@@ -317,12 +317,12 @@ public class IoTDBStorage implements IStorage {
         try {
             StringBuilder builder = new StringBuilder();
             for (String path : project.getPatterns()) {
-                builder.append(getRealPathWithoutPrefix(path, timeSeriesInterval.getSchemaPrefix()));
+                builder.append(path);
                 builder.append(',');
             }
             String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project, timeSeriesInterval.getSchemaPrefix()));
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());

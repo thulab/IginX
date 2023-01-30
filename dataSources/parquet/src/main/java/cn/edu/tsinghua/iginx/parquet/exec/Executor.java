@@ -15,7 +15,7 @@ import java.util.List;
 public interface Executor {
 
     TaskExecuteResult executeProjectTask(List<String> paths, TagFilter tagFilter, String filter,
-        String storageUnit, boolean isDummyStorageUnit, String schemaPrefix);
+        String storageUnit, boolean isDummyStorageUnit);
 
     TaskExecuteResult executeInsertTask(DataView dataView, String storageUnit);
 

@@ -20,18 +20,32 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.type;
 
 public enum OperatorType {
 
-    Unknown,
-    Binary,
-    Unary,
-    Multiple,
+    // Exception[0,9]
+    Unknown(0),
 
-    Project,
-    Select,
-    Join,
+    // MultipleOperator[10,19]
+    CombineNonQuery(10),
+
+    //isGlobalOperator[20,29]
+    ShowTimeSeries(20),
+    Migration,
+
+    // BinaryOperator[30,39]
+    Join(30),
+    Union,
     InnerJoin,
     OuterJoin,
     CrossJoin,
-    Union,
+
+
+    // isUnaryOperator >= 40
+    Binary(40),
+    Unary,
+    Delete,
+    Insert,
+    Multiple,
+    Project,
+    Select,
     Sort,
     Limit,
     Downsample,
@@ -39,23 +53,36 @@ public enum OperatorType {
     SetTransform,
     MappingTransform,
     Rename,
-
     Reorder,
+    AddSchemaPrefix;
 
-    Delete,
-    Insert,
-    CombineNonQuery,
 
-    ShowTimeSeries,
 
-    Migration;
+    private int value;
+    OperatorType(){
+        this(OperatorTypeCounter.nextValue);
+    }
+    OperatorType(int value){
+        this.value = value;
+        OperatorTypeCounter.nextValue = value + 1;
+    }
+
+    public int getValue()
+    {
+        return value;
+    }
+
+    private static class OperatorTypeCounter
+    {
+        private static int nextValue = 0;
+    }
 
     public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union || op == InnerJoin || op == OuterJoin || op == CrossJoin;
+        return op.value >= 30 && op.value <= 39;
     }
 
     public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert || op == Rename || op == Reorder;
+        return op.value >= 40;
     }
 
     public static boolean isMultipleOperator(OperatorType op) {
