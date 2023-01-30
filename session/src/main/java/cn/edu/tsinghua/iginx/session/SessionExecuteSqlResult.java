@@ -257,13 +257,15 @@ public class SessionExecuteSqlResult {
         if (storageEngineInfos != null && !storageEngineInfos.isEmpty()) {
             builder.append("Storage engine infos:").append("\n");
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("ID", "IP", "PORT", "TYPE")));
+            cache.add(new ArrayList<>(Arrays.asList("ID", "IP", "PORT", "TYPE", "SCHEMA_PREFIX", "DATAPREFIX")));
             for (StorageEngineInfo info : storageEngineInfos) {
                 cache.add(new ArrayList<>(Arrays.asList(
                     String.valueOf(info.getId()),
                     info.getIp(),
                     String.valueOf(info.getPort()),
-                    info.getType()
+                    info.getType(),
+                    info.getSchemaPrefix(),
+                    info.getDataPrefix()
                 )));
             }
             builder.append(FormatUtils.formatResult(cache));

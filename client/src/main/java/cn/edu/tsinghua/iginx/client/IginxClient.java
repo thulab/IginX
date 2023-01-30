@@ -402,7 +402,8 @@ public class IginxClient {
             Arrays.asList("clear", "data"),
             Arrays.asList("show", "time", "series"),
             Arrays.asList("show", "cluster", "info"),
-            Arrays.asList("show", "register", "python", "task")
+            Arrays.asList("show", "register", "python", "task"),
+            Arrays.asList("remove", "historyDataResource")
         );
         addArgumentCompleters(iginxCompleters, withoutNullCompleters, false);
 

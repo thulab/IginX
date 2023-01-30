@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public final class StorageEngineMeta implements Cloneable {
+public final class StorageEngineMeta {
 
     /**
      * 数据库的 id
@@ -211,11 +211,6 @@ public final class StorageEngineMeta implements Cloneable {
 
     public void setNeedReAllocate(boolean needReAllocate) {
         this.needReAllocate = needReAllocate;
-    }
-
-    @Override
-    public StorageEngineMeta clone() throws CloneNotSupportedException {
-        return (StorageEngineMeta)super.clone();
     }
 
     @Override

@@ -22,6 +22,7 @@ statement
     | SHOW TRANSFORM JOB STATUS jobId=INT #showJobStatusStatement
     | CANCEL TRANSFORM JOB jobId=INT #cancelJobStatement
     | SHOW jobStatus TRANSFORM JOB #showEligibleJobStatement
+    | REMOVE HISTORYDATARESOURCE storageEngineID (COMMA storageEngineID)* #removeHistoryDataResourceStatement
     ;
 
 queryClause
@@ -339,6 +340,7 @@ keyWords
     | JOIN
     | ON
     | USING
+    | REMOVE
     ;
 
 dateFormat
@@ -370,6 +372,10 @@ realLiteral
     : INT DOT (INT | EXPONENT)?
     | DOT  (INT|EXPONENT)
     | EXPONENT
+    ;
+
+storageEngineID
+    : (INT)
     ;
 
 //============================
@@ -701,6 +707,14 @@ ON
 
 USING
     : U S I N G
+    ;
+
+REMOVE
+    : R E M O V E
+    ;
+
+HISTORYDATARESOURCE
+    : H I S T O R Y D A T A R E S O U R C E
     ;
 //============================
 // End of the keywords list

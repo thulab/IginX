@@ -229,6 +229,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new ShowClusterInfoStatement();
     }
 
+    @Override
+    public Statement visitRemoveHistoryDataResourceStatement(RemoveHistoryDataResourceStatementContext ctx) {
+        RemoveHsitoryDataSourceStatement statement = new RemoveHsitoryDataSourceStatement();
+        ctx.storageEngineID().forEach(id -> statement.addStorageID(Long.parseLong(id.getText())));
+        return statement;
+    }
+
     private void parseFromPaths(FromClauseContext ctx, SelectStatement selectStatement) {
         if (ctx.queryClause() != null) {
             // parse sub query
