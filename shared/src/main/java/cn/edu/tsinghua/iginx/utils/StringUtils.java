@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringUtils {
 
@@ -105,5 +107,12 @@ public class StringUtils {
         name = name.replaceAll("[(]", "[(]");
         name = name.replaceAll("[)]", "[)]");
         return name;
+    }
+
+    public static boolean isContainSpecialChar(String str) {
+        String regEx = "[~!@#$%&()+=|{}':;',<>?~]|\r|\n|\t|[\u2E80-\u2E84]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(str);
+        return m.find();
     }
 }

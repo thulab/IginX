@@ -813,7 +813,7 @@ NAME_CHAR
     ;
 
 fragment CN_CHAR
-  : '\u2E80'..'\u9FFF'
+  : '\u2E85'..'\u9FFF'
   ;
 
 DOUBLE_QUOTE_STRING_LITERAL
